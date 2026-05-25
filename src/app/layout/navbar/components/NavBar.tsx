@@ -99,7 +99,7 @@ export function NavBar(): JSX.Element {
   const { t } = useT('common');
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const isAuthenticated = !useAppSelector(selectIsAuthenticated);
+  const isAuthenticated = useAppSelector(selectIsAuthenticated);
   const liveDate = useLiveDate();
 
   // Mega menu state
