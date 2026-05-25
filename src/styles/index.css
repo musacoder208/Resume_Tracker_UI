@@ -1,0 +1,194 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  /* =====================
+     BACKGROUND
+     ===================== */
+  --color-background: #F5F7F5;
+  --color-background-subtle: #E6EAE7;
+
+  /* =====================
+     SURFACE
+     ===================== */
+  --color-surface: #FFFFFF;
+  --color-surface-muted: #EBFAF2;
+  --color-surface-hover: #E6EAE7;
+  --color-surface-elevated: #FFFFFF;
+  --color-surface-active: #CDD4CE;
+  --color-surface-disabled: #f1f1f1;
+
+  /* =====================
+     TEXT
+     ===================== */
+  --color-text: #141A14;
+  --color-text-muted: #546757;
+  --color-text-subtle: #798F7C;
+  --color-text-inverted: #FFFFFF;
+  --color-text-disabled: #1d1d1d;
+
+  /* =====================
+     BORDER
+     ===================== */
+  --color-border: #CDD4CE;
+  --color-border-muted: #E6EAE7;
+  --color-border-focus: #00A457;
+  --color-border-danger: #F03526;
+  --color-border-strong: #394839;
+  --color-border-info: #3B77BC;
+  --color-border-inverse: #141A14;
+
+  /* =====================
+     PRIMARY
+     ===================== */
+  --color-primary: #00A457;
+  --color-primary-hover: #007A3F;
+  --color-primary-active: #005629;
+  --color-primary-subtle: #EBFAF2;
+  --color-primary-foreground: #FFFFFF;
+  --color-primary-border: #C4EED8;
+
+  /* =====================
+     STATUS — Success
+     ===================== */
+  --color-success: #00A457;
+  --color-success-foreground: #FFFFFF;
+  --color-success-subtle: #EBFAF2;
+
+  /* STATUS — Warning */
+  --color-warning: #F59200;
+  --color-warning-foreground: #141A14;
+  --color-warning-subtle: #FFF7E6;
+  --color-warning-text: #92400E;
+
+  /* STATUS — Error */
+  --color-error: #F03526;
+  --color-error-foreground: #FFFFFF;
+  --color-error-subtle: #FFF0ED;
+
+  /* =====================
+     STATUS — Info
+     ===================== */
+  --color-info: #1A5499;
+  --color-info-foreground: #FFFFFF;
+  --color-info-subtle: #E8EFF8;
+  --color-info-border: #BDD0EC;
+
+  /* =====================
+     LABEL
+     ===================== */
+  --color-label: #374151;
+
+  /* =====================
+     SKELETON
+     ===================== */
+  --color-skeleton-bg: #E6EAE7;
+
+  /* =====================
+     TYPOGRAPHY
+     ===================== */
+  --font-family-primary: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-family-mono: 'Fira Code', 'Cascadia Code', 'Roboto Mono', monospace;
+  --font-size-base: 1rem;
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extra-bold: 800;
+
+  /* =====================
+     RADIUS
+     ===================== */
+  --radius-none: 0px;
+  --radius-sm:   4px;
+  --radius-md:   8px;
+  --radius-lg:   12px;
+  --radius-xl:   20px;
+  --radius-full: 9999px;
+
+  /* =====================
+     BORDER WIDTH
+     ===================== */
+  --border-width-none: 0px;
+  --border-width-sm:   1px;
+  --border-width-md:   2px;
+  --border-width-lg:   4px;
+
+  /* =====================
+     SHADOW
+     ===================== */
+  --shadow-sm: 0 1px 2px rgba(0, 164, 87, 0.10);
+  --shadow-md: 0 4px 6px rgba(0, 164, 87, 0.15);
+  --shadow-lg: 0 10px 15px rgba(0, 164, 87, 0.20);
+
+  /* =====================
+     LAYOUT
+     ===================== */
+  --layout-header-height: 56px;
+  --layout-sidebar-width: 220px;
+  --layout-header-padding-x: 16px;
+  --layout-sidebar-padding: 12px;
+  --layout-content-padding: 16px;
+  --layout-field-height: 30px;
+  --layout-field-height-sm: 29px;
+}
+
+body {
+  font-family: var(--font-family-primary);
+  font-size: var(--font-size-base);
+}
+
+input:disabled,
+select:disabled,
+textarea:disabled {
+  color: var(--color-text-disabled);
+  -webkit-text-fill-color: var(--color-text-disabled);
+  opacity: 1;
+}
+
+@keyframes toast-progress {
+  from { transform: scaleX(1); }
+  to { transform: scaleX(0); }
+}
+
+.app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+.app-header {
+  height: var(--layout-header-height);
+  background: var(--color-primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 var(--layout-header-padding-x);
+}
+
+.app-body {
+  display: flex;
+  flex: 1;
+}
+
+.app-sidebar {
+  width: var(--layout-sidebar-width);
+  background: var(--color-surface);
+  border-right: var(--border-width-sm) solid var(--color-border);
+  padding: var(--layout-sidebar-padding);
+}
+
+.app-content {
+  flex: 1;
+  padding: var(--layout-content-padding);
+}
+
+/* ── Global search highlight ── */
+mark.search-highlight {
+  background-color: #F59E0B;
+  color: inherit;
+  padding: 0 1px;
+  border-radius: 2px;
+}

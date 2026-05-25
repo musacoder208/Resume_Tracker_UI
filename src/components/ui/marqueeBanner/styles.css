@@ -1,0 +1,38 @@
+/* ── Entry animation — slides the banner down from above the viewport ── */
+@keyframes marquee-banner-slide-down {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* ── Marquee scroll — content moves from right to left continuously ── */
+@keyframes marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee-banner {
+  animation: marquee-banner-slide-down 0.4s ease-out both;
+}
+
+.marquee-track {
+  display: flex;
+  flex-wrap: nowrap;
+  width: max-content;
+  white-space: nowrap;
+  animation: marquee-scroll 20s linear infinite;
+  direction: ltr;
+}
+
+.marquee-track:hover {
+  animation-play-state: paused;
+}

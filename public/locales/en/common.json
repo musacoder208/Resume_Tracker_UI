@@ -1,0 +1,84 @@
+{
+  "nav": {
+    "home": "Home",
+    "menuLabel": "Menu",
+    "search": "Search…",
+    "searchPlaceholder": "Search pages…",
+    "allModules": "All Modules",
+    "items": "items",
+    "expandSidebar": "Expand sidebar",
+    "collapseSidebar": "Collapse sidebar",
+    "notifications": "Notifications",
+    "help": "Help",
+    "logout": "Log out",
+    "settings": "Settings",
+    "signOut": "Sign out",
+    "logoutConfirm": {
+      "title": "Sign Out",
+      "message": "Are you sure you want to sign out?",
+      "cancel": "Cancel",
+      "confirm": "Sign Out"
+    },
+    "language": "Language",
+    "theme": "Theme",
+    "mainNav": "Main navigation",
+    "guest": "Guest",
+    "sections": {
+      "main": "Main"
+    },
+    "tabs": {
+      "dashboard": "Dashboard",
+      "resumes": "Resumes",
+      "demo": "Demos"
+    },
+    "menu": {}
+  },
+  "errors": {
+    "sessionExpired": "Session Expired",
+    "sessionExpiredDesc": "Please login again.",
+    "networkError": "Network Error",
+    "networkErrorDesc": "Please check your internet connection.",
+    "serverError": "Server Error",
+    "serverErrorDesc": "Something went wrong on server.",
+    "generic": "Error",
+    "somethingWentWrong": "Something went wrong."
+  },
+  "grid": {
+    "results": "Results",
+    "search": "Search…",
+    "loading": "Loading…",
+    "noRecords": "No records found",
+    "failedToLoad": "Failed to load data",
+    "total": "Total",
+    "showing": "Showing",
+    "selected": "Selected",
+    "of": "of",
+    "clearFilters": "Clear Filters",
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
+    "rowsPerPage": "Page Size",
+    "filterType": "Filter Type",
+    "clearFilter": "Clear filter",
+    "filterNoFilter": "No filter",
+    "filterContains": "Contains...",
+    "filterEquals": "Equals...",
+    "filter": {
+      "placeholder": "Filter…",
+      "contains": "Contains",
+      "notContains": "Not Contains",
+      "startsWith": "Starts With",
+      "endsWith": "Ends With",
+      "equals": "Equals",
+      "notEquals": "Not Equals",
+      "noFilter": "No Filter",
+      "lessThan": "Less Than",
+      "lessThanOrEqual": "Less Than Or Equal",
+      "greaterThan": "Greater Than",
+      "greaterThanOrEqual": "Greater Than Or Equal",
+      "dateIs": "Date Is",
+      "dateIsNot": "Date Is Not",
+      "dateIsBefore": "Date Is Before",
+      "dateIsAfter": "Date Is After"
+    }
+  }
+}

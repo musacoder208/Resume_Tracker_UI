@@ -1,0 +1,94 @@
+/* DateTimePicker Custom Styles - Theme Integration */
+
+.custom-day-picker .rdp {
+  --rdp-accent-color: var(--color-primary);
+  --rdp-background-color: var(--color-surface-muted);
+  --rdp-accent-color-dark: var(--color-primary-hover);
+  --rdp-background-color-dark: var(--color-surface-muted);
+  --rdp-outline: 2px solid var(--color-primary);
+  --rdp-outline-selected: 2px solid var(--color-primary);
+}
+
+/* Override default DayPicker styles to match theme */
+.custom-day-picker .rdp-root {
+  background-color: var(--color-surface);
+  color: var(--color-text);
+}
+
+.custom-day-picker .rdp-month_caption {
+  color: var(--color-text);
+}
+
+.custom-day-picker .rdp-nav button {
+  color: var(--color-text);
+}
+
+.custom-day-picker .rdp-nav button:hover {
+  background-color: var(--color-surface-muted);
+}
+
+.custom-day-picker .rdp-weekday {
+  color: var(--color-text-muted);
+}
+
+.custom-day-picker .rdp-day {
+  color: var(--color-text);
+}
+
+.custom-day-picker .rdp-day:hover {
+  background-color: var(--color-surface-muted);
+}
+
+.custom-day-picker .rdp-day_selected {
+  background-color: var(--color-primary);
+  color: white;
+}
+
+.custom-day-picker .rdp-day_selected:hover {
+  background-color: var(--color-primary-hover);
+  color: white;
+}
+
+.custom-day-picker .rdp-day_today {
+  background-color: var(--color-surface-muted);
+  color: var(--color-text);
+  font-weight: 500;
+}
+
+.custom-day-picker .rdp-day_outside {
+  color: var(--color-text-muted);
+  opacity: 0.5;
+}
+
+.custom-day-picker .rdp-day_disabled {
+  color: var(--color-text-muted);
+  opacity: 0.5;
+}
+
+/* Focus styles */
+.custom-day-picker .rdp-day:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+.custom-day-picker .rdp-button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Dropdown selectors (year/month) */
+.custom-day-picker .rdp-dropdown {
+  background-color: var(--color-surface);
+  color: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.custom-day-picker .rdp-dropdown:hover {
+  background-color: var(--color-surface-muted);
+}
+
+.custom-day-picker .rdp-dropdown option {
+  background-color: var(--color-surface);
+  color: var(--color-text);
+}
+

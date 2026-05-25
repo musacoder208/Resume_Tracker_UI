@@ -1,0 +1,67 @@
+{
+  "nav": {
+    "home": "الرئيسية",
+    "search": "بحث…",
+    "searchPlaceholder": "بحث في الصفحات…",
+    "allModules": "جميع الوحدات",
+    "items": "عناصر",
+    "expandSidebar": "توسيع الشريط الجانبي",
+    "collapseSidebar": "طي الشريط الجانبي",
+    "notifications": "الإشعارات",
+    "help": "المساعدة",
+    "logout": "تسجيل الخروج",
+    "settings": "الإعدادات",
+    "signOut": "خروج",
+    "language": "اللغة",
+    "theme": "السمة",
+    "mainNav": "القائمة الرئيسية",
+    "tabs": {
+      "dashboard": "لوحة التحكم",
+      "resumes": "السير الذاتية",
+      "demo": "العروض"
+    },
+    "sections": {
+      "main": "الرئيسية"
+    }
+  },
+  "grid": {
+    "total": "الإجمالي",
+    "showing": "يُعرض",
+    "selected": "محدد",
+    "of": "من",
+    "clearFilters": "مسح الفلاتر",
+    "loading": "جارٍ التحميل…",
+    "noRecords": "لا توجد سجلات",
+    "failedToLoad": "فشل تحميل البيانات",
+    "previousPage": "الصفحة السابقة",
+    "nextPage": "الصفحة التالية",
+    "filter": {
+      "placeholder": "تصفية…",
+      "contains": "يحتوي",
+      "notContains": "لا يحتوي",
+      "startsWith": "يبدأ بـ",
+      "endsWith": "ينتهي بـ",
+      "equals": "يساوي",
+      "notEquals": "لا يساوي",
+      "noFilter": "بدون فلتر",
+      "lessThan": "أقل من",
+      "lessThanOrEqual": "أقل من أو يساوي",
+      "greaterThan": "أكبر من",
+      "greaterThanOrEqual": "أكبر من أو يساوي",
+      "dateIs": "التاريخ هو",
+      "dateIsNot": "التاريخ ليس",
+      "dateIsBefore": "التاريخ قبل",
+      "dateIsAfter": "التاريخ بعد"
+    }
+  },
+  "errors": {
+    "sessionExpired": "انتهت الجلسة",
+    "sessionExpiredDesc": "يرجى تسجيل الدخول مجدداً.",
+    "networkError": "خطأ في الشبكة",
+    "networkErrorDesc": "يرجى التحقق من اتصالك بالإنترنت.",
+    "serverError": "خطأ في الخادم",
+    "serverErrorDesc": "حدث خطأ ما في الخادم.",
+    "generic": "خطأ",
+    "somethingWentWrong": "حدث خطأ ما."
+  }
+}

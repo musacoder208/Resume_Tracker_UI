@@ -1,0 +1,39 @@
+.menu-modal div:nth-child(2) {
+    border: 0px;
+}
+.v-iconButton,button{
+    cursor: pointer;
+}
+
+/* Hide scrollbar on mobile/tablet */
+
+
+/* Custom scrollbar — desktop only, theme-aware */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-background-subtle);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary-hover);
+}
+
+
+@media (max-width: 1000px) {
+  ::-webkit-scrollbar,main::-webkit-scrollbar {
+    width: 0px;
+    height: 5px;
+  }
+}
+
+
