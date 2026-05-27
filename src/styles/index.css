@@ -5,48 +5,56 @@
   /* =====================
      BACKGROUND
      ===================== */
-  --color-background: #F5F7F5;
-  --color-background-subtle: #E6EAE7;
+  --color-background: #F8F7FF;
+  --color-background-subtle: #F0EEFF;
 
   /* =====================
      SURFACE
      ===================== */
   --color-surface: #FFFFFF;
-  --color-surface-muted: #EBFAF2;
-  --color-surface-hover: #E6EAE7;
+  --color-surface-muted: #EEF2FF;
+  --color-surface-hover: #E0E7FF;
   --color-surface-elevated: #FFFFFF;
-  --color-surface-active: #CDD4CE;
+  --color-surface-active: #C7D2FE;
   --color-surface-disabled: #f1f1f1;
 
   /* =====================
      TEXT
      ===================== */
-  --color-text: #141A14;
-  --color-text-muted: #546757;
-  --color-text-subtle: #798F7C;
+  --color-text: #1E1B4B;
+  --color-text-muted: #4C4891;
+  --color-text-subtle: #818CF8;
   --color-text-inverted: #FFFFFF;
-  --color-text-disabled: #1d1d1d;
+  --color-text-disabled: #9CA3AF;
 
   /* =====================
      BORDER
      ===================== */
-  --color-border: #CDD4CE;
-  --color-border-muted: #E6EAE7;
-  --color-border-focus: #00A457;
+  --color-border: #C7D2FE;
+  --color-border-muted: #E0E7FF;
+  --color-border-focus: #6366F1;
   --color-border-danger: #F03526;
-  --color-border-strong: #394839;
+  --color-border-strong: #3730A3;
   --color-border-info: #3B77BC;
-  --color-border-inverse: #141A14;
+  --color-border-inverse: #1E1B4B;
+
+  /* =====================
+     ACCENT — gradient brand pair
+     ===================== */
+  --accent: #6366f1;
+  --accent2: #a855f7;
+  --color-accent: #6366f1;
+  --color-accent2: #a855f7;
 
   /* =====================
      PRIMARY
      ===================== */
-  --color-primary: #00A457;
-  --color-primary-hover: #007A3F;
-  --color-primary-active: #005629;
-  --color-primary-subtle: #EBFAF2;
+  --color-primary: #6366F1;
+  --color-primary-hover: #4F46E5;
+  --color-primary-active: #4338CA;
+  --color-primary-subtle: #EEF2FF;
   --color-primary-foreground: #FFFFFF;
-  --color-primary-border: #C4EED8;
+  --color-primary-border: #C7D2FE;
 
   /* =====================
      STATUS — Success
@@ -82,7 +90,7 @@
   /* =====================
      SKELETON
      ===================== */
-  --color-skeleton-bg: #E6EAE7;
+  --color-skeleton-bg: #E0E7FF;
 
   /* =====================
      TYPOGRAPHY
@@ -118,9 +126,9 @@
   /* =====================
      SHADOW
      ===================== */
-  --shadow-sm: 0 1px 2px rgba(0, 164, 87, 0.10);
-  --shadow-md: 0 4px 6px rgba(0, 164, 87, 0.15);
-  --shadow-lg: 0 10px 15px rgba(0, 164, 87, 0.20);
+  --shadow-sm: 0 1px 2px rgba(99, 102, 241, 0.10);
+  --shadow-md: 0 4px 6px rgba(99, 102, 241, 0.15);
+  --shadow-lg: 0 10px 15px rgba(99, 102, 241, 0.20);
 
   /* =====================
      LAYOUT
@@ -160,8 +168,9 @@ textarea:disabled {
 
 .app-header {
   height: var(--layout-header-height);
-  background: var(--color-primary);
-  color: white;
+  background: var(--color-surface);
+  color: var(--color-text);
+  border-bottom: 1px solid var(--color-border);
   display: flex;
   align-items: center;
   justify-content: space-between;

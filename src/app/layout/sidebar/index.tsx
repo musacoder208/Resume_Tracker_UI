@@ -52,7 +52,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps): JSX.Element {
   return (
     <div
       className={clsx(
-        'relative z-50 flex h-screen shrink-0 flex-col overflow-visible bg-primary shadow-lg transition-all duration-200',
+        'relative z-50 flex h-screen shrink-0 flex-col overflow-visible border-e border-border bg-surface shadow-sm transition-all duration-200',
         collapsed ? 'w-[60px]' : 'w-[240px]'
       )}
     >
@@ -61,29 +61,29 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps): JSX.Element {
         type="button"
         onClick={onToggle}
         aria-label={collapsed ? t('nav.expandSidebar') : t('nav.collapseSidebar')}
-        className="absolute -end-3 top-[71px] z-60 flex h-6 w-6 items-center justify-center rounded-full border border-border-muted bg-primary shadow-md"
+        className="absolute -end-3 top-[71px] z-60 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-surface shadow-md"
       >
         {collapsed ? (
-          <ChevronRightIcon className="h-3 w-3 text-white" />
+          <ChevronRightIcon className="h-3 w-3 text-text-muted" />
         ) : (
-          <ChevronLeftIcon className="h-3 w-3 text-white" />
+          <ChevronLeftIcon className="h-3 w-3 text-text-muted" />
         )}
       </button>
 
       {/* Logo */}
       <div className={clsx('flex h-16 shrink-0 items-center gap-3', collapsed ? 'justify-center px-3' : 'px-4')}>
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-white/20">
-          <span className="text-xs font-bold tracking-widest text-white">RT</span>
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary-subtle">
+          <span className="text-xs font-bold tracking-widest text-primary">RT</span>
         </div>
         {!collapsed && (
           <div className="min-w-0">
-            <div className="text-sm font-bold text-white">Resume Tracker</div>
-            <div className="text-xs text-white/60">V1.0</div>
+            <div className="text-sm font-bold text-text">Resume Tracker</div>
+            <div className="text-xs text-text-muted">V1.0</div>
           </div>
         )}
       </div>
 
-      <div className="h-px shrink-0 bg-white/10" />
+      <div className="h-px shrink-0 bg-border" />
 
       {/* Nav — scrollable */}
       <nav
@@ -102,7 +102,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps): JSX.Element {
         </div>
       </nav>
 
-      <div className="h-px shrink-0 bg-white/10" />
+      <div className="h-px shrink-0 bg-border" />
 
       {/* Footer */}
       <div
@@ -113,11 +113,11 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps): JSX.Element {
       >
         {!collapsed && (
           <>
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/20 text-xs font-bold text-white">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary-subtle text-xs font-bold text-primary">
               U
             </div>
             <div className="min-w-0 flex-1">
-              <div className="truncate text-xs font-bold text-white">
+              <div className="truncate text-xs font-bold text-text">
                 {user != null ? `User #${user.userId}` : '—'}
               </div>
             </div>
@@ -128,7 +128,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps): JSX.Element {
           onClick={handleSignOut}
           title={t('nav.signOut')}
           aria-label={t('nav.signOut')}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-white/60 transition-colors hover:bg-white/10 hover:text-white"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-text-muted transition-colors hover:bg-surface-hover hover:text-text"
         >
           <ArrowRightOnRectangleIcon className="h-[18px] w-[18px]" />
         </button>
