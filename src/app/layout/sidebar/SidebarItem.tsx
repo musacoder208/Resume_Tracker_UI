@@ -76,8 +76,8 @@ export function SidebarItem({ item, collapsed, onNavigate }: SidebarItemProps): 
         <button
           type="button"
           onClick={handleClick}
-          title={t(item.labelKey)}
-          aria-label={t(item.labelKey)}
+          title={item.label ?? t(item.labelKey ?? '')}
+          aria-label={item.label ?? t(item.labelKey ?? '')}
           aria-haspopup={hasChildren ? 'menu' : undefined}
           aria-expanded={hasChildren ? isHovered : undefined}
           className={clsx(
@@ -137,7 +137,7 @@ export function SidebarItem({ item, collapsed, onNavigate }: SidebarItemProps): 
             <Icon className="h-4 w-4 text-white" />
           </div>
         )}
-        <span className="flex-1 truncate text-start text-[13px] font-medium">{t(item.labelKey)}</span>
+        <span className="flex-1 truncate text-start text-[13px] font-medium">{item.label ?? t(item.labelKey ?? '')}</span>
         {hasChildren && <ChevronRightIcon className="h-3 w-3 shrink-0 text-white/40" />}
       </button>
 

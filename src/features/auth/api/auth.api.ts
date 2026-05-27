@@ -1,22 +1,22 @@
 import { baseApi } from '@/services/baseApi';
-import type { User } from '../types/auth.types';
-import { mapAuthResponse } from './auth.mappers';
+import type { MappedAuthData } from './auth.mappers';
+import { mapLoginResponse, mapAuthResponse } from './auth.mappers';
 
 export const authApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    login: builder.mutation<{ user: User; sessionExpiresAt: string | null }, { email: string; password: string }>({
+    login: builder.mutation<MappedAuthData, { username: string; password: string }>({
       query: (body) => ({
         url: 'auth/login',
         method: 'POST',
         body,
       }),
-      transformResponse: mapAuthResponse,
-      extraOptions: { skipReauth: true },
+      transformResponse: mapLoginResponse,
+      extraOptions: { skipReauth: true, skipRetry: true },
     }),
 
-    getSession: builder.query<{ user: User; sessionExpiresAt: string | null }, void>({
+    getSession: builder.query<MappedAuthData, void>({
       query: () => ({
-        url: 'auth/me',
+        url: 'auth/session',
         method: 'GET',
       }),
       transformResponse: mapAuthResponse,
@@ -25,8 +25,8 @@ export const authApi = baseApi.injectEndpoints({
 
     logout: builder.mutation<{ ok: boolean }, void>({
       query: () => ({
-        url: 'auth/session',
-        method: 'DELETE',
+        url: 'auth/logout',
+        method: 'POST',
       }),
     }),
   }),

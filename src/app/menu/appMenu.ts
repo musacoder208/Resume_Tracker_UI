@@ -1,27 +1,16 @@
-import { HomeIcon, DocumentTextIcon, ChartBarIcon } from '@/icons';
 import type { MenuItem, MenuGroup } from './menu.types';
+import type { PageAccess } from '@/features/auth/types/auth.types';
 
-const MENU_ITEMS: MenuItem[] = [
-  {
-    id: 'dashboard',
-    labelKey: 'nav.tabs.dashboard',
-    icon: HomeIcon,
-    path: '/',
-  },
-  {
-    id: 'resumes',
-    labelKey: 'nav.tabs.resumes',
-    icon: DocumentTextIcon,
-    path: '/resumes',
-  },
-  {
-    id: 'demo',
-    labelKey: 'nav.tabs.demo',
-    icon: ChartBarIcon,
-    path: '/demo',
-  },
-];
+export function buildMenuFromPageAccess(pageAccess: PageAccess[]): MenuItem[] {
+  return [...pageAccess]
+    .sort((a, b) => a.display_order - b.display_order)
+    .map((page) => ({
+      id: page.route,
+      label: page.page_name,
+      path: page.route,
+    }));
+}
 
-export const APP_MENU_GROUPS: MenuGroup[] = [{ labelKey: 'nav.sections.main', items: MENU_ITEMS }];
-
-export const APP_MENU: MenuItem[] = MENU_ITEMS;
+// Static fallback — used when page_access is empty (e.g. before login resolves)
+export const APP_MENU_GROUPS: MenuGroup[] = [];
+export const APP_MENU: MenuItem[] = [];

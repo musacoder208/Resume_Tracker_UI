@@ -3,7 +3,6 @@ import { Navigate } from 'react-router-dom';
 import { LoginForm } from './loginForm';
 import { selectIsAuthenticated } from './redux/auth.selectors';
 import { useAppSelector } from '@/hooks/reduxHooks';
-
 export function LoginPage(): JSX.Element {
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
 

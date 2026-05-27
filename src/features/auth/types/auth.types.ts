@@ -1,8 +1,12 @@
 export type User = {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
+  userId: number;
+};
+
+export type PageAccess = {
+  page_name: string;
+  route: string;
+  icon: string | null;
+  display_order: number;
   permissions: string[];
 };
 
@@ -18,4 +22,6 @@ export type AuthState = {
   user: User | null;
   isAuthenticated: boolean;
   sessionExpiresAt: string | null;
+  permissions: string[];
+  pageAccess: PageAccess[];
 };

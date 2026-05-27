@@ -4,6 +4,7 @@ import { RequireAuth } from '../guards/RequireAuth';
 import { AppShell } from '../layout/pageLayout/privateLayout/AppShell';
 import { NotFound } from '@/components/ui/notFound';
 import { LoginPage } from '@/features/auth/LoginPage';
+import { DashboardPage } from '@/features/dashboard/pages/DashboardPage';
 import { env } from '@/config/env';
 
 export const router = createBrowserRouter(
@@ -21,6 +22,10 @@ export const router = createBrowserRouter(
         {
           path: '/',
           element: <></>,
+        },
+        {
+          path: '/dashboard',
+          element: <DashboardPage />,
         },
         {
           path: '*',

@@ -105,6 +105,12 @@ const baseQueryWithRetry: BaseQueryFn<string | FetchArgs, unknown, ApiError> = a
   api,
   extraOptions
 ) => {
+  const skipRetry = (extraOptions as { skipRetry?: boolean } | undefined)?.skipRetry === true;
+
+  if (skipRetry) {
+    return baseQueryWithErrorHandling(args, api, extraOptions);
+  }
+
   let attempt = 0;
   let result;
 

@@ -18,7 +18,7 @@ import { setActiveSession } from '@/utils/authSession';
 // Schema at module level — no i18n dependency.
 // Type is derived from the schema so they can never diverge.
 const loginSchema = z.object({
-  email: z.string().email(),
+  username: z.string().min(1),
   password: z.string().min(1),
   rememberMe: z.boolean().optional(),
 });
@@ -33,15 +33,15 @@ export function LoginForm(): JSX.Element {
 
   const { register, handleSubmit, formState } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: '', password: '', rememberMe: false },
+    defaultValues: { username: '', password: '', rememberMe: false },
   });
 
   const onSubmit = async (values: LoginFormValues): Promise<void> => {
     try {
-      const data = await login({ email: values.email, password: values.password }).unwrap();
+      const data = await login({ username: values.username, password: values.password }).unwrap();
       setActiveSession();
       dispatch(setAuthContext(data));
-      await navigate('/', { replace: true });
+      await navigate('/dashboard', { replace: true });
     } catch {
       // error surfaced via RTK Query `error` state
     }
@@ -53,7 +53,7 @@ export function LoginForm(): JSX.Element {
     <div className="w-full max-w-md">
       {/* Logo + heading */}
       <div className="mb-7 flex flex-col items-center gap-y-5 text-center">
-        <img src={IMAGES.logo} alt="EQAS" className="h-13 w-auto" />
+        <img src={IMAGES.logo} alt="Resume Tracker" className="h-13 w-auto" />
         <div>
           <h1 className="text-3xl font-bold text-text">{t('login.title')}</h1>
           <p className="mt-2 text-sm font-medium text-primary-hover">{t('login.subtitle')}</p>
@@ -68,16 +68,16 @@ export function LoginForm(): JSX.Element {
       >
         <FormErrorBanner message={apiError} />
 
-        {/* Email field */}
+        {/* Username field */}
         <div>
           <Input
-            {...register('email')}
-            placeholder={t('login.form.placeholders.email')}
-            variant={formState.errors.email ? 'error' : 'default'}
-            autoComplete="email"
+            {...register('username')}
+            placeholder={t('login.form.placeholders.username')}
+            variant={formState.errors.username ? 'error' : 'default'}
+            autoComplete="username"
           />
-          {formState.errors.email && (
-            <p className="mt-1 text-xs text-error">{t('login.errors.emailRequired')}</p>
+          {formState.errors.username && (
+            <p className="mt-1 text-xs text-error">{t('login.errors.usernameRequired')}</p>
           )}
         </div>
 

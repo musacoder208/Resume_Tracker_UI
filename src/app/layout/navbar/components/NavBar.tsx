@@ -84,7 +84,7 @@ function MegaMenuCascade({
                   <Icon className="h-4 w-4" />
                 </span>
               )}
-              <span className="flex-1 text-start">{t(item.labelKey)}</span>
+              <span className="flex-1 text-start">{t(item.labelKey ?? '')}</span>
             </button>
           );
         })}
@@ -126,11 +126,10 @@ export function NavBar(): JSX.Element {
       const hasChildren = Boolean(mod.children?.length);
       if (hasChildren) {
         return (mod.children ?? [])
-          .filter((item) => t(item.labelKey).toLowerCase().includes(q))
-          .map((item) => ({ item, moduleTitle: t(mod.labelKey), moduleId: mod.id }));
+          .filter((item) => (item.label ?? t(item.labelKey ?? '')).toLowerCase().includes(q))
+          .map((item) => ({ item, moduleTitle: item.label ?? t(mod.labelKey ?? ''), moduleId: mod.id }));
       }
-      // Top-level item without children — search itself
-      if (t(mod.labelKey).toLowerCase().includes(q)) {
+      if ((mod.label ?? t(mod.labelKey ?? '')).toLowerCase().includes(q)) {
         return [{ item: mod, moduleTitle: '', moduleId: mod.id }];
       }
       return [];
@@ -169,11 +168,10 @@ export function NavBar(): JSX.Element {
   }, [showModules]);
 
   return (
-    <header className="relative z-30 flex h-14 shrink-0 items-center justify-between border-b border-border bg-surface px-6">
+    <header className="relative z-30 flex h-14 shrink-0 items-center justify-end border-b border-border bg-surface px-6">
       {/* Left — All Modules + Search */}
-      {isAuthenticated && (
+      {/* {isAuthenticated && (
         <div className="flex items-center gap-4">
-          {/* All Modules trigger */}
           <div className="relative" onMouseEnter={openModules} onMouseLeave={closeModulesDelayed}>
             <button
               type="button"
@@ -189,7 +187,6 @@ export function NavBar(): JSX.Element {
             </button>
           </div>
 
-          {/* Global search */}
           <div className="hidden h-11 w-[400px] items-center gap-2 rounded-lg border border-border bg-surface px-3.5 shadow-sm sm:flex lg:w-[500px]">
             <MagnifyingGlassIcon className="h-5 w-5 shrink-0 text-text-muted" />
             <input
@@ -210,7 +207,7 @@ export function NavBar(): JSX.Element {
             )}
           </div>
         </div>
-      )}
+      )} */}
 
       {/* Right — date + bell + avatar */}
       {isAuthenticated && (
@@ -233,17 +230,15 @@ export function NavBar(): JSX.Element {
       )}
 
       {/* All Modules Mega Menu */}
-      {showModules && (
+      {/* {showModules && (
         <div
           ref={menuRef}
           className="absolute inset-x-3 top-full z-[200] rounded-b-lg border border-border-muted bg-surface shadow-xl"
           onMouseEnter={openModules}
           onMouseLeave={closeModulesDelayed}
         >
-          {/* Triangle pointer */}
           <div className="absolute -top-2 start-6 h-0 w-0 border-x-[8px] border-b-[8px] border-x-transparent border-b-primary" />
 
-          {/* Header bar */}
           <div className="flex items-center justify-between gap-3 rounded-t-lg bg-primary px-5 py-2.5">
             <div className="flex items-center gap-3">
               <span className="text-xs font-bold text-white">
@@ -283,7 +278,6 @@ export function NavBar(): JSX.Element {
           </div>
 
           {megaSearch.trim() ? (
-            /* Flat search results */
             <div className="max-h-[60vh] overflow-y-auto px-4 py-3">
               {flatResults.length === 0 ? (
                 <div className="py-10 text-center text-sm text-text-muted">
@@ -308,7 +302,7 @@ export function NavBar(): JSX.Element {
                         <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-primary-subtle text-primary">
                           {Icon && <Icon className="h-4 w-4" />}
                         </span>
-                        <span className="flex-1 text-sm text-text">{t(item.labelKey)}</span>
+                        <span className="flex-1 text-sm text-text">{item.label ?? t(item.labelKey ?? '')}</span>
                         <span className="shrink-0 rounded-full bg-surface-muted px-2.5 py-0.5 text-xs text-text-muted">
                           {moduleTitle}
                         </span>
@@ -320,7 +314,6 @@ export function NavBar(): JSX.Element {
               )}
             </div>
           ) : (
-            /* Module cards */
             <div className="flex flex-wrap gap-2 p-5">
               {APP_MENU.map((mod) => {
                 const Icon = mod.icon;
@@ -349,7 +342,7 @@ export function NavBar(): JSX.Element {
                           </div>
                         )}
                         <div className="text-start">
-                          <div className="text-xs font-semibold text-text">{t(mod.labelKey)}</div>
+                          <div className="text-xs font-semibold text-text">{mod.label ?? t(mod.labelKey ?? '')}</div>
                           {hasChildren && (
                             <div className="text-xs text-text-muted">
                               {mod.children?.length} {t('nav.items')}
@@ -387,7 +380,7 @@ export function NavBar(): JSX.Element {
             </div>
           )}
         </div>
-      )}
+      )} */}
     </header>
   );
 }

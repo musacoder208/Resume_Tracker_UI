@@ -1,4 +1,4 @@
-import { useRef, useEffect, type JSX } from 'react';
+import { useRef, useEffect, useMemo, type JSX } from 'react';
 import { useNavigate } from 'react-router-dom';
 import clsx from 'clsx';
 import { ChevronLeftIcon, ChevronRightIcon, ArrowRightOnRectangleIcon } from '@/icons';
@@ -6,17 +6,12 @@ import { useT } from '@/i18n/useT';
 import { useAppSelector, useAppDispatch } from '@/hooks/reduxHooks';
 import { useLogoutMutation } from '@/features/auth/api/auth.api';
 import { clearAuthContext } from '@/features/auth/redux/auth.slice';
+import { selectUser, selectPageAccess } from '@/features/auth/redux/auth.selectors';
 import { clearActiveSession } from '@/utils/authSession';
 import { applyTheme } from '@/theme/applyTheme';
 import { getStoredTheme, clearStoredTheme } from '@/utils/themeStorage';
-import { APP_MENU_GROUPS } from '@/app/menu/appMenu';
+import { buildMenuFromPageAccess } from '@/app/menu/appMenu';
 import { SidebarItem } from './SidebarItem';
-
-function getInitials(name: string): string {
-  const words = name.trim().split(/\s+/);
-  if (words.length === 1) return (words[0] ?? '').slice(0, 2).toUpperCase();
-  return ((words[0]?.[0] ?? '') + (words[words.length - 1]?.[0] ?? '')).toUpperCase();
-}
 
 interface SidebarProps {
   collapsed: boolean;
@@ -27,9 +22,12 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps): JSX.Element {
   const { t } = useT('common');
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const user = useAppSelector((state) => state.auth.user);
+  const user = useAppSelector(selectUser);
+  const pageAccess = useAppSelector(selectPageAccess);
   const [logout] = useLogoutMutation();
   const navRef = useRef<HTMLDivElement>(null);
+
+  const menuItems = useMemo(() => buildMenuFromPageAccess(pageAccess), [pageAccess]);
 
   useEffect(() => {
     return () => {
@@ -50,8 +48,6 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps): JSX.Element {
       }
     })();
   };
-
-  const initials = user?.name != null ? getInitials(user.name) : 'U';
 
   return (
     <div
@@ -94,25 +90,14 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps): JSX.Element {
         ref={navRef}
         className={clsx('flex-1 overflow-y-auto overflow-x-hidden', collapsed ? 'px-2 py-3' : 'px-3 py-3')}
       >
-        <div className="flex flex-col gap-4">
-          {APP_MENU_GROUPS.map((group) => (
-            <div key={group.labelKey}>
-              {!collapsed && (
-                <p className="mb-2 px-2 text-[11px] font-semibold uppercase tracking-widest text-white/40">
-                  {t(group.labelKey)}
-                </p>
-              )}
-              <div className="flex flex-col gap-1">
-                {group.items.map((item) => (
-                  <SidebarItem
-                    key={item.id}
-                    item={item}
-                    collapsed={collapsed}
-                    onNavigate={() => {}}
-                  />
-                ))}
-              </div>
-            </div>
+        <div className="flex flex-col gap-1">
+          {menuItems.map((item) => (
+            <SidebarItem
+              key={item.id}
+              item={item}
+              collapsed={collapsed}
+              onNavigate={() => {}}
+            />
           ))}
         </div>
       </nav>
@@ -129,12 +114,11 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps): JSX.Element {
         {!collapsed && (
           <>
             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white/20 text-xs font-bold text-white">
-              {initials}
+              U
             </div>
             <div className="min-w-0 flex-1">
-              <div className="truncate text-xs font-bold text-white">{user?.name ?? '—'}</div>
-              <div className="truncate text-xs capitalize text-white/60">
-                {(user?.role ?? '').replace(/_/g, ' ')}
+              <div className="truncate text-xs font-bold text-white">
+                {user != null ? `User #${user.userId}` : '—'}
               </div>
             </div>
           </>
