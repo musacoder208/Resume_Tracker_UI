@@ -52,4 +52,8 @@ export {
   PlusIcon,
   PencilIcon,
   ArrowDownTrayIcon,
+  ClockIcon,
+  PaperAirplaneIcon,
+  BuildingOffice2Icon,
+  SparklesIcon,
 } from '@heroicons/react/24/outline';

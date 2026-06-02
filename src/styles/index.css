@@ -1,5 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
+@plugin "@tailwindcss/typography";
 
 @theme {
   /* =====================
@@ -140,6 +141,7 @@
   --layout-content-padding: 16px;
   --layout-field-height: 30px;
   --layout-field-height-sm: 29px;
+  --layout-modal-preview-max-height: 60vh;
 }
 
 body {

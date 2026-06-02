@@ -5,6 +5,7 @@ import { AppShell } from '../layout/pageLayout/privateLayout/AppShell';
 import { NotFound } from '@/components/ui/notFound';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage';
+import { CompanyProfilePage } from '@/features/companyProfile/pages/CompanyProfilePage';
 import { env } from '@/config/env';
 
 export const router = createBrowserRouter(
@@ -26,6 +27,10 @@ export const router = createBrowserRouter(
         {
           path: '/dashboard',
           element: <DashboardPage />,
+        },
+        {
+          path: '/company-profile',
+          element: <CompanyProfilePage />,
         },
         {
           path: '*',

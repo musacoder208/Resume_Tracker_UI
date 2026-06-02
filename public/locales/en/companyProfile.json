@@ -1,0 +1,44 @@
+{
+  "sections": {
+    "companyInformation": "Company Information",
+    "aiBuilder": "AI Company Profile Builder"
+  },
+  "modes": {
+    "initial": "Initial",
+    "clarification": "Clarification",
+    "crossfield": "Cross-field"
+  },
+  "actions": {
+    "submit": "Submit",
+    "skip": "Skip",
+    "selectAll": "Select All",
+    "previewProfile": "Preview Company Profile",
+    "editAnswer": "Edit Answer",
+    "saveDraft": "Save Draft",
+    "saveAndPublish": "Save & Publish"
+  },
+  "chat": {
+    "editTooltip": "Edit answer",
+    "historyTooltip": "View history",
+    "noHistory": "No previous history",
+    "answeredAt": "Answered",
+    "previousAnswers": "Previous answers for this field"
+  },
+  "loading": {
+    "starting": "Starting profile session…",
+    "submitting": "Submitting answer…"
+  },
+  "errors": {
+    "startFailed": "Failed to start profile session. Please try again.",
+    "submitFailed": "Failed to submit answer. Please try again."
+  },
+  "preview": {
+    "title": "Company Profile Preview"
+  },
+  "edit": {
+    "modalTitle": "Update Answer",
+    "confirm": "Confirm",
+    "cancel": "Cancel",
+    "successTitle": "Update Successful"
+  }
+}
