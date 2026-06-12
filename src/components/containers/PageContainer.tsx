@@ -13,7 +13,7 @@ export function PageContainer({
     <div
       className={[
         'bg-background text-text',
-        padded ? 'px-4 py-6 sm:px-6 lg:px-8' : 'py-6',
+        padded ? 'px-4 pt-2 pb-6 sm:px-6 lg:px-8' : 'pb-6',
       ].join(' ')}
     >
       {children}

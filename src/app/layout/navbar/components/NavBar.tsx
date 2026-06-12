@@ -22,14 +22,14 @@ import { AvatarMenu } from './AvatarMenu';
 
 function useLiveDate(): string {
   const [date, setDate] = useState(() =>
-    new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })
+    new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })
   );
   useEffect(() => {
     const interval = setInterval(() => {
       setDate(
         new Date().toLocaleDateString('en-GB', {
-          day: '2-digit',
-          month: '2-digit',
+          day: 'numeric',
+          month: 'long',
           year: 'numeric',
         })
       );

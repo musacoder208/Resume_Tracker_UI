@@ -5,6 +5,12 @@ import { clearAuthContext } from '@/features/auth/redux/auth.slice';
 import { clearActiveSession } from '@/utils/authSession';
 import type { ApiError, ApiErrorKind, ApiErrorMeta } from '@/types/apiError';
 
+export type BaseQueryExtraOptions = {
+  skipRetry?: boolean;
+  skipReauth?: boolean;
+  timeout?: number;
+};
+
 const MAX_RETRIES = 3;
 
 const rawBaseQuery = fetchBaseQuery({
@@ -13,7 +19,7 @@ const rawBaseQuery = fetchBaseQuery({
 });
 
 // @ts-expect-error -- FetchBaseQueryError is structurally compatible with ApiError
-const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, ApiError> = async (
+const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, ApiError, BaseQueryExtraOptions> = async (
   args,
   api,
   extraOptions
@@ -21,7 +27,7 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, ApiError> = 
   let result = await rawBaseQuery(args, api, extraOptions);
 
   if (result.error?.status === 401) {
-    const skip = (extraOptions as { skipReauth?: boolean } | undefined)?.skipReauth;
+    const skip = extraOptions?.skipReauth;
 
     if (skip) {
       clearActiveSession();
@@ -65,12 +71,29 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, ApiError> = 
   return result;
 };
 
-const baseQueryWithErrorHandling: BaseQueryFn<string | FetchArgs, unknown, ApiError> = async (
+const baseQueryWithErrorHandling: BaseQueryFn<string | FetchArgs, unknown, ApiError, BaseQueryExtraOptions> = async (
   args,
   api,
   extraOptions
 ) => {
-  const result = await baseQueryWithReauth(args, api, extraOptions);
+  const timeoutMs = extraOptions?.timeout;
+  let resolvedArgs: string | FetchArgs = args;
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+  if (timeoutMs != null) {
+    const controller = new AbortController();
+    timeoutId = setTimeout(() => { controller.abort(); }, timeoutMs);
+    resolvedArgs = typeof args === 'string'
+      ? { url: args, signal: controller.signal }
+      : { ...(args as FetchArgs), signal: controller.signal };
+  }
+
+  let result: Awaited<ReturnType<typeof baseQueryWithReauth>>;
+  try {
+    result = await baseQueryWithReauth(resolvedArgs, api, extraOptions);
+  } finally {
+    if (timeoutId != null) clearTimeout(timeoutId);
+  }
 
   if (result.error) {
     const err = result.error;
@@ -100,12 +123,12 @@ const baseQueryWithErrorHandling: BaseQueryFn<string | FetchArgs, unknown, ApiEr
   return result;
 };
 
-const baseQueryWithRetry: BaseQueryFn<string | FetchArgs, unknown, ApiError> = async (
+const baseQueryWithRetry: BaseQueryFn<string | FetchArgs, unknown, ApiError, BaseQueryExtraOptions> = async (
   args,
   api,
   extraOptions
 ) => {
-  const skipRetry = (extraOptions as { skipRetry?: boolean } | undefined)?.skipRetry === true;
+  const skipRetry = extraOptions?.skipRetry === true;
 
   if (skipRetry) {
     return baseQueryWithErrorHandling(args, api, extraOptions);

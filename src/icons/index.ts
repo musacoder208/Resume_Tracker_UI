@@ -10,6 +10,7 @@
 
 export {
   // Navigation
+  ArrowLeftIcon,
   Bars3Icon,
   ChevronDownIcon,
   ChevronLeftIcon,
@@ -35,6 +36,7 @@ export {
 
   // Forms / Selection
   CheckIcon,
+  ArrowUpTrayIcon,
 
   // General
   HomeIcon,
@@ -43,6 +45,7 @@ export {
   ChartBarIcon,
   TableCellsIcon,
   UserIcon,
+  UsersIcon,
   UserCircleIcon,
   Cog6ToothIcon,
   GlobeAltIcon,

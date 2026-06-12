@@ -6,6 +6,8 @@ import { NotFound } from '@/components/ui/notFound';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage';
 import { CompanyProfilePage } from '@/features/companyProfile/pages/CompanyProfilePage';
+import { JdLandingPage } from '@/features/jd/pages/JdLandingPage';
+import { AddJdPage } from '@/features/jd/pages/AddJdPage';
 import { env } from '@/config/env';
 
 export const router = createBrowserRouter(
@@ -31,6 +33,18 @@ export const router = createBrowserRouter(
         {
           path: '/company-profile',
           element: <CompanyProfilePage />,
+        },
+        {
+          path: '/jd',
+          element: <JdLandingPage />,
+        },
+        {
+          path: '/jd/create',
+          element: <AddJdPage />,
+        },
+        {
+          path: '/jd/create/:jdId',
+          element: <AddJdPage />,
         },
         {
           path: '*',

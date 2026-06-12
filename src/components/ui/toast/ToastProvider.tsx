@@ -1,7 +1,8 @@
-import { createContext, useCallback, useRef, useState, type JSX } from 'react';
+import { createContext, useCallback, useEffect, useRef, useState, type JSX } from 'react';
 import type { ToastContextType, ToastItem, ToastVariant } from './toast.types';
 import { Toast } from './Toast';
 import { DEFAULT_DURATIONS, TOAST_STACK_LIMIT } from './toast.config';
+import { registerToast } from './toastService';
 import { useDirection } from '@/hooks/useDirection';
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -63,6 +64,10 @@ export function ToastProvider({ children }: { children: React.ReactNode }): JSX.
     },
     []
   );
+
+  useEffect(() => {
+    registerToast({ showToast, closeToast });
+  }, [showToast, closeToast]);
 
   return (
     <ToastContext.Provider value={{ showToast, closeToast }}>
