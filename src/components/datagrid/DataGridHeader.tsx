@@ -17,6 +17,8 @@ export const DataGridHeader = (): JSX.Element => {
     enableSorting,
     lastPinnedColumnId,
     pinnedLeftOffsets,
+    firstRightPinnedColumnId,
+    pinnedRightOffsets,
   } = useDataGridContext<unknown>();
   const sorting = table.getState().sorting;
 
@@ -31,8 +33,10 @@ export const DataGridHeader = (): JSX.Element => {
             {group.headers.map((header) => {
               const canSort: boolean = enableSorting && header.column.getCanSort();
               const meta = header.column.columnDef.meta as GridColumnMeta | undefined;
-              const isPinned = meta?.pin === 'left';
+              const isPinnedLeft = meta?.pin === 'left';
+              const isPinnedRight = meta?.pin === 'right';
               const isLastPinned = header.column.id === lastPinnedColumnId;
+              const isFirstRightPinned = header.column.id === firstRightPinnedColumnId;
 
               return (
                 <th
@@ -40,14 +44,17 @@ export const DataGridHeader = (): JSX.Element => {
                   colSpan={header.colSpan}
                   style={{
                     width: header.getSize(),
-                    ...(isPinned ? { insetInlineStart: pinnedLeftOffsets[header.column.id] ?? 0 } : {}),
+                    ...(isPinnedLeft ? { insetInlineStart: pinnedLeftOffsets[header.column.id] ?? 0 } : {}),
+                    ...(isPinnedRight ? { insetInlineEnd: pinnedRightOffsets[header.column.id] ?? 0 } : {}),
                   }}
                   className={clsx(
                     gridTheme.thBase,
                     isFit ? gridTheme.wrap : gridTheme.nowrap,
                     meta?.align === 'right' ? 'text-end' : meta?.align === 'center' ? 'text-center' : 'text-start',
-                    isPinned && gridTheme.thPinned,
+                    isPinnedLeft && gridTheme.thPinned,
+                    isPinnedRight && gridTheme.thPinnedRight,
                     isLastPinned && gridTheme.lastPinnedBorder,
+                    isFirstRightPinned && gridTheme.firstRightPinnedBorder,
                     meta?.headerClassName,
                   )}
                 >
@@ -77,8 +84,10 @@ export const DataGridHeader = (): JSX.Element => {
               {group.headers.map((header) => {
                 const canFilter: boolean = header.column.getCanFilter();
                 const meta = header.column.columnDef.meta as GridColumnMeta | undefined;
-                const isPinned = meta?.pin === 'left';
+                const isPinnedLeft = meta?.pin === 'left';
+                const isPinnedRight = meta?.pin === 'right';
                 const isLastPinned = header.column.id === lastPinnedColumnId;
+                const isFirstRightPinned = header.column.id === firstRightPinnedColumnId;
 
                 return (
                   <th
@@ -86,12 +95,15 @@ export const DataGridHeader = (): JSX.Element => {
                     colSpan={header.colSpan}
                     style={{
                       width: header.getSize(),
-                      ...(isPinned ? { insetInlineStart: pinnedLeftOffsets[header.column.id] ?? 0 } : {}),
+                      ...(isPinnedLeft ? { insetInlineStart: pinnedLeftOffsets[header.column.id] ?? 0 } : {}),
+                      ...(isPinnedRight ? { insetInlineEnd: pinnedRightOffsets[header.column.id] ?? 0 } : {}),
                     }}
                     className={clsx(
                       gridTheme.filterCell,
-                      isPinned && gridTheme.thPinnedFilter,
+                      isPinnedLeft && gridTheme.thPinnedFilter,
+                      isPinnedRight && gridTheme.thPinnedRightFilter,
                       isLastPinned && gridTheme.lastPinnedBorder,
+                      isFirstRightPinned && gridTheme.firstRightPinnedBorder,
                     )}
                   >
                     {canFilter === true && header.isPlaceholder === false ? (

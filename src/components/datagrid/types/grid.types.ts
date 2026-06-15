@@ -108,6 +108,9 @@ export interface DataGridContextValue<TData> {
   lastPinnedColumnId: string | null;
   /** Sticky left offsets (px) for each left-pinned column, keyed by column id */
   pinnedLeftOffsets: Record<string, number>;
+  firstRightPinnedColumnId: string | null;
+  /** Sticky right offsets (px) for each right-pinned column, keyed by column id */
+  pinnedRightOffsets: Record<string, number>;
   renderExpandedRow?: (row: Row<TData>) => ReactNode;
 }
 

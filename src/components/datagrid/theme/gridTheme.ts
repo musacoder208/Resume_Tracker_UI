@@ -25,13 +25,25 @@ export const gridTheme = {
   /* Pinned sort-header cell — higher z-index + right border */
   thPinned: 'z-50 bg-surface-muted border-e border-border-muted',
 
+  /* Right-pinned sort-header cell */
+  thPinnedRight: 'sticky z-50 bg-surface-muted border-s border-border-muted',
+
   /* Pinned filter-row cell — top-9 to stack below the sort header row + right border */
   thPinnedFilter: 'z-49 bg-surface border-e border-border-muted',
 
-  /* Last pinned column — ::after pseudo draws the separator line + shadow (1px normal, 2px+shadow for last) */
+  /* Right-pinned filter-row cell */
+  thPinnedRightFilter: 'sticky z-49 bg-surface border-s border-border-muted',
+
+  /* Last left-pinned column — ::after pseudo draws the separator shadow on its right edge */
   lastPinnedBorder: [
     'after:content-[\'\'] after:absolute after:top-0 after:end-0 after:w-px after:h-full',
     'after:bg-border after:shadow-[2px_0_6px_rgba(0,0,0,0.08)] after:pointer-events-none',
+  ].join(' '),
+
+  /* First right-pinned column — ::before pseudo draws the separator shadow on its left edge */
+  firstRightPinnedBorder: [
+    'before:content-[\'\'] before:absolute before:top-0 before:start-0 before:w-px before:h-full',
+    'before:bg-border before:shadow-[-2px_0_6px_rgba(0,0,0,0.08)] before:pointer-events-none',
   ].join(' '),
 
   /* ── Body ── */
@@ -59,6 +71,10 @@ export const gridTheme = {
   /* Pinned body cells — opaque bg + right border matching non-frozen bottom border */
   tdPinned: 'sticky z-20 bg-surface group-hover:bg-surface-hover border-e border-border-muted',
   tdPinnedSelected: 'sticky z-20 bg-primary-subtle group-hover:bg-primary-subtle border-e border-border-muted',
+
+  /* Right-pinned body cells */
+  tdPinnedRight: 'sticky z-20 bg-surface group-hover:bg-surface-hover border-s border-border-muted',
+  tdPinnedRightSelected: 'sticky z-20 bg-primary-subtle group-hover:bg-primary-subtle border-s border-border-muted',
 
   tdNumeric: 'tabular-nums',
 

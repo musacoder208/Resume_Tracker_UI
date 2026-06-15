@@ -175,6 +175,7 @@ export interface JdDetailsDataBlob {
   field_values: FieldValues;
   field_progress?: Record<string, unknown>;
   interactions: Interaction[];
+  org_dna_snapshot?: Record<string, unknown>;
 }
 
 export interface WeightageCapability {
@@ -218,6 +219,8 @@ export interface JdCounts {
   addedThisWeek: number;
   remoteRoles: number;
   hybridRoles: number;
+  totalCount: number;
+  totalPages: number;
 }
 
 export interface JdListItem {
@@ -239,9 +242,22 @@ export interface JdListData {
   list: JdListItem[];
 }
 
+export type JdSortBy =
+  | 'job_title'
+  | 'seniority'
+  | 'min_exp'
+  | 'max_exp'
+  | 'status_name'
+  | 'work_model'
+  | 'start_date';
+
 export interface GetAllJDsParams {
   job_title_id?: number;
   seniority_id?: number;
+  page?: number;
+  page_size?: number;
+  sort_by?: JdSortBy;
+  sort_order?: 'asc' | 'desc';
 }
 
 // ── Update theory ─────────────────────────────────────────────────────────────
@@ -282,6 +298,8 @@ export interface UpdateWeightageBody {
 export interface UpdateWeightageData {
   success: boolean;
   message: string;
+  weightsUpdated: boolean;
+  responseText: string;
 }
 
 // ── Generate Weightage ────────────────────────────────────────────────────────

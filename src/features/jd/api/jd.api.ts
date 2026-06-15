@@ -67,6 +67,10 @@ export const jdApi = baseApi.injectEndpoints({
         params: {
           ...(params.job_title_id != null && { job_title_id: params.job_title_id }),
           ...(params.seniority_id != null && { seniority_id: params.seniority_id }),
+          ...(params.page != null && { page: params.page }),
+          ...(params.page_size != null && { page_size: params.page_size }),
+          ...(params.sort_by != null && { sort_by: params.sort_by }),
+          ...(params.sort_order != null && { sort_order: params.sort_order }),
         },
       }),
       transformResponse: mapGetAllJDsResponse,

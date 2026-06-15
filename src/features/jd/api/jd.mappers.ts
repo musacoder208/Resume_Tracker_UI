@@ -45,8 +45,26 @@ export const mapMasterDataResponse = (raw: ApiResponse<RawMasterData>): MasterDa
   seniorities: raw.data.seniorities,
 });
 
-export const mapGetAllJDsResponse = (raw: ApiResponse<JdListData>): JdListData => ({
-  counts: raw.data.counts,
+interface RawJdCounts {
+  totalJds: number;
+  addedThisWeek: number;
+  remoteRoles: number;
+  hybridRoles: number;
+  total_count: number;
+  total_pages: number;
+}
+
+export const mapGetAllJDsResponse = (
+  raw: ApiResponse<{ counts: RawJdCounts; list: JdListData['list'] }>
+): JdListData => ({
+  counts: {
+    totalJds: raw.data.counts.totalJds,
+    addedThisWeek: raw.data.counts.addedThisWeek,
+    remoteRoles: raw.data.counts.remoteRoles,
+    hybridRoles: raw.data.counts.hybridRoles,
+    totalCount: raw.data.counts.total_count,
+    totalPages: raw.data.counts.total_pages,
+  },
   list: raw.data.list,
 });
 
@@ -61,7 +79,7 @@ export const mapGetJdDetailsResponse = (raw: ApiResponse<JdDetails>): JdDetails 
   dataBlob: raw.data.dataBlob,
   isWeightage: raw.data.isWeightage ?? false,
   weightageJson: raw.data.weightageJson ?? null,
-  orgDnaSnapshot: (raw.data as unknown as { org_dna_snapshot?: Record<string, unknown> }).org_dna_snapshot ?? {},
+  orgDnaSnapshot: raw.data.dataBlob?.org_dna_snapshot ?? {},
 });
 
 export const mapEditJdQaResponse = (raw: ApiResponse<RawEditJdQaData>): EditJdQaData => ({
@@ -94,7 +112,14 @@ export const mapGenerateWeightageResponse = (raw: ApiResponse<unknown>): Generat
   message: raw.message,
 });
 
-export const mapUpdateWeightageResponse = (raw: ApiResponse<unknown>): UpdateWeightageData => ({
+interface RawUpdateWeightageData {
+  weights_updated: boolean;
+  response: string;
+}
+
+export const mapUpdateWeightageResponse = (raw: ApiResponse<RawUpdateWeightageData>): UpdateWeightageData => ({
   success: raw.success,
   message: raw.message,
+  weightsUpdated: raw.data?.weights_updated ?? false,
+  responseText: raw.data?.response ?? '',
 });

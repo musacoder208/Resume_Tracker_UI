@@ -75,7 +75,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }): JSX.
 
       <div
         aria-live="assertive"
-        className={`pointer-events-none fixed inset-0 z-50 flex px-4 py-6 sm:p-6 ${
+        className={`pointer-events-none fixed inset-0 z-[200] flex px-4 py-6 sm:p-6 ${
           dir === 'rtl' ? 'items-start justify-start' : 'items-start justify-end'
         }`}
       >

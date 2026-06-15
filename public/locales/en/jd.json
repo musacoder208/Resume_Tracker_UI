@@ -16,6 +16,7 @@
     },
     "table": {
       "no": "#",
+      "srNo": "Sr.No",
       "jobTitle": "Job Title",
       "seniority": "Seniority",
       "workType": "Work Type",
@@ -100,7 +101,16 @@
     "skill": "Skill",
     "requiredSkills": "Required Skills",
     "optionalSkills": "Optional Skills",
-    "noOptionalSkills": "No Optional Skills"
+    "noOptionalSkills": "No Optional Skills",
+    "weightsNotUpdated": "Couldn't complete this request. Please refine your input and try again.",
+    "adjustWeight": "Adjust Weight",
+    "totalWeight": "Total Weight",
+    "weightLessThan100": "Total weight is less than 100. Please adjust the weights to sum to 100.",
+    "weightGreaterThan100": "Total weight is greater than 100. Please adjust the weights to sum to 100.",
+    "validateWithAi": "Validate with AI",
+    "totalMustBe100": "Total weight must be exactly 100.",
+    "weightOutOfRange": "Weight must be between 0 and 100.",
+    "emptyWeight": "Please enter weight for all capabilities."
   },
   "detail": {
     "title": "Job Description Details",

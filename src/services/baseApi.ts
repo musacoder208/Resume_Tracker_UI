@@ -18,6 +18,11 @@ const rawBaseQuery = fetchBaseQuery({
   credentials: 'include',
 });
 
+// Shared refresh promise — ensures only one token refresh runs at a time.
+// All concurrent 401s wait for this single promise instead of each firing
+// their own refresh, which would exhaust the single-use refresh token.
+let pendingRefresh: Promise<{ data: unknown } | { error: unknown }> | null = null;
+
 // @ts-expect-error -- FetchBaseQueryError is structurally compatible with ApiError
 const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, ApiError, BaseQueryExtraOptions> = async (
   args,
@@ -26,7 +31,15 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, ApiError, Ba
 ) => {
   let result = await rawBaseQuery(args, api, extraOptions);
 
-  if (result.error?.status === 401) {
+  // fetchBaseQuery wraps 401 in PARSING_ERROR when the body is empty/non-JSON.
+  // Check both the primary status and originalStatus to catch both shapes.
+  const errStatus = result.error?.status;
+  const origStatus = (result.error as { originalStatus?: number } | undefined)?.originalStatus;
+  const is401 = errStatus === 401 || origStatus === 401;
+
+  console.warn('[baseApi] error status:', errStatus, 'originalStatus:', origStatus);
+
+  if (is401) {
     const skip = extraOptions?.skipReauth;
 
     if (skip) {
@@ -44,16 +57,20 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, ApiError, Ba
       };
     }
 
-    const refreshResult = await rawBaseQuery(
-      {
-        url: `${env.AUTH_SERVICE_BASE_URL}/auth/refresh`,
-        method: 'POST',
-      },
-      api,
-      extraOptions
-    );
+    // If no refresh is in flight, start one. Otherwise reuse the existing promise.
+    if (pendingRefresh == null) {
+      pendingRefresh = rawBaseQuery(
+        { url: `${env.AUTH_SERVICE_BASE_URL}/auth/refresh`, method: 'POST' },
+        api,
+        extraOptions
+      ).finally(() => {
+        pendingRefresh = null;
+      });
+    }
 
-    if (refreshResult.data != null) {
+    const refreshResult = await pendingRefresh;
+
+    if ('data' in refreshResult && refreshResult.data != null) {
       result = await rawBaseQuery(args, api, extraOptions);
     } else {
       api.dispatch(clearAuthContext());

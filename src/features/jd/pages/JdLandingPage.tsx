@@ -1,13 +1,21 @@
-import { useState, useEffect, type JSX } from 'react';
+import { useState, useEffect, useMemo, type JSX } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PageContainer } from '@/components/containers/PageContainer';
 import { Button } from '@/components/ui/button';
 import { Select } from '@/components/ui/select/Select';
+import { DataGrid } from '@/components/datagrid/DataGrid';
+import { createInitialGridState } from '@/components/datagrid/types/grid.state';
+import type { GridState } from '@/components/datagrid/types/grid.state';
+import type { GridColumnDef } from '@/components/datagrid/types/grid.types';
 import { useT } from '@/i18n/useT';
-import { EyeIcon, ArrowUpTrayIcon, PlusIcon, XMarkIcon } from '@/icons';
+import {
+  EyeIcon, ArrowUpTrayIcon, PlusIcon, XMarkIcon,
+  DocumentTextIcon, CalendarIcon, GlobeAltIcon, BuildingOffice2Icon,
+} from '@/icons';
 import { useGetMasterDataQuery, useLazyGetAllJDsQuery } from '../api/jd.api';
-import { JdStatCardSkeleton, JdTableSkeleton } from '@/components/ui/loader';
-import type { MasterDataItem, JdListItem, GetAllJDsParams } from '../types/jd.types';
+import { JdStatCardSkeleton } from '@/components/ui/loader';
+import { StatCard } from '@/components/ui/statCard';
+import type { MasterDataItem, JdListItem, GetAllJDsParams, JdSortBy } from '../types/jd.types';
 import type { ApiError } from '@/types/apiError';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -17,6 +25,14 @@ function formatExperience(min: number | null, max: number | null): string {
   if (min != null && max != null) return `${min}–${max} years`;
   if (min != null) return `${min}+ years`;
   return `Up to ${max!} years`;
+}
+
+function formatDate(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('en-GB', {
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
 }
 
 // ── Sub-components ────────────────────────────────────────────────────────────
@@ -38,71 +54,6 @@ function WorkModelBadge({ value }: { value: string | null }): JSX.Element {
   );
 }
 
-function ActionButton({
-  icon,
-  label,
-  danger,
-  onClick,
-}: {
-  icon: JSX.Element;
-  label: string;
-  danger?: boolean;
-  onClick?: () => void;
-}): JSX.Element {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex items-center gap-1 text-xs ${
-        danger === true ? 'text-error hover:text-error/70' : 'text-text-muted hover:text-text'
-      }`}
-    >
-      {icon}
-      <span>{label}</span>
-    </button>
-  );
-}
-
-function JdTableRow({
-  item,
-  index,
-  t,
-  onView,
-}: {
-  item: JdListItem;
-  index: number;
-  t: (key: string) => string;
-  onView: (id: number) => void;
-}): JSX.Element {
-  return (
-    <tr className="border-b border-border last:border-0 hover:bg-surface-muted/40">
-      <td className="px-4 py-4 text-xs text-text-muted">{index + 1}</td>
-      <td className="px-4 py-4">
-        <p className="text-xs font-semibold text-text">{item.job_title}</p>
-      </td>
-      <td className="px-4 py-4 text-xs text-text">{item.seniority}</td>
-      <td className="px-4 py-4">
-        <WorkModelBadge value={item.work_model} />
-      </td>
-      <td className="px-4 py-4 text-xs text-text">
-        {formatExperience(item.min_exp, item.max_exp)}
-      </td>
-      <td className="px-4 py-4 text-xs text-text-muted">—</td>
-      <td className="px-4 py-4 text-xs text-text-muted">—</td>
-      <td className="px-4 py-4">
-        <div className="flex items-center gap-4">
-          <ActionButton
-            icon={<EyeIcon className="h-4 w-4" />}
-            label={t('actions.view')}
-            onClick={() => { onView(item.jd_id); }}
-          />
-          <ActionButton icon={<ArrowUpTrayIcon className="h-4 w-4" />} label={t('actions.upload')} />
-        </div>
-      </td>
-    </tr>
-  );
-}
-
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export function JdLandingPage(): JSX.Element {
@@ -111,48 +62,139 @@ export function JdLandingPage(): JSX.Element {
 
   const [selectedJobTitle, setSelectedJobTitle] = useState<MasterDataItem | null>(null);
   const [selectedSeniority, setSelectedSeniority] = useState<MasterDataItem | null>(null);
+  const [gridState, setGridState] = useState<GridState>(() =>
+    createInitialGridState({ pagination: { pageIndex: 0, pageSize: 10 } })
+  );
 
   const { data: masterData } = useGetMasterDataQuery();
-  const [triggerGetAllJDs, { data: jdData, isLoading, isError, error }] = useLazyGetAllJDsQuery();
+  const [triggerGetAllJDs, { data: jdData, isFetching, isError, error }] = useLazyGetAllJDsQuery();
 
-  // Fetch all JDs on initial load
   useEffect(() => {
-    void triggerGetAllJDs({});
+    void triggerGetAllJDs({ page: 1, page_size: 10 });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function handleSearch(params?: GetAllJDsParams): void {
-    void triggerGetAllJDs(params ?? {
-      job_title_id: selectedJobTitle?.id,
-      seniority_id: selectedSeniority?.id,
-    });
+  function buildParams(state: GridState, jobTitleId?: number, seniorityId?: number): GetAllJDsParams {
+    const sorting = state.sorting[0];
+    return {
+      ...(jobTitleId != null && { job_title_id: jobTitleId }),
+      ...(seniorityId != null && { seniority_id: seniorityId }),
+      page: state.pagination.pageIndex + 1,
+      page_size: state.pagination.pageSize,
+      ...(sorting != null && {
+        sort_by: sorting.id as JdSortBy,
+        sort_order: sorting.desc ? 'desc' : 'asc',
+      }),
+    };
+  }
+
+  function handleGridStateChange(next: GridState): void {
+    setGridState(next);
+    void triggerGetAllJDs(buildParams(next, selectedJobTitle?.id, selectedSeniority?.id));
+  }
+
+  function handleSearch(): void {
+    const next = { ...gridState, pagination: { ...gridState.pagination, pageIndex: 0 } };
+    setGridState(next);
+    void triggerGetAllJDs(buildParams(next, selectedJobTitle?.id, selectedSeniority?.id));
   }
 
   function handleClear(): void {
     setSelectedJobTitle(null);
     setSelectedSeniority(null);
-    void triggerGetAllJDs({});
+    const next = { ...gridState, pagination: { ...gridState.pagination, pageIndex: 0 } };
+    setGridState(next);
+    void triggerGetAllJDs(buildParams(next));
   }
+
+  const columns = useMemo<GridColumnDef<JdListItem>[]>(() => [
+    {
+      id: 'no',
+      header: t('landing.table.srNo'),
+      enableSorting: false,
+      cell: ({ row }) => <span className="text-xs text-text-muted">{row.index + 1}</span>,
+    },
+    {
+      id: 'job_title',
+      accessorKey: 'job_title',
+      header: t('landing.table.jobTitle'),
+      cell: ({ row }) => (
+        <p className="text-xs font-semibold text-text">{row.original.job_title}</p>
+      ),
+    },
+    {
+      id: 'seniority',
+      accessorKey: 'seniority',
+      header: t('landing.table.seniority'),
+      cell: ({ row }) => <span className="text-xs text-text">{row.original.seniority}</span>,
+    },
+    {
+      id: 'work_model',
+      accessorKey: 'work_model',
+      header: t('landing.table.workType'),
+      cell: ({ row }) => <WorkModelBadge value={row.original.work_model} />,
+    },
+    {
+      id: 'min_exp',
+      header: t('landing.table.experience'),
+      accessorFn: (row) => formatExperience(row.min_exp, row.max_exp),
+      cell: ({ row }) => (
+        <span className="text-xs text-text">
+          {formatExperience(row.original.min_exp, row.original.max_exp)}
+        </span>
+      ),
+    },
+    {
+      id: 'resumes',
+      header: t('landing.table.resumes'),
+      enableSorting: false,
+      cell: () => <span className="text-xs text-text-muted">—</span>,
+    },
+    {
+      id: 'start_date',
+      accessorKey: 'start_date',
+      header: t('landing.table.createdDate'),
+      cell: ({ row }) => (
+        <span className="text-xs text-text-muted">{formatDate(row.original.start_date)}</span>
+      ),
+    },
+    {
+      id: 'actions',
+      header: t('landing.table.actions'),
+      enableSorting: false,
+      meta: { pin: 'right' },
+      cell: ({ row }) => (
+        <div className="flex items-center gap-3">
+          <Button
+            variant="unstyled"
+            size="xs"
+            leadingIcon={<EyeIcon className="h-4 w-4" />}
+            className="text-xs text-text-muted hover:text-text"
+            onClick={() => { navigate(`/jd/create/${row.original.jd_id}`); }}
+          >
+            {t('actions.view')}
+          </Button>
+          <Button
+            variant="unstyled"
+            size="xs"
+            leadingIcon={<ArrowUpTrayIcon className="h-4 w-4" />}
+            className="text-xs text-text-muted hover:text-text"
+          >
+            {t('actions.upload')}
+          </Button>
+        </div>
+      ),
+    },
+  ], [t, navigate]);
 
   const counts = jdData?.counts;
   const list = jdData?.list ?? [];
 
   const countBoxes = [
-    { label: t('landing.counts.totalJds'), value: counts?.totalJds ?? 0 },
-    { label: t('landing.counts.addedThisWeek'), value: counts?.addedThisWeek ?? 0 },
-    { label: t('landing.counts.remoteRoles'), value: counts?.remoteRoles ?? 0 },
-    { label: t('landing.counts.hybridRoles'), value: counts?.hybridRoles ?? 0 },
-  ];
-
-  const tableHeaders = [
-    t('landing.table.no'),
-    t('landing.table.jobTitle'),
-    t('landing.table.seniority'),
-    t('landing.table.workType'),
-    t('landing.table.experience'),
-    t('landing.table.resumes'),
-    t('landing.table.createdDate'),
-    t('landing.table.actions'),
+    { label: t('landing.counts.totalJds'),     value: counts?.totalJds ?? 0,     icon: DocumentTextIcon },
+    { label: t('landing.counts.addedThisWeek'),value: counts?.addedThisWeek ?? 0, icon: CalendarIcon },
+    { label: t('landing.counts.remoteRoles'),  value: counts?.remoteRoles ?? 0,  icon: GlobeAltIcon },
+    { label: t('landing.counts.hybridRoles'),  value: counts?.hybridRoles ?? 0,  icon: BuildingOffice2Icon },
   ];
 
   return (
@@ -176,15 +218,12 @@ export function JdLandingPage(): JSX.Element {
         </div>
 
         {/* Count boxes */}
-        {isLoading ? (
+        {isFetching && jdData == null ? (
           <JdStatCardSkeleton />
         ) : (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {countBoxes.map(({ label, value }) => (
-              <div key={label} className="rounded-xl border border-border bg-surface p-4">
-                <p className="text-2xl font-bold text-text">{value}</p>
-                <p className="mt-1 text-xs text-text-muted">{label}</p>
-              </div>
+            {countBoxes.map(({ label, value, icon }) => (
+              <StatCard key={label} label={label} value={value} icon={icon} />
             ))}
           </div>
         )}
@@ -192,7 +231,7 @@ export function JdLandingPage(): JSX.Element {
         {/* Filters */}
         <div className="flex flex-wrap items-end gap-3">
 
-          {/* Job Title dropdown with × */}
+          {/* Job Title dropdown */}
           <div className="w-full sm:w-56">
             <label className="text-xs font-medium text-text-muted">{t('fields.jobTitle')}</label>
             <div className="flex items-center gap-1">
@@ -219,7 +258,7 @@ export function JdLandingPage(): JSX.Element {
             </div>
           </div>
 
-          {/* Seniority dropdown with × */}
+          {/* Seniority dropdown */}
           <div className="w-full sm:w-56">
             <label className="text-xs font-medium text-text-muted">{t('fields.seniorityLevel')}</label>
             <div className="flex items-center gap-1">
@@ -251,8 +290,8 @@ export function JdLandingPage(): JSX.Element {
             <Button
               variant="primary"
               size="sm"
-              onClick={() => { handleSearch(); }}
-              disabled={isLoading}
+              onClick={handleSearch}
+              disabled={isFetching}
             >
               {t('actions.search')}
             </Button>
@@ -260,7 +299,7 @@ export function JdLandingPage(): JSX.Element {
               variant="secondary"
               size="sm"
               onClick={handleClear}
-              disabled={isLoading}
+              disabled={isFetching}
             >
               {t('actions.clearFilters')}
             </Button>
@@ -268,50 +307,19 @@ export function JdLandingPage(): JSX.Element {
 
         </div>
 
-        {/* Table */}
-        {isLoading ? (
-          <JdTableSkeleton />
-        ) : isError && (error as ApiError)?.meta?.kind !== 'auth' ? (
-          <p className="text-xs text-error">{t('errors.fetchFailed')}</p>
-        ) : (
-          <div className="overflow-hidden rounded-xl border border-border bg-surface">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-border bg-surface-muted">
-                    {tableHeaders.map((header) => (
-                      <th
-                        key={header}
-                        className="whitespace-nowrap px-4 py-3 text-start text-xs font-medium uppercase tracking-wide text-text-muted"
-                      >
-                        {header}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {list.length === 0 ? (
-                    <tr>
-                      <td colSpan={8} className="px-4 py-10 text-center text-xs text-text-muted">
-                        {t('landing.empty')}
-                      </td>
-                    </tr>
-                  ) : (
-                    list.map((item, index) => (
-                      <JdTableRow
-                        key={item.jd_id}
-                        item={item}
-                        index={index}
-                        t={t}
-                        onView={(id) => { navigate(`/jd/create/${id}`); }}
-                      />
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+        {/* DataGrid */}
+        <DataGrid<JdListItem>
+          data={list}
+          columns={columns}
+          totalRows={counts?.totalCount ?? 0}
+          state={gridState}
+          onStateChange={handleGridStateChange}
+          rowId={(row) => String(row.jd_id)}
+          loading={isFetching}
+          enableSorting
+          error={isError && (error as ApiError)?.meta?.kind !== 'auth' ? error : undefined}
+          layout={{ widthMode: 'fit' }}
+        />
 
       </div>
     </PageContainer>

@@ -57,6 +57,18 @@ export const useTable = <TData>({
     return ids;
   }, [columns]);
 
+  // Derive right-pinned column IDs from meta.pin === 'right'
+  const rightPinnedIds = useMemo(() => {
+    const ids: string[] = [];
+    for (const col of columns) {
+      const meta = (col.meta as GridColumnMeta | undefined);
+      if (meta?.pin === 'right' && typeof col.id === 'string') {
+        ids.push(col.id);
+      }
+    }
+    return ids;
+  }, [columns]);
+
   const table = useReactTable<TData>({
     data: gridData,
     columns: columns as GridColumnDef<TData>[],
@@ -89,7 +101,7 @@ export const useTable = <TData>({
       columnVisibility: state.columnVisibility,
       columnPinning: {
         left: leftPinnedIds,
-        right: state.columnPinning?.right ?? [],
+        right: rightPinnedIds,
       },
     },
 
