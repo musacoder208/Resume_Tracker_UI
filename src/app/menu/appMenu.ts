@@ -1,5 +1,19 @@
+import type { ComponentType } from 'react';
 import type { MenuItem, MenuGroup } from './menu.types';
 import type { PageAccess } from '@/features/auth/types/auth.types';
+import {
+  HomeIcon,
+  BuildingOffice2Icon,
+  DocumentTextIcon,
+  UsersIcon,
+} from '@/icons';
+
+const routeIconMap: Record<string, ComponentType<{ className?: string }>> = {
+  '/dashboard':       HomeIcon,
+  '/company-profile': BuildingOffice2Icon,
+  '/jd':              DocumentTextIcon,
+  '/candidate':       UsersIcon,
+};
 
 export function buildMenuFromPageAccess(pageAccess: PageAccess[]): MenuItem[] {
   return [...pageAccess]
@@ -8,6 +22,7 @@ export function buildMenuFromPageAccess(pageAccess: PageAccess[]): MenuItem[] {
       id: page.route,
       label: page.page_name,
       path: page.route,
+      icon: routeIconMap[page.route],
     }));
 }
 
