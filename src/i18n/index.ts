@@ -11,7 +11,7 @@ void i18n
     fallbackLng: 'en',
     load: 'languageOnly',
     defaultNS: 'common',
-    ns: ['common', 'auth', 'companyProfile', 'jd'],
+    ns: ['common', 'auth', 'companyProfile', 'jd', 'candidate'],
 
     backend: {
       loadPath: `${import.meta.env.BASE_URL}locales/{{lng}}/{{ns}}.json`,

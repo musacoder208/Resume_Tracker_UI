@@ -43,6 +43,8 @@ export const mapAnswerJdResponse = (raw: ApiResponse<RawAnswerJdData>): AnswerJd
 export const mapMasterDataResponse = (raw: ApiResponse<RawMasterData>): MasterData => ({
   jobTitles: raw.data.jobTitles,
   seniorities: raw.data.seniorities,
+  feedbackStatuses: raw.data.feedbackStatuses ?? [],
+  statuses: raw.data.statuses ?? {},
 });
 
 interface RawJdCounts {

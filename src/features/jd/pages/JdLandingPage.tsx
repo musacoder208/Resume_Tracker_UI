@@ -13,6 +13,7 @@ import {
   DocumentTextIcon, CalendarIcon, GlobeAltIcon, BuildingOffice2Icon,
 } from '@/icons';
 import { useGetMasterDataQuery, useLazyGetAllJDsQuery } from '../api/jd.api';
+import { useGetModuleIdQuery } from '@/features/common/api/common.api';
 import { JdStatCardSkeleton } from '@/components/ui/loader';
 import { StatCard } from '@/components/ui/statCard';
 import type { MasterDataItem, JdListItem, GetAllJDsParams, JdSortBy } from '../types/jd.types';
@@ -62,11 +63,14 @@ export function JdLandingPage(): JSX.Element {
 
   const [selectedJobTitle, setSelectedJobTitle] = useState<MasterDataItem | null>(null);
   const [selectedSeniority, setSelectedSeniority] = useState<MasterDataItem | null>(null);
+  const [selectedStatus, setSelectedStatus] = useState<MasterDataItem | null>(null);
   const [gridState, setGridState] = useState<GridState>(() =>
     createInitialGridState({ pagination: { pageIndex: 0, pageSize: 10 } })
   );
 
+  const { data: moduleId } = useGetModuleIdQuery('JD_MODULE');
   const { data: masterData } = useGetMasterDataQuery();
+  const moduleStatuses = moduleId != null ? (masterData?.statuses?.[String(moduleId)] ?? []) : [];
   const [triggerGetAllJDs, { data: jdData, isFetching, isError, error }] = useLazyGetAllJDsQuery();
 
   useEffect(() => {
@@ -74,11 +78,12 @@ export function JdLandingPage(): JSX.Element {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function buildParams(state: GridState, jobTitleId?: number, seniorityId?: number): GetAllJDsParams {
+  function buildParams(state: GridState, jobTitleId?: number, seniorityId?: number, statusId?: number): GetAllJDsParams {
     const sorting = state.sorting[0];
     return {
       ...(jobTitleId != null && { job_title_id: jobTitleId }),
       ...(seniorityId != null && { seniority_id: seniorityId }),
+      ...(statusId != null && { status_id: statusId }),
       page: state.pagination.pageIndex + 1,
       page_size: state.pagination.pageSize,
       ...(sorting != null && {
@@ -90,18 +95,19 @@ export function JdLandingPage(): JSX.Element {
 
   function handleGridStateChange(next: GridState): void {
     setGridState(next);
-    void triggerGetAllJDs(buildParams(next, selectedJobTitle?.id, selectedSeniority?.id));
+    void triggerGetAllJDs(buildParams(next, selectedJobTitle?.id, selectedSeniority?.id, selectedStatus?.id));
   }
 
   function handleSearch(): void {
     const next = { ...gridState, pagination: { ...gridState.pagination, pageIndex: 0 } };
     setGridState(next);
-    void triggerGetAllJDs(buildParams(next, selectedJobTitle?.id, selectedSeniority?.id));
+    void triggerGetAllJDs(buildParams(next, selectedJobTitle?.id, selectedSeniority?.id, selectedStatus?.id));
   }
 
   function handleClear(): void {
     setSelectedJobTitle(null);
     setSelectedSeniority(null);
+    setSelectedStatus(null);
     const next = { ...gridState, pagination: { ...gridState.pagination, pageIndex: 0 } };
     setGridState(next);
     void triggerGetAllJDs(buildParams(next));
@@ -179,6 +185,7 @@ export function JdLandingPage(): JSX.Element {
             size="xs"
             leadingIcon={<ArrowUpTrayIcon className="h-4 w-4" />}
             className="text-xs text-text-muted hover:text-text"
+            onClick={() => { navigate('/candidate/upload', { state: { jdId: row.original.jd_id.toString() } }); }}
           >
             {t('actions.upload')}
           </Button>
@@ -277,6 +284,33 @@ export function JdLandingPage(): JSX.Element {
                 <button
                   type="button"
                   onClick={() => { setSelectedSeniority(null); }}
+                  className="mt-2 rounded-md p-1 text-text-muted hover:bg-surface-muted hover:text-text"
+                >
+                  <XMarkIcon className="h-4 w-4" />
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Status dropdown */}
+          <div className="w-full sm:w-56">
+            <label className="text-xs font-medium text-text-muted">{t('fields.status')}</label>
+            <div className="flex items-center gap-1">
+              <div className="flex-1 min-w-0">
+                <Select<MasterDataItem>
+                  value={selectedStatus}
+                  onChange={setSelectedStatus}
+                  options={moduleStatuses}
+                  getOptionKey={(opt) => opt.id}
+                  renderValue={(opt) => <span className="text-xs text-text">{opt.name}</span>}
+                  renderOption={(opt) => <span className="text-xs">{opt.name}</span>}
+                  placeholder={<span className="text-xs text-text-muted">{t('landing.allStatuses')}</span>}
+                />
+              </div>
+              {selectedStatus != null && (
+                <button
+                  type="button"
+                  onClick={() => { setSelectedStatus(null); }}
                   className="mt-2 rounded-md p-1 text-text-muted hover:bg-surface-muted hover:text-text"
                 >
                   <XMarkIcon className="h-4 w-4" />

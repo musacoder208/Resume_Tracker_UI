@@ -10,6 +10,8 @@ export interface MasterDataItem {
 export interface MasterData {
   jobTitles: MasterDataItem[];
   seniorities: MasterDataItem[];
+  feedbackStatuses: MasterDataItem[];
+  statuses: Record<string, MasterDataItem[]>;
 }
 
 export interface Question {
@@ -115,6 +117,8 @@ export interface RawMasterData {
   industryTypes: MasterDataItem[];
   jobTitles: MasterDataItem[];
   seniorities: MasterDataItem[];
+  feedbackStatuses?: MasterDataItem[];
+  statuses?: Record<string, MasterDataItem[]>;
 }
 
 // ── Domain types (flat — what components consume) ─────────────────────────────
@@ -254,6 +258,7 @@ export type JdSortBy =
 export interface GetAllJDsParams {
   job_title_id?: number;
   seniority_id?: number;
+  status_id?: number;
   page?: number;
   page_size?: number;
   sort_by?: JdSortBy;

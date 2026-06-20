@@ -37,8 +37,6 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, ApiError, Ba
   const origStatus = (result.error as { originalStatus?: number } | undefined)?.originalStatus;
   const is401 = errStatus === 401 || origStatus === 401;
 
-  console.warn('[baseApi] error status:', errStatus, 'originalStatus:', origStatus);
-
   if (is401) {
     const skip = extraOptions?.skipReauth;
 
@@ -60,7 +58,7 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, ApiError, Ba
     // If no refresh is in flight, start one. Otherwise reuse the existing promise.
     if (pendingRefresh == null) {
       pendingRefresh = rawBaseQuery(
-        { url: `${env.AUTH_SERVICE_BASE_URL}/auth/refresh`, method: 'POST' },
+        { url: 'auth/session', method: 'GET' },
         api,
         extraOptions
       ).finally(() => {
@@ -70,7 +68,15 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, ApiError, Ba
 
     const refreshResult = await pendingRefresh;
 
-    if ('data' in refreshResult && refreshResult.data != null) {
+    // Treat the refresh as failed only if it explicitly returned a 401.
+    // A 204/empty-body 200 arrives as PARSING_ERROR with originalStatus 2xx —
+    // the cookie was still set, so we must retry rather than log out.
+    const refreshErr = (refreshResult as { error?: { status?: unknown; originalStatus?: number } }).error;
+    const refreshFailed =
+      refreshErr !== undefined &&
+      (refreshErr.status === 401 || refreshErr.originalStatus === 401);
+
+    if (!refreshFailed) {
       result = await rawBaseQuery(args, api, extraOptions);
     } else {
       api.dispatch(clearAuthContext());

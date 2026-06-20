@@ -20,7 +20,6 @@ export const authApi = baseApi.injectEndpoints({
         method: 'GET',
       }),
       transformResponse: mapAuthResponse,
-      extraOptions: { skipReauth: true },
     }),
 
     logout: builder.mutation<{ ok: boolean }, void>({

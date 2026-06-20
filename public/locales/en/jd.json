@@ -7,6 +7,7 @@
     "subtitle": "Manage postings and upload candidate resumes",
     "allJobTitles": "All Job Titles",
     "allSeniorities": "All Levels",
+    "allStatuses": "All Statuses",
     "empty": "No job descriptions found.",
     "counts": {
       "totalJds": "Total JDs",
@@ -33,6 +34,7 @@
   "fields": {
     "jobTitle": "Job Title",
     "seniorityLevel": "Seniority Level",
+    "status": "Status",
     "generatedTitle": "Generated Title"
   },
   "modes": {

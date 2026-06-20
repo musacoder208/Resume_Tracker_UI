@@ -13,6 +13,7 @@ import {
   useEditJdQaMutation,
   useGenerateWeightageMutation,
 } from '../api/jd.api';
+import { useGetModuleIdQuery } from '@/features/common/api/common.api';
 import { JdSection } from '../jdSection';
 import { AiJdBuilder } from '../aiJdBuilder';
 import { EditJdModal } from '../editJdModal';
@@ -226,6 +227,7 @@ export function AddJdPage(): JSX.Element {
   const isViewMode = urlJdId != null;
 
   // ── API hooks ───────────────────────────────────────────────────────────────
+  const { data: moduleId } = useGetModuleIdQuery('JD_MODULE');
   const { data: masterData, isLoading: isMasterDataLoading, isError: isMasterDataError } =
     useGetMasterDataQuery();
   const [startJd, { isLoading: isStarting }] = useStartJdMutation();

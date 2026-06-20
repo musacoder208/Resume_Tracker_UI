@@ -61,7 +61,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps): JSX.Element {
         type="button"
         onClick={onToggle}
         aria-label={collapsed ? t('nav.expandSidebar') : t('nav.collapseSidebar')}
-        className="absolute -end-3 top-[71px] z-60 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-surface shadow-md"
+        className="absolute -end-3 top-[52px] z-60 flex h-6 w-6 items-center justify-center rounded-full border border-border bg-surface shadow-md"
       >
         {collapsed ? (
           <ChevronRightIcon className="h-3 w-3 text-text-muted" />
@@ -78,7 +78,6 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps): JSX.Element {
         {!collapsed && (
           <div className="min-w-0">
             <div className="text-sm font-bold text-text">Resume Tracker</div>
-            <div className="text-xs text-text-muted">V1.0</div>
           </div>
         )}
       </div>
