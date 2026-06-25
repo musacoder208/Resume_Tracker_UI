@@ -235,7 +235,7 @@ export function AddJdPage(): JSX.Element {
   const [editJdQa, { isLoading: isEditSubmitting }] = useEditJdQaMutation();
 
   const { data: jdDetails, isLoading: isDetailsLoading, isError: isDetailsError, refetch: refetchJdDetails } =
-    useGetJdDetailsByIdQuery(urlJdId!, { skip: !isViewMode });
+    useGetJdDetailsByIdQuery(urlJdId!, { skip: !isViewMode, refetchOnMountOrArgChange: true });
 
   // ── Q&A state ───────────────────────────────────────────────────────────────
   const [selectedJobTitle, setSelectedJobTitle] = useState<MasterDataItem | null>(null);
@@ -249,6 +249,7 @@ export function AddJdPage(): JSX.Element {
   const [theory, setTheory] = useState<string | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [startError, setStartError] = useState(false);
+  const [totalQuestionsCount, setTotalQuestionsCount] = useState<number | undefined>(undefined);
 
   // ── Edit state ──────────────────────────────────────────────────────────────
   const [isEditMode, setIsEditMode] = useState(false);
@@ -267,6 +268,7 @@ export function AddJdPage(): JSX.Element {
     setCurrentJdId(jdDetails.jdId);
     setCurrentFieldValues(jdDetails.dataBlob.field_values);
     setCurrentFieldProgress(jdDetails.dataBlob.field_progress ?? {});
+    if (jdDetails.totalQuestionsCount != null) setTotalQuestionsCount(jdDetails.totalQuestionsCount);
 
     if (jdDetails.statusName === 'Completed') return;
 
@@ -277,6 +279,7 @@ export function AddJdPage(): JSX.Element {
         if (data.jdId != null) setCurrentJdId(data.jdId);
         if (data.field_values != null) setCurrentFieldValues(data.field_values);
         if (data.field_progress != null) setCurrentFieldProgress(data.field_progress);
+        if (data.totalQuestionsCount != null) setTotalQuestionsCount(data.totalQuestionsCount);
         setCurrentQuestion(data.next_question);
         setInteractions(data.interactions);
         setResolvedConflicts(data.resolved_conflict_ids);
@@ -314,6 +317,7 @@ export function AddJdPage(): JSX.Element {
       if (data.jdId != null) setCurrentJdId(data.jdId);
       if (data.field_values != null) setCurrentFieldValues(data.field_values);
       if (data.field_progress != null) setCurrentFieldProgress(data.field_progress);
+      if (data.totalQuestionsCount != null) setTotalQuestionsCount(data.totalQuestionsCount);
       setCurrentQuestion(data.next_question);
       setInteractions(data.interactions);
       setResolvedConflicts(data.resolved_conflict_ids);
@@ -433,7 +437,7 @@ export function AddJdPage(): JSX.Element {
   }
 
   // ── Determine if JD is completed (view mode) ───────────────────────────────
-  const isJdCompleted = isViewMode && jdDetails?.statusName === 'Completed';
+  const isJdCompleted = isViewMode && jdDetails?.statusCode?.toLowerCase() !== 'draft';
 
   return (
     <PageContainer>
@@ -505,22 +509,23 @@ export function AddJdPage(): JSX.Element {
               <AiJdBuilder
                 currentQuestion={null}
                 interactions={jdDetails.dataBlob.interactions}
-              resolvedConflicts={[]}
-              isCompleted={true}
-              theory={jdDetails.theory}
-              fieldValues={jdDetails.dataBlob.field_values}
-              isSubmitting={false}
-              isEditSubmitting={isEditSubmitting}
-              editingFieldKey={editingFieldKey}
-              jdId={currentJdId}
-              isPreviewOpen={isPreviewOpen}
-              onSubmitAnswer={() => {}}
-              onStartEdit={handleStartEdit}
-              onSubmitEdit={(fieldKey, answer) => { void handleSubmitEdit(fieldKey, answer); }}
-              onOpenPreview={() => { setIsPreviewOpen(true); }}
-              onClosePreview={() => { setIsPreviewOpen(false); }}
-              onTheoryUpdated={() => { void refetchJdDetails(); }}
-            />
+                resolvedConflicts={[]}
+                isCompleted={true}
+                theory={jdDetails.theory}
+                fieldValues={jdDetails.dataBlob.field_values}
+                isSubmitting={false}
+                isEditSubmitting={isEditSubmitting}
+                editingFieldKey={editingFieldKey}
+                jdId={currentJdId}
+                isPreviewOpen={isPreviewOpen}
+                totalQuestionsCount={totalQuestionsCount}
+                onSubmitAnswer={() => {}}
+                onStartEdit={handleStartEdit}
+                onSubmitEdit={(fieldKey, answer) => { void handleSubmitEdit(fieldKey, answer); }}
+                onOpenPreview={() => { setIsPreviewOpen(true); }}
+                onClosePreview={() => { setIsPreviewOpen(false); }}
+                onTheoryUpdated={() => { void refetchJdDetails(); }}
+              />
             </>
           ) : (
             <JdDetailView
@@ -565,6 +570,7 @@ export function AddJdPage(): JSX.Element {
                   editingFieldKey={editingFieldKey}
                   jdId={currentJdId}
                   isPreviewOpen={isPreviewOpen}
+                  totalQuestionsCount={totalQuestionsCount}
                   onSubmitAnswer={(answer) => { void handleSubmitAnswer(answer); }}
                   onStartEdit={handleStartEdit}
                   onSubmitEdit={(fieldKey, answer) => { void handleSubmitEdit(fieldKey, answer); }}

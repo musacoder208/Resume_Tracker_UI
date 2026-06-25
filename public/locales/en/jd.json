@@ -13,7 +13,10 @@
       "totalJds": "Total JDs",
       "addedThisWeek": "Added This Week",
       "remoteRoles": "Remote Roles",
-      "hybridRoles": "Hybrid Roles"
+      "hybridRoles": "Hybrid Roles",
+      "draftCount": "Draft",
+      "inProgressCount": "In Progress",
+      "completedCount": "Completed"
     },
     "table": {
       "no": "#",
@@ -23,6 +26,8 @@
       "workType": "Work Type",
       "experience": "Experience",
       "resumes": "Resumes",
+      "status": "Status",
+      "createdBy": "Created By",
       "createdDate": "Created Date",
       "actions": "Actions"
     }

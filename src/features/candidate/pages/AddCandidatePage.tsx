@@ -1,4 +1,4 @@
-import { useState, useEffect, type JSX } from 'react';
+import { useState, useEffect, useSyncExternalStore, type JSX } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
 import { PageContainer } from '@/components/containers/PageContainer';
@@ -9,12 +9,18 @@ import { JdSelectionPanel } from '../jdSelectionPanel';
 import { ResumeUploadZone } from '../resumeUploadZone';
 import { ProcessingSummaryPanel } from '../processingSummary';
 import { CandidateResultsTabs } from '../candidateResultsTabs';
-import { useUploadResumesMutation, useSaveCandidatesMutation, useUpdateCandidateScoreMutation } from '../api/candidate.api';
-import { useGetModuleIdQuery } from '@/features/common/api/common.api';
+import { useSaveCandidatesMutation, useUpdateCandidateScoreMutation } from '../api/candidate.api';
+import {
+  getSnapshot,
+  subscribe,
+  setActiveTab,
+  setSelectedJd,
+  clearSession,
+  startStream,
+} from '../utils/uploadSession';
 import type {
   CandidateTab,
   ProcessingSummary,
-  UploadResumesResult,
   CandidateSavePayload,
 } from '../types/candidate.types';
 import type { AutocompleteOption } from '@/components/ui/autocompleteSelect';
@@ -41,20 +47,26 @@ export function AddCandidatePage(): JSX.Element {
   const { t } = useT('candidate');
   const navigate = useNavigate();
   const location = useLocation();
-  const [uploadResumes, { isLoading: isProcessing }] = useUploadResumesMutation();
   const [saveCandidates, { isLoading: isSaving }] = useSaveCandidatesMutation();
   const [updateCandidateScore, { isLoading: isScoring }] = useUpdateCandidateScoreMutation();
 
-  const { data: moduleId } = useGetModuleIdQuery('CAND_MGT');
-  const initialJdId = (location.state as { jdId?: string } | null)?.jdId ?? '';
-  const [selectedJd, setSelectedJd] = useState(initialJdId);
+  // ── Singleton stream state ─────────────────────────────────────────────────
+  const session = useSyncExternalStore(subscribe, getSnapshot);
+
+  // ── Local-only state (not persisted across navigation) ────────────────────
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-  const [activeTab, setActiveTab] = useState<CandidateTab>('success');
-  const [uploadResult, setUploadResult] = useState<UploadResumesResult | null>(null);
-  const [processError, setProcessError] = useState<string | null>(null);
-  const [resultKey, setResultKey] = useState(0);
   const [toast, setToast] = useState<Toast | null>(null);
   const [shouldNavigate, setShouldNavigate] = useState(false);
+
+  // On mount: if navigated from JD landing with a specific JD, honour it
+  useEffect(() => {
+    const jdFromRoute =
+      (location.state as { jdId?: string } | null)?.jdId ?? '';
+    if (jdFromRoute !== '') {
+      setSelectedJd(jdFromRoute);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Auto-dismiss toast after 3 seconds
   useEffect(() => {
@@ -70,60 +82,53 @@ export function AddCandidatePage(): JSX.Element {
     return () => { clearTimeout(id); };
   }, [shouldNavigate, navigate]);
 
-  const canProcess = uploadedFiles.length > 0;
+  // ── Derived values ─────────────────────────────────────────────────────────
+  const canProcess = uploadedFiles.length > 0 && session.selectedJd !== '';
 
-  const summary: ProcessingSummary = uploadResult != null
-    ? {
-        total:
-          uploadResult.successCandidates.length +
-          uploadResult.duplicateCandidates.length +
-          uploadResult.incompleteCandidates.length,
-        success: uploadResult.successCandidates.length,
-        duplicate: uploadResult.duplicateCandidates.length,
-        incomplete: uploadResult.incompleteCandidates.length,
-      }
-    : EMPTY_SUMMARY;
+  const summary: ProcessingSummary =
+    session.uploadResult != null
+      ? {
+          total:
+            session.uploadResult.successCandidates.length +
+            session.uploadResult.duplicateCandidates.length +
+            session.uploadResult.incompleteCandidates.length,
+          success: session.uploadResult.successCandidates.length,
+          duplicate: session.uploadResult.duplicateCandidates.length,
+          incomplete: session.uploadResult.incompleteCandidates.length,
+        }
+      : EMPTY_SUMMARY;
 
+  // ── Handlers ───────────────────────────────────────────────────────────────
   function handleJdChange(value: string): void {
     setSelectedJd(value);
     if (value === '') {
       setUploadedFiles([]);
-      setUploadResult(null);
-      setProcessError(null);
+      clearSession();
     }
   }
 
-  async function handleProcess(): Promise<void> {
-    if (!canProcess) return;
-    const positionTitle = STUB_JD_OPTIONS.find((o) => o.value === selectedJd)?.label ?? '';
-    setProcessError(null);
-    try {
-      const result = await uploadResumes({ positionTitle, files: uploadedFiles }).unwrap();
-      setUploadResult(result);
-      setResultKey((k) => k + 1);
-      if (result.successCandidates.length > 0) {
-        setActiveTab('success');
-      } else if (result.duplicateCandidates.length > 0) {
-        setActiveTab('duplicate');
-      } else {
-        setActiveTab('incomplete');
-      }
-    } catch {
-      setProcessError(t('actions.processError'));
-    }
+  function handleProcess(): void {
+    if (!canProcess || session.isStreaming) return;
+    const positionTitle =
+      STUB_JD_OPTIONS.find((o) => o.value === session.selectedJd)?.label ?? '';
+    startStream({
+      positionTitle,
+      jdId: Number(session.selectedJd),
+      files: uploadedFiles,
+    });
   }
 
   function buildRawCandidates(payload: CandidateSavePayload) {
-    if (uploadResult == null) return null;
+    if (session.uploadResult == null) return null;
     const selectedFilenames = new Set<string>([
       ...payload.successCandidates.map((c) => c.filename),
       ...payload.duplicateCandidates.map((c) => c.filename),
       ...payload.incompleteCandidates.map((c) => c.filename),
     ]);
     return [
-      ...uploadResult.rawItems.successExtraction,
-      ...uploadResult.rawItems.duplicate,
-      ...uploadResult.rawItems.incomplete,
+      ...session.uploadResult.rawItems.successExtraction,
+      ...session.uploadResult.rawItems.duplicate,
+      ...session.uploadResult.rawItems.incomplete,
     ]
       .filter((item) => selectedFilenames.has(item.filename))
       .map((item) => ({ ...item, isSelected: true }));
@@ -133,7 +138,10 @@ export function AddCandidatePage(): JSX.Element {
     const candidates = buildRawCandidates(payload);
     if (candidates == null) return;
     try {
-      const result = await saveCandidates({ jd_id: Number(selectedJd), candidates }).unwrap();
+      const result = await saveCandidates({
+        jd_id: Number(session.selectedJd),
+        candidates,
+      }).unwrap();
       if (result.success) {
         setToast({ type: 'success', message: result.message });
         setShouldNavigate(true);
@@ -149,10 +157,12 @@ export function AddCandidatePage(): JSX.Element {
     const candidates = buildRawCandidates(payload);
     if (candidates == null) return;
 
-    // Step 1 — save candidates
     let candidateIds: number[] | null = null;
     try {
-      const saveResult = await saveCandidates({ jd_id: Number(selectedJd), candidates }).unwrap();
+      const saveResult = await saveCandidates({
+        jd_id: Number(session.selectedJd),
+        candidates,
+      }).unwrap();
       if (saveResult.success) {
         setToast({ type: 'success', message: saveResult.message });
         candidateIds = saveResult.data.candidate_ids.map(Number);
@@ -165,10 +175,9 @@ export function AddCandidatePage(): JSX.Element {
 
     if (candidateIds == null) return;
 
-    // Step 2 — trigger scoring for the newly saved candidates only
     try {
       const scoreResult = await updateCandidateScore({
-        jd_id: Number(selectedJd),
+        jd_id: Number(session.selectedJd),
         candidate_ids: candidateIds,
       }).unwrap();
       if (scoreResult.success) {
@@ -183,9 +192,11 @@ export function AddCandidatePage(): JSX.Element {
   }
 
   function handleBack(): void {
+    // Stream continues in background; component simply unmounts
     navigate(-1);
   }
 
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <PageContainer>
       {/* Fixed toast notification */}
@@ -196,10 +207,11 @@ export function AddCandidatePage(): JSX.Element {
             toast.type === 'success' ? 'bg-success text-white' : 'bg-error text-white',
           )}
         >
-          {toast.type === 'success'
-            ? <CheckCircleIcon className="h-5 w-5 shrink-0" />
-            : <XCircleIcon className="h-5 w-5 shrink-0" />
-          }
+          {toast.type === 'success' ? (
+            <CheckCircleIcon className="h-5 w-5 shrink-0" />
+          ) : (
+            <XCircleIcon className="h-5 w-5 shrink-0" />
+          )}
           <p className="text-sm font-medium">{toast.message}</p>
         </div>
       )}
@@ -219,17 +231,17 @@ export function AddCandidatePage(): JSX.Element {
           </Button>
         </div>
 
-        {/* Error banner */}
-        {processError != null && (
+        {/* Error banner — shown when stream fails (survives navigation, resets on refresh) */}
+        {session.hasFailed && (
           <div className="rounded-lg border border-error/30 bg-error-subtle/30 px-4 py-3 text-sm text-error">
-            {processError}
+            {t('actions.processError')}
           </div>
         )}
 
         {/* Two-column layout */}
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
 
-          {/* ── Left panel (30%) — sticky with pinned Process button ───── */}
+          {/* ── Left panel (30%) — sticky with pinned Process button ─────── */}
           <div className="w-full lg:w-[30%] lg:max-w-xs lg:shrink-0 lg:sticky lg:top-0 lg:self-start">
             <div
               className="flex flex-col overflow-hidden rounded-xl border border-border bg-surface shadow-sm"
@@ -240,10 +252,10 @@ export function AddCandidatePage(): JSX.Element {
                 <div className="flex flex-col gap-5">
 
                   <JdSelectionPanel
-                    value={selectedJd}
+                    value={session.selectedJd}
                     onChange={handleJdChange}
                     options={STUB_JD_OPTIONS}
-                    showHint={selectedJd === ''}
+                    showHint={session.selectedJd === ''}
                   />
 
                   <div className="h-px bg-border" />
@@ -251,7 +263,7 @@ export function AddCandidatePage(): JSX.Element {
                   <ResumeUploadZone
                     files={uploadedFiles}
                     onFilesChange={setUploadedFiles}
-                    disabled={selectedJd === ''}
+                    disabled={session.selectedJd === ''}
                   />
 
                   <div className="h-px bg-border" />
@@ -267,30 +279,40 @@ export function AddCandidatePage(): JSX.Element {
                   variant="primary"
                   size="sm"
                   fullWidth
-                  disabled={!canProcess || isProcessing}
-                  onClick={() => { void handleProcess(); }}
+                  disabled={!canProcess || session.isStreaming}
+                  onClick={handleProcess}
                 >
-                  {isProcessing ? t('actions.processing') : t('actions.processResumes')}
+                  {session.isStreaming ? t('actions.processing') : t('actions.processResumes')}
                 </Button>
               </div>
 
             </div>
           </div>
 
-          {/* ── Right panel (70%) ──────────────────────────────────────── */}
-          <div className="min-w-0 flex-1">
+          {/* ── Right panel (70%) ────────────────────────────────────────── */}
+          <div className="flex min-w-0 flex-1 flex-col gap-3">
+
+            {/* Streaming indicator */}
+            {session.isStreaming && (
+              <div className="flex items-center gap-2.5 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3">
+                <span className="h-2 w-2 shrink-0 animate-pulse rounded-full bg-primary" />
+                <p className="text-sm text-primary">{t('actions.streaming')}</p>
+              </div>
+            )}
+
             <CandidateResultsTabs
-              key={resultKey}
-              activeTab={activeTab}
-              onTabChange={setActiveTab}
-              successCandidates={uploadResult?.successCandidates ?? []}
-              duplicateCandidates={uploadResult?.duplicateCandidates ?? []}
-              incompleteCandidates={uploadResult?.incompleteCandidates ?? []}
-              isLoading={isProcessing}
+              key={session.streamId}
+              activeTab={session.activeTab}
+              onTabChange={(tab: CandidateTab) => { setActiveTab(tab); }}
+              successCandidates={session.uploadResult?.successCandidates ?? []}
+              duplicateCandidates={session.uploadResult?.duplicateCandidates ?? []}
+              incompleteCandidates={session.uploadResult?.incompleteCandidates ?? []}
+              isLoading={session.isStreaming && session.uploadResult == null}
               isSaving={isSaving || isScoring}
               onSaveCandidates={(payload) => { void handleSaveCandidates(payload); }}
               onSaveAndScore={(payload) => { void handleSaveAndScore(payload); }}
             />
+
           </div>
 
         </div>

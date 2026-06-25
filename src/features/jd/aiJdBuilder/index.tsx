@@ -2,6 +2,7 @@ import type { JSX } from 'react';
 import { SparklesIcon } from '@/icons';
 import { Button } from '@/components/ui/button';
 import { useT } from '@/i18n/useT';
+import { ProfileProgress } from '@/features/companyProfile/profileProgress';
 import { ChatHistory } from '../chatHistory';
 import { ChatQuestion } from '../chatQuestion';
 import { JdPreviewModal } from '../jdPreviewModal';
@@ -19,6 +20,7 @@ interface AiJdBuilderProps {
   editingFieldKey: string | null;
   jdId: number | null;
   isPreviewOpen: boolean;
+  totalQuestionsCount?: number;
   onSubmitAnswer: (answer: string) => void;
   onStartEdit: (fieldKey: string) => void;
   onSubmitEdit: (fieldKey: string, answer: string) => void;
@@ -39,6 +41,7 @@ export function AiJdBuilder({
   editingFieldKey,
   jdId,
   isPreviewOpen,
+  totalQuestionsCount,
   onSubmitAnswer,
   onStartEdit,
   onSubmitEdit,
@@ -47,13 +50,26 @@ export function AiJdBuilder({
   onTheoryUpdated,
 }: AiJdBuilderProps): JSX.Element {
   const { t } = useT('jd');
+  const answeredFieldKeys = new Set(interactions.map((i) => i.field_key));
+  if (currentQuestion != null) answeredFieldKeys.delete(currentQuestion.field_key);
+  const answeredCount = answeredFieldKeys.size;
 
   return (
     <div className="rounded-xl border border-border bg-surface p-6">
-      <div className="mb-4 flex items-center gap-2">
+      <div className="mb-1 flex items-center gap-2">
         <SparklesIcon className="h-5 w-5 text-primary" />
         <h2 className="text-sm font-semibold text-text">{t('sections.aiBuilder')}</h2>
       </div>
+
+      {totalQuestionsCount != null && totalQuestionsCount > 0 && (
+        <div className="mb-4">
+          <ProfileProgress
+            answered={answeredCount}
+            total={totalQuestionsCount}
+            isCompleted={isCompleted}
+          />
+        </div>
+      )}
 
       <div className="flex flex-col gap-4">
         {/* Past Q&A history */}

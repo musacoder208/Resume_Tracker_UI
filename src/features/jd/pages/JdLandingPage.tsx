@@ -11,11 +11,13 @@ import { useT } from '@/i18n/useT';
 import {
   EyeIcon, ArrowUpTrayIcon, PlusIcon, XMarkIcon,
   DocumentTextIcon, CalendarIcon, GlobeAltIcon, BuildingOffice2Icon,
+  ClockIcon, ChartBarIcon, CheckCircleIcon,
 } from '@/icons';
 import { useGetMasterDataQuery, useLazyGetAllJDsQuery } from '../api/jd.api';
 import { useGetModuleIdQuery } from '@/features/common/api/common.api';
 import { JdStatCardSkeleton } from '@/components/ui/loader';
 import { StatCard } from '@/components/ui/statCard';
+import { ProfileProgress } from '@/features/companyProfile/profileProgress';
 import type { MasterDataItem, JdListItem, GetAllJDsParams, JdSortBy } from '../types/jd.types';
 import type { ApiError } from '@/types/apiError';
 
@@ -124,9 +126,19 @@ export function JdLandingPage(): JSX.Element {
       id: 'job_title',
       accessorKey: 'job_title',
       header: t('landing.table.jobTitle'),
-      cell: ({ row }) => (
-        <p className="text-xs font-semibold text-text">{row.original.job_title}</p>
-      ),
+      cell: ({ row }) => {
+        const total = row.original.total_questions_count;
+        const answered = row.original.answered_questions_count ?? 0;
+        const isCompleted = row.original.status_name?.toLowerCase().includes('complet') ?? false;
+        return (
+          <div className="flex flex-col">
+            <p className="text-xs font-semibold text-text">{row.original.job_title}</p>
+            {total != null && total > 0 && (
+              <ProfileProgress answered={answered} total={total} isCompleted={isCompleted} />
+            )}
+          </div>
+        );
+      },
     },
     {
       id: 'seniority',
@@ -157,11 +169,32 @@ export function JdLandingPage(): JSX.Element {
       cell: () => <span className="text-xs text-text-muted">—</span>,
     },
     {
+      id: 'status_name',
+      accessorKey: 'status_name',
+      header: t('landing.table.status'),
+      cell: ({ row }) => (
+        <span className="text-xs text-text">{row.original.status_name}</span>
+      ),
+    },
+    {
+      id: 'created_by',
+      accessorKey: 'created_by',
+      header: t('landing.table.createdBy'),
+      enableSorting: false,
+      cell: ({ row }) => (
+        <span className="text-xs text-text-muted">{row.original.created_by ?? '—'}</span>
+      ),
+    },
+    {
       id: 'start_date',
       accessorKey: 'start_date',
       header: t('landing.table.createdDate'),
       cell: ({ row }) => (
-        <span className="text-xs text-text-muted">{formatDate(row.original.start_date)}</span>
+        <span className="text-xs text-text-muted">
+          {row.original.created_date != null
+            ? formatDate(row.original.created_date)
+            : formatDate(row.original.start_date)}
+        </span>
       ),
     },
     {
@@ -170,25 +203,29 @@ export function JdLandingPage(): JSX.Element {
       enableSorting: false,
       meta: { pin: 'right' },
       cell: ({ row }) => (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-1">
           <Button
             variant="unstyled"
             size="xs"
+            circular
+            title={t('actions.view')}
+            aria-label={t('actions.view')}
+            className="text-text-muted hover:text-text"
             leadingIcon={<EyeIcon className="h-4 w-4" />}
-            className="text-xs text-text-muted hover:text-text"
             onClick={() => { navigate(`/jd/create/${row.original.jd_id}`); }}
-          >
-            {t('actions.view')}
-          </Button>
-          <Button
-            variant="unstyled"
-            size="xs"
-            leadingIcon={<ArrowUpTrayIcon className="h-4 w-4" />}
-            className="text-xs text-text-muted hover:text-text"
-            onClick={() => { navigate('/candidate/upload', { state: { jdId: row.original.jd_id.toString() } }); }}
-          >
-            {t('actions.upload')}
-          </Button>
+          />
+          {row.original.status_name?.toLowerCase().includes('complet') && (
+            <Button
+              variant="unstyled"
+              size="xs"
+              circular
+              title={t('actions.upload')}
+              aria-label={t('actions.upload')}
+              className="text-text-muted hover:text-text"
+              leadingIcon={<ArrowUpTrayIcon className="h-4 w-4" />}
+              onClick={() => { navigate('/candidate/upload', { state: { jdId: row.original.jd_id.toString(), statusId: row.original.status_id } }); }}
+            />
+          )}
         </div>
       ),
     },
@@ -197,11 +234,17 @@ export function JdLandingPage(): JSX.Element {
   const counts = jdData?.counts;
   const list = jdData?.list ?? [];
 
-  const countBoxes = [
-    { label: t('landing.counts.totalJds'),     value: counts?.totalJds ?? 0,     icon: DocumentTextIcon },
-    { label: t('landing.counts.addedThisWeek'),value: counts?.addedThisWeek ?? 0, icon: CalendarIcon },
-    { label: t('landing.counts.remoteRoles'),  value: counts?.remoteRoles ?? 0,  icon: GlobeAltIcon },
-    { label: t('landing.counts.hybridRoles'),  value: counts?.hybridRoles ?? 0,  icon: BuildingOffice2Icon },
+  const overviewBoxes = [
+    { label: t('landing.counts.totalJds'),       value: counts?.totalJds ?? 0,       icon: DocumentTextIcon },
+    { label: t('landing.counts.addedThisWeek'),  value: counts?.addedThisWeek ?? 0,  icon: CalendarIcon },
+    { label: t('landing.counts.remoteRoles'),    value: counts?.remoteRoles ?? 0,    icon: GlobeAltIcon },
+    { label: t('landing.counts.hybridRoles'),    value: counts?.hybridRoles ?? 0,    icon: BuildingOffice2Icon },
+  ];
+
+  const statusBoxes = [
+    { label: t('landing.counts.draftCount'),      value: counts?.draftCount ?? 0,      icon: ClockIcon },
+    { label: t('landing.counts.inProgressCount'), value: counts?.inProgressCount ?? 0, icon: ChartBarIcon },
+    { label: t('landing.counts.completedCount'),  value: counts?.completedCount ?? 0,  icon: CheckCircleIcon },
   ];
 
   return (
@@ -228,10 +271,17 @@ export function JdLandingPage(): JSX.Element {
         {isFetching && jdData == null ? (
           <JdStatCardSkeleton />
         ) : (
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            {countBoxes.map(({ label, value, icon }) => (
-              <StatCard key={label} label={label} value={value} icon={icon} />
-            ))}
+          <div className="flex flex-col gap-3">
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              {overviewBoxes.map(({ label, value, icon }) => (
+                <StatCard key={label} label={label} value={value} icon={icon} />
+              ))}
+            </div>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              {statusBoxes.map(({ label, value, icon }) => (
+                <StatCard key={label} label={label} value={value} icon={icon} />
+              ))}
+            </div>
           </div>
         )}
 

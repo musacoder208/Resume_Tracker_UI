@@ -1,10 +1,11 @@
 import { baseApi } from '@/services/baseApi';
-import type { StartProfileData, AnswerData, EditQuestionData, UpdateAnswerData } from '../types/companyProfile.types';
+import type { StartProfileData, AnswerData, EditQuestionData, UpdateAnswerData, ProfileDetailsData } from '../types/companyProfile.types';
 import {
   mapStartProfileResponse,
   mapAnswerResponse,
   mapEditQuestionResponse,
   mapUpdateAnswerResponse,
+  mapProfileDetailsResponse,
 } from './companyProfile.mappers';
 
 export const companyProfileApi = baseApi.injectEndpoints({
@@ -43,6 +44,14 @@ export const companyProfileApi = baseApi.injectEndpoints({
       }),
       transformResponse: mapUpdateAnswerResponse,
     }),
+
+    getProfileDetails: builder.query<ProfileDetailsData, void>({
+      query: () => ({
+        url: 'companyProfile/details',
+        method: 'GET',
+      }),
+      transformResponse: mapProfileDetailsResponse,
+    }),
   }),
 });
 
@@ -51,4 +60,5 @@ export const {
   useSubmitAnswerMutation,
   useEditQuestionMutation,
   useUpdateAnswerMutation,
+  useGetProfileDetailsQuery,
 } = companyProfileApi;

@@ -10,6 +10,7 @@ import type { Question, QuestionMode } from '../types/companyProfile.types';
 
 interface ChatQuestionProps {
   question: Question;
+  questionNumber: number;
   isSubmitting: boolean;
   onSubmit: (answer: string) => void;
 }
@@ -20,7 +21,7 @@ const modeBadgeClasses: Record<QuestionMode, string> = {
   crossfield: 'bg-primary/10 text-primary',
 };
 
-export function ChatQuestion({ question, isSubmitting, onSubmit }: ChatQuestionProps): JSX.Element {
+export function ChatQuestion({ question, questionNumber, isSubmitting, onSubmit }: ChatQuestionProps): JSX.Element {
   const { t } = useT('companyProfile');
   const [textValue, setTextValue] = useState('');
   const [selectedSingle, setSelectedSingle] = useState('');
@@ -77,7 +78,9 @@ export function ChatQuestion({ question, isSubmitting, onSubmit }: ChatQuestionP
         >
           {t(`modes.${question.mode}`)}
         </span>
-        <p className="flex-1 text-xs font-medium text-text">{question.text}</p>
+        <p className="flex-1 text-xs font-semibold text-text">
+          {question.mode === 'initial' ? `Q${questionNumber}. ` : ''}{question.text}
+        </p>
       </div>
 
       {/* Answer input */}

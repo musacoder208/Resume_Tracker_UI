@@ -104,6 +104,7 @@ export interface RawStartJdData {
   jd_id?: number;
   next_question: Question | null;
   data_blob: RawDataBlob;
+  total_questions_count?: number;
 }
 
 export interface RawAnswerJdData {
@@ -131,6 +132,7 @@ export interface StartJdData {
   interactions: Interaction[];
   field_values?: FieldValues;
   field_progress?: Record<string, unknown>;
+  totalQuestionsCount?: number;
 }
 
 export interface AnswerJdData {
@@ -204,11 +206,14 @@ export interface JdDetails {
   jobTitle: string;
   sessionId: string;
   statusName: string;
+  statusCode: string;
   theory: string | null;
   dataBlob: JdDetailsDataBlob;
   isWeightage: boolean;
   weightageJson: WeightageJson | null;
   orgDnaSnapshot: Record<string, unknown>;
+  total_questions_count?: number;
+  totalQuestionsCount?: number;
 }
 
 export interface StartJdBody {
@@ -223,6 +228,9 @@ export interface JdCounts {
   addedThisWeek: number;
   remoteRoles: number;
   hybridRoles: number;
+  draftCount: number;
+  inProgressCount: number;
+  completedCount: number;
   totalCount: number;
   totalPages: number;
 }
@@ -239,6 +247,10 @@ export interface JdListItem {
   start_date: string;
   end_date: string | null;
   work_model: string | null;
+  created_by?: string | null;
+  created_date?: string | null;
+  total_questions_count?: number | null;
+  answered_questions_count?: number | null;
 }
 
 export interface JdListData {

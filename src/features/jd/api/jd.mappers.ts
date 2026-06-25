@@ -26,6 +26,7 @@ export const mapStartJdResponse = (raw: ApiResponse<RawStartJdData>): StartJdDat
   resolved_conflict_ids: raw.data.data_blob.conflict_context.resolved_conflict_ids ?? [],
   field_values: raw.data.data_blob.field_values,
   field_progress: raw.data.data_blob.field_progress,
+  totalQuestionsCount: raw.data.total_questions_count,
 });
 
 // data_blob is absent when next_question is null (JD completed)
@@ -47,28 +48,27 @@ export const mapMasterDataResponse = (raw: ApiResponse<RawMasterData>): MasterDa
   statuses: raw.data.statuses ?? {},
 });
 
-interface RawJdCounts {
-  totalJds: number;
-  addedThisWeek: number;
-  remoteRoles: number;
-  hybridRoles: number;
-  total_count: number;
-  total_pages: number;
-}
+type RawJdCounts = Record<string, number | undefined>;
 
 export const mapGetAllJDsResponse = (
   raw: ApiResponse<{ counts: RawJdCounts; list: JdListData['list'] }>
-): JdListData => ({
-  counts: {
-    totalJds: raw.data.counts.totalJds,
-    addedThisWeek: raw.data.counts.addedThisWeek,
-    remoteRoles: raw.data.counts.remoteRoles,
-    hybridRoles: raw.data.counts.hybridRoles,
-    totalCount: raw.data.counts.total_count,
-    totalPages: raw.data.counts.total_pages,
-  },
-  list: raw.data.list,
-});
+): JdListData => {
+  const c = raw.data.counts;
+  return {
+    counts: {
+      totalJds: c.totalJds ?? 0,
+      addedThisWeek: c.addedThisWeek ?? 0,
+      remoteRoles: c.remoteRoles ?? 0,
+      hybridRoles: c.hybridRoles ?? 0,
+      draftCount: c.draftCount ?? 0,
+      inProgressCount: c.inprogressCount ?? 0,
+      completedCount: c.completedCount ?? 0,
+      totalCount: c.total_count ?? 0,
+      totalPages: c.total_pages ?? 0,
+    },
+    list: raw.data.list,
+  };
+};
 
 export const mapGetJdDetailsResponse = (raw: ApiResponse<JdDetails>): JdDetails => ({
   jdId: raw.data.jdId,
@@ -77,11 +77,13 @@ export const mapGetJdDetailsResponse = (raw: ApiResponse<JdDetails>): JdDetails 
   jobTitle: raw.data.jobTitle,
   sessionId: raw.data.sessionId,
   statusName: raw.data.statusName,
+  statusCode: raw.data.statusCode,
   theory: raw.data.theory,
   dataBlob: raw.data.dataBlob,
   isWeightage: raw.data.isWeightage ?? false,
   weightageJson: raw.data.weightageJson ?? null,
   orgDnaSnapshot: raw.data.dataBlob?.org_dna_snapshot ?? {},
+  totalQuestionsCount: raw.data.total_questions_count ?? raw.data.totalQuestionsCount,
 });
 
 export const mapEditJdQaResponse = (raw: ApiResponse<RawEditJdQaData>): EditJdQaData => ({

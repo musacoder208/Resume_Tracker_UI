@@ -86,6 +86,7 @@ export interface RawStartData {
   session_id: string;
   next_question: Question | null;
   theory: string | null;
+  total_questions_count?: number;
   data_blob: RawDataBlob;
 }
 
@@ -101,6 +102,7 @@ export interface StartProfileData {
   session_id: string;
   next_question: Question | null;
   theory: string | null;
+  total_questions_count: number;
   resolved_conflict_ids: ResolvedConflict[];
   interactions: Interaction[];
 }
@@ -111,4 +113,13 @@ export interface AnswerData {
   interactions: Interaction[];
   completed?: boolean;
   theory?: string;
+  message?: string;
+}
+
+export interface RawProfileDetailsData {
+  theory: string;
+}
+
+export interface ProfileDetailsData {
+  theory: string | null;
 }

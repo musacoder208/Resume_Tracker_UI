@@ -225,7 +225,7 @@ export function ChatHistory({
 
   return (
     <div className="flex flex-col gap-3">
-      {groups.map((group) => {
+      {groups.map((group, index) => {
         const isEditing = editingFieldKey === group.fieldKey;
         const isExpanded = expandedFieldKey === group.fieldKey;
         const hasHistory = group.items.length > 1;
@@ -244,8 +244,8 @@ export function ChatHistory({
             {/* Q&A display row */}
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0 flex-1">
-                <p className="mb-1 text-xs font-medium text-text-muted">
-                  {group.displayQuestionText}
+                <p className="mb-1 text-xs font-semibold text-text">
+                  Q{index + 1}. {group.displayQuestionText}
                 </p>
                 {!isEditing && (
                   <p className="break-words text-xs font-semibold text-text">{group.displayAnswer}</p>

@@ -77,3 +77,21 @@ export function PdfExportIcon({ className }: { className?: string }): JSX.Elemen
     </svg>
   );
 }
+
+/** Waving hand — used with .animate-wave class for looping wave animation */
+export function WavingHandIcon({ className }: { className?: string }): JSX.Element {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      <path d="M10.05 4.575a1.575 1.575 0 1 0-3.15 0v3m3.15-3v-1.5a1.575 1.575 0 0 1 3.15 0v1.5m-3.15 0 .075 5.925m3.075.75V4.575m0 0a1.575 1.575 0 0 1 3.15 0V15M6.9 7.575a1.575 1.575 0 1 0-3.15 0v8.175a6.75 6.75 0 0 0 13.5 0v-5.25a1.575 1.575 0 0 0-3.15 0v.75" />
+    </svg>
+  );
+}

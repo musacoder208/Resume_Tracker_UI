@@ -15,7 +15,9 @@
     "previewProfile": "معاينة ملف الشركة",
     "editAnswer": "تعديل الإجابة",
     "saveDraft": "حفظ كمسودة",
-    "saveAndPublish": "حفظ ونشر"
+    "saveAndPublish": "حفظ ونشر",
+    "editAnswers": "تعديل الإجابات",
+    "viewProfile": "عرض الملف"
   },
   "chat": {
     "editTooltip": "تعديل الإجابة",
@@ -32,6 +34,10 @@
     "startFailed": "فشل بدء جلسة الملف. يرجى المحاولة مجدداً.",
     "submitFailed": "فشل إرسال الإجابة. يرجى المحاولة مجدداً."
   },
+  "noPermission": {
+    "notCreated": "لم يتم إنشاء ملف الشركة بعد.",
+    "contactAdmin": "ليس لديك صلاحية إنشائه. يرجى التواصل مع المسؤول."
+  },
   "preview": {
     "title": "معاينة ملف الشركة"
   },
@@ -40,5 +46,11 @@
     "confirm": "تأكيد",
     "cancel": "إلغاء",
     "successTitle": "تم التحديث بنجاح"
+  },
+  "progress": {
+    "title": "تقدم بناء الملف",
+    "questionOf": "س{{current}} من {{total}}",
+    "answered": "{{count}} من {{total}} سؤال تمت الإجابة عليه",
+    "completed": "تمت الإجابة على جميع الأسئلة!"
   }
 }

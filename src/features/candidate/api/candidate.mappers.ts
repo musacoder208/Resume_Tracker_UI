@@ -34,7 +34,7 @@ const mapWorkHistory = (raw: RawExperienceEntry): CandidateWorkHistory => ({
   keyResponsibilities: raw.key_responsibilities ?? [],
 });
 
-const mapSuccessItem = (raw: RawCandidateItem): SuccessCandidate => {
+export const mapSuccessItem = (raw: RawCandidateItem): SuccessCandidate => {
   const allSkills = raw.professional_info.technical_stack_and_tools?.value ?? [];
   return {
     filename: raw.filename,
@@ -57,12 +57,12 @@ const mapSuccessItem = (raw: RawCandidateItem): SuccessCandidate => {
   };
 };
 
-const mapDuplicateItem = (raw: RawDuplicateItem): DuplicateCandidate => ({
+export const mapDuplicateItem = (raw: RawDuplicateItem): DuplicateCandidate => ({
   ...mapSuccessItem(raw),
   duplicateReason: raw.reason ?? '',
 });
 
-const mapIncompleteItem = (raw: RawCandidateItem): IncompleteCandidate => {
+export const mapIncompleteItem = (raw: RawCandidateItem): IncompleteCandidate => {
   const allSkills = raw.professional_info.technical_stack_and_tools?.value ?? [];
   return {
     filename: raw.filename,

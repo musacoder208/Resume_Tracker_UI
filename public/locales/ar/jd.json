@@ -13,7 +13,10 @@
       "totalJds": "إجمالي الأوصاف",
       "addedThisWeek": "مضاف هذا الأسبوع",
       "remoteRoles": "الأدوار عن بُعد",
-      "hybridRoles": "الأدوار الهجينة"
+      "hybridRoles": "الأدوار الهجينة",
+      "draftCount": "مسودة",
+      "inProgressCount": "قيد التنفيذ",
+      "completedCount": "مكتمل"
     },
     "table": {
       "no": "#",
@@ -23,6 +26,8 @@
       "workType": "نوع العمل",
       "experience": "الخبرة",
       "resumes": "السير الذاتية",
+      "status": "الحالة",
+      "createdBy": "أنشئ بواسطة",
       "createdDate": "تاريخ الإنشاء",
       "actions": "الإجراءات"
     }

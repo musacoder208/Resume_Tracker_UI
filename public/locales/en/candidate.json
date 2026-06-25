@@ -12,6 +12,7 @@
     "saveAll": "Save All Candidates",
     "cancel": "Cancel",
     "processError": "Failed to process resumes. Please try again.",
+    "streaming": "Processing resumes, please wait…",
     "saveCandidates": "Save Candidates",
     "saving": "Saving...",
     "saveAndScore": "Save & Start Scoring",

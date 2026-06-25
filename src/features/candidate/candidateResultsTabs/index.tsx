@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, type JSX } from 'react';
+import { useState, useRef, useEffect, useMemo, type JSX } from 'react';
 import clsx from 'clsx';
 import { useT } from '@/i18n/useT';
 import { Button } from '@/components/ui/button';
@@ -92,6 +92,36 @@ export function CandidateResultsTabs({
   );
 
   const selectAllRef = useRef<HTMLInputElement>(null);
+
+  // Track filenames already processed for selection so streaming arrivals get
+  // auto-selected without re-processing candidates the user explicitly toggled.
+  const handledFilenamesRef = useRef<Set<string>>(
+    new Set(
+      [...successCandidates, ...duplicateCandidates, ...incompleteCandidates].map((c) => c.filename),
+    ),
+  );
+
+  const allCandidates = useMemo(
+    () => [...successCandidates, ...duplicateCandidates, ...incompleteCandidates],
+    [successCandidates, duplicateCandidates, incompleteCandidates],
+  );
+
+  useEffect(() => {
+    const toAdd: string[] = [];
+    for (const c of allCandidates) {
+      if (!handledFilenamesRef.current.has(c.filename)) {
+        handledFilenamesRef.current.add(c.filename);
+        if (c.isSelected) toAdd.push(c.filename);
+      }
+    }
+    if (toAdd.length > 0) {
+      setSelectedFilenames((prev) => {
+        const next = new Set(prev);
+        toAdd.forEach((f) => { next.add(f); });
+        return next;
+      });
+    }
+  }, [allCandidates]);
 
   // ── Current tab candidates ──────────────────────────────────────────────────
   const currentTabCandidates: AnyCandidate[] =

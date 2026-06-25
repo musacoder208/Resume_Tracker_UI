@@ -1,10 +1,14 @@
-import { useState, useEffect, type JSX } from 'react';
+import { useState, useEffect, useRef, type JSX } from 'react';
+import { useSelector } from 'react-redux';
 import { PageContainer } from '@/components/containers/PageContainer';
+import { toastService } from '@/components/ui/toast/toastService';
 import { useT } from '@/i18n/useT';
+import { selectPageAccess } from '@/features/auth/redux/auth.selectors';
 import {
   useStartProfileMutation,
   useSubmitAnswerMutation,
   useEditQuestionMutation,
+  useGetProfileDetailsQuery,
 } from '../api/companyProfile.api';
 import { CompanyInformation } from '../companyInformation';
 import { AiProfileBuilder } from '../aiProfileBuilder';
@@ -20,18 +24,32 @@ import type {
 export function CompanyProfilePage(): JSX.Element {
   const { t } = useT('companyProfile');
 
+  const pageAccess = useSelector(selectPageAccess);
+  const canCreate = pageAccess
+    .find((p) => p.route === '/company-profile')
+    ?.permissions.includes('create') ?? false;
+
   const [startProfile, { isLoading: isStarting }] = useStartProfileMutation();
   const [submitAnswer, { isLoading: isSubmitting }] = useSubmitAnswerMutation();
   const [editQuestion, { isLoading: isEditSubmitting }] = useEditQuestionMutation();
+
+  // View-only users call GET /details instead of POST /start
+  const {
+    data: profileDetails,
+    isLoading: isDetailsLoading,
+    isError: isDetailsError,
+  } = useGetProfileDetailsQuery(undefined, { skip: canCreate });
 
   const [currentQuestion, setCurrentQuestion] = useState<Question | null>(null);
   const [interactions, setInteractions] = useState<Interaction[]>([]);
   const [resolvedConflicts, setResolvedConflicts] = useState<ResolvedConflict[]>([]);
   const [isCompleted, setIsCompleted] = useState(false);
   const [theory, setTheory] = useState<string | null>(null);
+  const [totalQuestionsCount, setTotalQuestionsCount] = useState(0);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [editingFieldKey, setEditingFieldKey] = useState<string | null>(null);
   const [startError, setStartError] = useState(false);
+  const isInitialLoad = useRef(true);
 
   // Edit modal state
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -46,13 +64,16 @@ export function CompanyProfilePage(): JSX.Element {
       setResolvedConflicts(data.resolved_conflict_ids);
       setTheory(data.theory);
       setIsCompleted(data.next_question == null && data.interactions.length > 0);
+      if (data.total_questions_count > 0) setTotalQuestionsCount(data.total_questions_count);
     } catch {
-      setStartError(true);
+      if (isInitialLoad.current) setStartError(true);
+    } finally {
+      isInitialLoad.current = false;
     }
   }
 
   useEffect(() => {
-    void loadProfile();
+    if (canCreate) void loadProfile();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -63,10 +84,14 @@ export function CompanyProfilePage(): JSX.Element {
       setResolvedConflicts(data.resolved_conflict_ids);
       setEditingFieldKey(null);
 
+      if (data.message) toastService.success(data.message);
+
       if (data.next_question == null) {
+        // Show button immediately, then reload to get full interactions (data_blob absent on completion)
         setIsCompleted(true);
         setCurrentQuestion(null);
         if (data.theory != null) setTheory(data.theory);
+        void loadProfile();
       } else {
         setCurrentQuestion(data.next_question);
       }
@@ -97,7 +122,7 @@ export function CompanyProfilePage(): JSX.Element {
     setEditingFieldKey((prev) => (prev === fieldKey ? null : fieldKey));
   }
 
-  if (isStarting) {
+  if (canCreate ? (isStarting && isInitialLoad.current) : isDetailsLoading) {
     return (
       <PageContainer>
         <p className="text-xs text-text-muted">{t('loading.starting')}</p>
@@ -105,7 +130,7 @@ export function CompanyProfilePage(): JSX.Element {
     );
   }
 
-  if (startError) {
+  if (canCreate ? startError : isDetailsError) {
     return (
       <PageContainer>
         <p className="text-xs text-error">{t('errors.startFailed')}</p>
@@ -113,22 +138,37 @@ export function CompanyProfilePage(): JSX.Element {
     );
   }
 
+  // For view-only users derive state from the details query
+  const effectiveTheory = canCreate ? theory : (profileDetails?.theory ?? null);
+  const effectiveIsCompleted = canCreate ? isCompleted : (profileDetails?.theory != null);
+
+  const answeredFieldKeys = new Set(interactions.map((i) => i.field_key));
+  if (currentQuestion?.mode === 'clarification' || currentQuestion?.mode === 'crossfield') {
+    answeredFieldKeys.delete(currentQuestion.field_key);
+  }
+  const answeredCount = answeredFieldKeys.size;
+
   return (
-    <PageContainer>
-      <div className="flex flex-col gap-6">
+    <PageContainer className="h-full flex flex-col !pt-0">
+      <div className="flex flex-col gap-3 flex-1 min-h-0">
         {/* Section 1 */}
-        <CompanyInformation />
+        <div className="shrink-0">
+          <CompanyInformation />
+        </div>
 
         {/* Section 2 */}
         <AiProfileBuilder
           currentQuestion={currentQuestion}
           interactions={interactions}
           resolvedConflicts={resolvedConflicts}
-          isCompleted={isCompleted}
-          theory={theory}
+          isCompleted={effectiveIsCompleted}
+          theory={effectiveTheory}
           isSubmitting={isSubmitting || isEditSubmitting}
           editingFieldKey={editingFieldKey}
           isPreviewOpen={isPreviewOpen}
+          answeredCount={answeredCount}
+          totalQuestionsCount={totalQuestionsCount}
+          canCreate={canCreate}
           onSubmitAnswer={(answer) => { void handleSubmitAnswer(answer); }}
           onStartEdit={handleStartEdit}
           onSubmitEdit={(fieldKey, answer) => { void handleSubmitEdit(fieldKey, answer); }}

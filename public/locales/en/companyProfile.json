@@ -15,7 +15,9 @@
     "previewProfile": "Preview Company Profile",
     "editAnswer": "Edit Answer",
     "saveDraft": "Save Draft",
-    "saveAndPublish": "Save & Publish"
+    "saveAndPublish": "Save & Publish",
+    "editAnswers": "Edit Answers",
+    "viewProfile": "View Profile"
   },
   "chat": {
     "editTooltip": "Edit answer",
@@ -32,6 +34,10 @@
     "startFailed": "Failed to start profile session. Please try again.",
     "submitFailed": "Failed to submit answer. Please try again."
   },
+  "noPermission": {
+    "notCreated": "Company profile has not been created yet.",
+    "contactAdmin": "You don't have permission to create it. Please contact your administrator."
+  },
   "preview": {
     "title": "Company Profile Preview"
   },
@@ -40,5 +46,11 @@
     "confirm": "Confirm",
     "cancel": "Cancel",
     "successTitle": "Update Successful"
+  },
+  "progress": {
+    "title": "Profile Building Progress",
+    "questionOf": "Q{{current}} of {{total}}",
+    "answered": "{{count}} of {{total}} questions answered",
+    "completed": "All questions answered!"
   }
 }
