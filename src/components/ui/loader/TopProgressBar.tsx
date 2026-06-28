@@ -38,6 +38,7 @@ export function TopProgressBar(): JSX.Element | null {
       }, 400);
       return () => { clearTimeout(id); };
     }
+    return undefined;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoading]);
 

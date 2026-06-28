@@ -91,7 +91,7 @@ export function SidebarItem({ item, collapsed, onNavigate }: SidebarItemProps): 
         {isHovered && hasChildren && item.children && (
           <SidebarCascade
             items={item.children}
-            title={item.labelKey}
+            title={item.labelKey ?? ''}
             collapsed={collapsed}
             triggerRef={wrapperEl}
             onNavigate={() => {
@@ -144,7 +144,7 @@ export function SidebarItem({ item, collapsed, onNavigate }: SidebarItemProps): 
       {isHovered && hasChildren && item.children && (
         <SidebarCascade
           items={item.children}
-          title={item.labelKey}
+          title={item.labelKey ?? ''}
           collapsed={collapsed}
           triggerRef={wrapperEl}
           onNavigate={() => {

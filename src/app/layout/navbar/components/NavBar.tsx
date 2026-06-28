@@ -4,11 +4,11 @@ import clsx from 'clsx';
 import { useT } from '@/i18n/useT';
 import {
   BellIcon,
-  ChevronDownIcon,
-  ChevronRightIcon,
-  MagnifyingGlassIcon,
-  XMarkIcon,
-  Bars3Icon,
+  // ChevronDownIcon,
+  // ChevronRightIcon,
+  // MagnifyingGlassIcon,
+  // XMarkIcon,
+  // Bars3Icon,
 } from '@/icons';
 import { useAppSelector } from '@/hooks/reduxHooks';
 import { selectIsAuthenticated } from '@/features/auth/redux/auth.selectors';
@@ -41,7 +41,7 @@ function useLiveDate(): string {
 
 // ─── MegaMenuCascade (sub-items flyout below module card) ─────────────────────
 
-function MegaMenuCascade({
+function _MegaMenuCascade({
   items,
   pathname,
   onNavigate,
@@ -93,24 +93,26 @@ function MegaMenuCascade({
   );
 }
 
+void _MegaMenuCascade;
+
 // ─── NavBar ───────────────────────────────────────────────────────────────────
 
 export function NavBar(): JSX.Element {
   const { t } = useT('common');
-  const navigate = useNavigate();
-  const { pathname } = useLocation();
+  const _navigate = useNavigate();
+  const { pathname: _pathname } = useLocation();
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
   const liveDate = useLiveDate();
 
   // Mega menu state
   const [showModules, setShowModules] = useState(false);
-  const [expandedModule, setExpandedModule] = useState<string | null>(null);
+  const [_expandedModule, setExpandedModule] = useState<string | null>(null);
   const [megaSearch, setMegaSearch] = useState('');
   const menuRef = useRef<HTMLDivElement>(null);
   const menuHoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Global search state
-  const [searchInput, setSearchInput] = useState('');
+  const [searchInput, _setSearchInput] = useState('');
   const { setSearchTerm } = useGlobalSearch();
   const debouncedSearch = useDebouncedValue(searchInput, 300);
 
@@ -119,7 +121,7 @@ export function NavBar(): JSX.Element {
   }, [debouncedSearch, setSearchTerm]);
 
   // Mega menu search results — includes top-level items without children too
-  const flatResults = useMemo(() => {
+  const _flatResults = useMemo(() => {
     const q = megaSearch.trim().toLowerCase();
     if (!q) return [];
     return APP_MENU.flatMap((mod) => {
@@ -136,7 +138,7 @@ export function NavBar(): JSX.Element {
     });
   }, [megaSearch, t]);
 
-  const openModules = (): void => {
+  const _openModules = (): void => {
     if (menuHoverTimeout.current) {
       clearTimeout(menuHoverTimeout.current);
       menuHoverTimeout.current = null;
@@ -145,7 +147,7 @@ export function NavBar(): JSX.Element {
     setExpandedModule(null);
   };
 
-  const closeModulesDelayed = (): void => {
+  const _closeModulesDelayed = (): void => {
     menuHoverTimeout.current = setTimeout(() => {
       setShowModules(false);
       setExpandedModule(null);
@@ -166,6 +168,8 @@ export function NavBar(): JSX.Element {
     setTimeout(() => document.addEventListener('mousedown', handler), 80);
     return () => document.removeEventListener('mousedown', handler);
   }, [showModules]);
+
+  void [_navigate, _flatResults, _openModules, _closeModulesDelayed];
 
   return (
     <header className="relative z-30 flex h-14 shrink-0 items-center justify-end border-b border-border bg-surface px-6">

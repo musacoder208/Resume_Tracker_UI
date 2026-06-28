@@ -379,8 +379,8 @@ export function DateTimePicker({
               {rangeMode === 'range' ? (
                 <DayPicker
                   captionLayout={resolveCaptionLayout(calendarNavigation)}
-                  fromYear={fromYear}
-                  toYear={toYear}
+                  startMonth={new Date(fromYear, 0)}
+                  endMonth={new Date(toYear, 11)}
                   mode="range"
                   month={viewMonth}
                   onMonthChange={setViewMonth}

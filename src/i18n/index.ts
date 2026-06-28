@@ -14,7 +14,7 @@ void i18n
     ns: ['common', 'auth', 'companyProfile', 'jd', 'candidate'],
 
     backend: {
-      loadPath: `${import.meta.env.BASE_URL}locales/{{lng}}/{{ns}}.json`,
+      loadPath: `${import.meta.env.BASE_URL}/locales/{{lng}}/{{ns}}.json`,
     },
 
     detection: {

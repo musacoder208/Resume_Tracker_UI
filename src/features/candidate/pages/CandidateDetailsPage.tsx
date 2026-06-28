@@ -779,7 +779,7 @@ export function CandidateDetailsPage(): JSX.Element {
   const [activeTab, setActiveTab] = useState<DetailTab>('overview');
   const [updateCandidateScore, { isLoading: isCalculating }] = useUpdateCandidateScoreMutation();
 
-  const { data: moduleId } = useGetModuleIdQuery('CAND_MGT');
+  const { data: _moduleId } = useGetModuleIdQuery('CAND_MGT');
   const { data: detail, isLoading, isError, refetch } = useGetCandidateDetailsQuery(candidateId, {
     skip: isNaN(candidateId),
   });

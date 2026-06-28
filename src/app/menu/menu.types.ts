@@ -6,6 +6,7 @@ export interface MenuItem {
   label?: string;      // direct string — for API-sourced menu items
   icon?: ComponentType<{ className?: string }>;
   path?: string;
+  route?: string;
   children?: MenuItem[];
 }
 

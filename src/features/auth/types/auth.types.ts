@@ -1,5 +1,7 @@
 export type User = {
   userId: number;
+  name?: string;
+  role?: string;
 };
 
 export type PageAccess = {

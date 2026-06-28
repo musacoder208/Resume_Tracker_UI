@@ -94,7 +94,7 @@ export function Header(): JSX.Element {
                 <div className="border-b border-border px-4 py-3">
                   <p className="text-sm font-semibold text-text truncate">{user?.name ?? '—'}</p>
                   <p className="text-xs text-text-muted mt-0.5 capitalize">
-                    {user?.role.replace(/_/g, ' ') ?? '—'}
+                    {user?.role?.replace(/_/g, ' ') ?? '—'}
                   </p>
                 </div>
 

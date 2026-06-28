@@ -57,13 +57,13 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, ApiError, Ba
 
     // If no refresh is in flight, start one. Otherwise reuse the existing promise.
     if (pendingRefresh == null) {
-      pendingRefresh = rawBaseQuery(
-        { url: 'auth/session', method: 'GET' },
-        api,
-        extraOptions
-      ).finally(() => {
-        pendingRefresh = null;
-      });
+      pendingRefresh = (async () => {
+        try {
+          return await rawBaseQuery({ url: 'auth/session', method: 'GET' }, api, extraOptions);
+        } finally {
+          pendingRefresh = null;
+        }
+      })();
     }
 
     const refreshResult = await pendingRefresh;

@@ -11,7 +11,7 @@ import { AddJdPage } from '@/features/jd/pages/AddJdPage';
 import { CandidateSearchPage } from '@/features/candidate/pages/CandidateSearchPage';
 import { AddCandidatePage } from '@/features/candidate/pages/AddCandidatePage';
 import { CandidateDetailsPage } from '@/features/candidate/pages/CandidateDetailsPage';
-import { env } from '@/config/env';
+//import { env } from '@/config/env';
 
 export const router = createBrowserRouter(
   [
@@ -78,6 +78,6 @@ export const router = createBrowserRouter(
     },
   ],
   {
-    basename: env.SERVER_MODE === 'production' ? '/resume-tracker' : '/',
+    basename: '/resumetracker',
   }
 );

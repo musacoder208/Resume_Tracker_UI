@@ -227,7 +227,7 @@ export function AddJdPage(): JSX.Element {
   const isViewMode = urlJdId != null;
 
   // ── API hooks ───────────────────────────────────────────────────────────────
-  const { data: moduleId } = useGetModuleIdQuery('JD_MODULE');
+  const { data: _moduleId } = useGetModuleIdQuery('JD_MODULE');
   const { data: masterData, isLoading: isMasterDataLoading, isError: isMasterDataError } =
     useGetMasterDataQuery();
   const [startJd, { isLoading: isStarting }] = useStartJdMutation();
