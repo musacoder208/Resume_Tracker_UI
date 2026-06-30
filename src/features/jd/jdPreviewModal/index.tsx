@@ -61,7 +61,7 @@ export function JdPreviewModal({
           <MarkdownRenderer content={theory} />
         </div>
 
-        <div className="flex flex-col gap-1.5">
+        {/* <div className="flex flex-col gap-1.5">
           <p className="text-xs font-semibold text-text">{t('chat.discussWithAi')}</p>
           <div className="flex items-end gap-2">
             <textarea
@@ -82,7 +82,7 @@ export function JdPreviewModal({
               </button>
             )}
           </div>
-        </div>
+        </div> */}
       </div>
     </BaseModal>
   );

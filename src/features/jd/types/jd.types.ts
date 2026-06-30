@@ -333,3 +333,15 @@ export interface GenerateWeightageData {
   message: string;
 }
 
+// ── JD Dropdown ───────────────────────────────────────────────────────────────
+
+export interface RawJdDropdownItem {
+  jd_id: number;
+  label: string;
+}
+
+export interface JdDropdownItem {
+  jdId: number;
+  label: string;
+}
+

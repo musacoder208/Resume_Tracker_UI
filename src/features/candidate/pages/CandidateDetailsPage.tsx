@@ -1,4 +1,4 @@
-import { useState, type JSX } from 'react';
+import { useState, useEffect, type JSX } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
 import { PageContainer } from '@/components/containers/PageContainer';
@@ -28,6 +28,7 @@ import {
 import {
   useGetCandidateDetailsQuery,
   useUpdateCandidateScoreMutation,
+  useSaveHRFeedbackMutation,
 } from '../api/candidate.api';
 import { useGetMasterDataQuery } from '@/features/jd/api/jd.api';
 import { useGetModuleIdQuery } from '@/features/common/api/common.api';
@@ -580,13 +581,37 @@ function ScoreGroupCard({ group, assessment, comment, error, feedbackStatuses, o
   );
 }
 
-function ScoreBreakdownTab({ detail, t }: { detail: CandidateDetail; t: (key: string) => string }): JSX.Element {
+function ScoreBreakdownTab({
+  detail,
+  t,
+  onSaved,
+}: {
+  detail: CandidateDetail;
+  t: (key: string) => string;
+  onSaved: () => void;
+}): JSX.Element {
   const { data: masterData } = useGetMasterDataQuery();
   const feedbackStatuses = masterData?.feedbackStatuses ?? [];
+  const [saveHRFeedback, { isLoading: isSaving }] = useSaveHRFeedbackMutation();
 
   const [assessments, setAssessments] = useState<Record<string, string>>({});
   const [comments, setComments] = useState<Record<string, string>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Pre-populate form from saved hr_feedback whenever detail refreshes
+  useEffect(() => {
+    const initAssessments: Record<string, string> = {};
+    const initComments: Record<string, string> = {};
+    detail.score?.groupBreakdown.forEach((g) => {
+      if (g.hrFeedback != null) {
+        initAssessments[g.groupKey] = String(g.hrFeedback.feedbackTypeId);
+        initComments[g.groupKey] = g.hrFeedback.userFeedback;
+      }
+    });
+    setAssessments(initAssessments);
+    setComments(initComments);
+    setErrors({});
+  }, [detail.score]);
 
   function handleAssessmentChange(groupKey: string, value: string): void {
     setAssessments((prev) => ({ ...prev, [groupKey]: value }));
@@ -615,8 +640,10 @@ function ScoreBreakdownTab({ detail, t }: { detail: CandidateDetail; t: (key: st
     return name === 'partial' || name === 'no' || name.startsWith('partial') || name.startsWith('no ');
   }
 
-  function handleSave(): void {
+  async function handleSave(): Promise<void> {
     if (detail.score == null) return;
+
+    // Validate: groups with assessments that need a comment must have one
     const newErrors: Record<string, string> = {};
     detail.score.groupBreakdown.forEach((group) => {
       const assessment = assessments[group.groupKey] ?? '';
@@ -626,9 +653,21 @@ function ScoreBreakdownTab({ detail, t }: { detail: CandidateDetail; t: (key: st
       }
     });
     setErrors(newErrors);
-    if (Object.keys(newErrors).length === 0) {
-      // TODO: wire save feedback API
-    }
+    if (Object.keys(newErrors).length > 0) return;
+
+    // Only send groups where the user picked an assessment
+    const feedbacks = detail.score.groupBreakdown
+      .filter((group) => (assessments[group.groupKey] ?? '') !== '')
+      .map((group) => ({
+        group_score_id: group.groupScoreId,
+        feedback_type_id: Number(assessments[group.groupKey]),
+        user_feedback: comments[group.groupKey] ?? '',
+      }));
+
+    if (feedbacks.length === 0) return;
+
+    await saveHRFeedback({ candidate_id: detail.candidateId, feedbacks }).unwrap();
+    onSaved();
   }
 
   if (detail.score == null) {
@@ -674,8 +713,13 @@ function ScoreBreakdownTab({ detail, t }: { detail: CandidateDetail; t: (key: st
       ))}
 
       <div className="flex justify-end pt-1">
-        <Button variant="primary" size="sm" onClick={handleSave}>
-          {t('details.score.saveFeedback')}
+        <Button
+          variant="primary"
+          size="sm"
+          disabled={isSaving}
+          onClick={() => { void handleSave(); }}
+        >
+          {isSaving ? t('actions.saving') : t('details.score.saveFeedback')}
         </Button>
       </div>
     </div>
@@ -905,7 +949,7 @@ export function CandidateDetailsPage(): JSX.Element {
             {activeTab === 'education' && <EducationTab detail={detail} t={t} />}
             {activeTab === 'skills' && <SkillsTab detail={detail} t={t} />}
             {activeTab === 'resume' && <ResumeTab detail={detail} t={t} />}
-            {activeTab === 'score' && <ScoreBreakdownTab detail={detail} t={t} />}
+            {activeTab === 'score' && <ScoreBreakdownTab detail={detail} t={t} onSaved={refetch} />}
           </div>
         </div>
       </div>

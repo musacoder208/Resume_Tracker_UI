@@ -14,6 +14,8 @@ import type {
   CandidateListResult,
   RawCandidateDetailResponse,
   CandidateDetail,
+  RawUploadStatusResponse,
+  UploadStatusResult,
 } from '../types/candidate.types';
 
 const mapEducation = (raw: RawEducationEntry): CandidateEducation => ({
@@ -125,7 +127,27 @@ export const mapCandidateListResponse = (raw: RawCandidateListResponse): Candida
   } : undefined,
 });
 
+export const mapUploadStatusResponse = (raw: RawUploadStatusResponse): UploadStatusResult => {
+  const mapItem = (item: RawUploadStatusResponse['data']['complete'][number]) => ({
+    candidateId: item.candidate_id,
+    fullName: item.full_name ?? '',
+    email: item.email,
+    phone: item.phone,
+    currentJobTitle: item.current_job_title,
+    uploadStatus: item.upload_status as UploadStatusResult['complete'][number]['uploadStatus'],
+    statusCode: item.status_code ?? null,
+    reason: item.reason,
+    createdDate: item.created_date,
+  });
+  return {
+    complete: (raw.data.complete ?? []).map(mapItem),
+    duplicate: (raw.data.duplicate ?? []).map(mapItem),
+    incomplete: (raw.data.incomplete ?? []).map(mapItem),
+  };
+};
+
 export const mapCandidateDetailResponse = (raw: RawCandidateDetailResponse): CandidateDetail => ({
+  candidateId: raw.data.candidate_id,
   personal: {
     fullName: raw.data.personal_info.full_name ?? '',
     email: raw.data.personal_info.email ?? '',
@@ -167,6 +189,7 @@ export const mapCandidateDetailResponse = (raw: RawCandidateDetailResponse): Can
     finalScore: raw.data.score.final_score,
     verdict: raw.data.score.verdict,
     groupBreakdown: (raw.data.score.group_breakdown ?? []).map((g) => ({
+      groupScoreId: g.group_score_id,
       groupKey: g.group_key,
       weight: g.weight,
       groupScore: g.group_score,
@@ -175,6 +198,9 @@ export const mapCandidateDetailResponse = (raw: RawCandidateDetailResponse): Can
       missingRequired: g.missing_required ?? [],
       optionalPresent: g.optional_present ?? [],
       optionalMissing: g.optional_missing ?? [],
+      hrFeedback: g.hr_feedback != null
+        ? { feedbackTypeId: g.hr_feedback.feedback_type_id, userFeedback: g.hr_feedback.user_feedback }
+        : null,
     })),
   } : null,
   jdId: raw.data.meta?.jd_id ?? null,

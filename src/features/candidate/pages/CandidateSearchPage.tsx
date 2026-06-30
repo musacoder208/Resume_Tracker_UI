@@ -20,16 +20,9 @@ import {
 } from '@/icons';
 import { CandidateListCard } from '../candidateListCard';
 import { useGetCandidateListQuery } from '../api/candidate.api';
-import { useGetMasterDataQuery } from '@/features/jd/api/jd.api';
+import { useGetMasterDataQuery, useGetJDDropdownQuery } from '@/features/jd/api/jd.api';
 import { useGetModuleIdQuery } from '@/features/common/api/common.api';
 import type { CandidateListParams, CandidateListSummary } from '../types/candidate.types';
-import type { AutocompleteOption } from '@/components/ui/autocompleteSelect';
-
-// Temporary — replace with JD list API when ready
-const STUB_JD_OPTIONS: AutocompleteOption[] = [
-  { value: '110', label: 'Senior Backend Dev' },
-  { value: '111', label: 'Senior Frontend Dev' },
-];
 
 const SKELETON_COUNT = 6;
 const PAGE_SIZE = 10;
@@ -133,6 +126,8 @@ export function CandidateSearchPage(): JSX.Element {
 
   const { data: moduleId } = useGetModuleIdQuery('CAND_MGT');
   const { data: masterData } = useGetMasterDataQuery();
+  const { data: jdList = [] } = useGetJDDropdownQuery();
+  const jdOptions = jdList.map((item) => ({ value: String(item.jdId), label: item.label }));
   const moduleStatuses = moduleId != null ? (masterData?.statuses?.[String(moduleId)] ?? []) : [];
   const { data, isLoading, isFetching } = useGetCandidateListQuery(queryParams);
 
@@ -253,7 +248,7 @@ export function CandidateSearchPage(): JSX.Element {
             className="rounded-md border border-border bg-surface py-1.5 ps-3 pe-8 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="">{t('filters.allJds')}</option>
-            {STUB_JD_OPTIONS.map((opt) => (
+            {jdOptions.map((opt) => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
           </select>

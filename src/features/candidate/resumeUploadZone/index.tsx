@@ -6,6 +6,7 @@ import { CloudArrowUpIcon, XMarkIcon, DocumentTextIcon } from '@/icons';
 interface ResumeUploadZoneProps {
   files: File[];
   onFilesChange: (files: File[]) => void;
+  onLimitExceeded?: () => void;
   disabled?: boolean;
 }
 
@@ -17,8 +18,9 @@ const ACCEPTED_MIME_TYPES = [
 
 const ACCEPT_ATTR = '.pdf,.doc,.docx';
 const FORMAT_BADGES = ['PDF', 'DOC', 'DOCX'] as const;
+const MAX_FILES = 5;
 
-export function ResumeUploadZone({ files, onFilesChange, disabled = false }: ResumeUploadZoneProps): JSX.Element {
+export function ResumeUploadZone({ files, onFilesChange, onLimitExceeded, disabled = false }: ResumeUploadZoneProps): JSX.Element {
   const { t } = useT('candidate');
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -28,9 +30,13 @@ export function ResumeUploadZone({ files, onFilesChange, disabled = false }: Res
       if (disabled || incoming == null) return;
       const valid = Array.from(incoming).filter((f) => ACCEPTED_MIME_TYPES.includes(f.type));
       if (valid.length === 0) return;
+      if (files.length + valid.length > MAX_FILES) {
+        onLimitExceeded?.();
+        return;
+      }
       onFilesChange([...files, ...valid]);
     },
-    [disabled, files, onFilesChange],
+    [disabled, files, onFilesChange, onLimitExceeded],
   );
 
   const removeFile = useCallback(
@@ -58,15 +64,18 @@ export function ResumeUploadZone({ files, onFilesChange, disabled = false }: Res
     [addFiles],
   );
 
+  const isAtLimit = files.length >= MAX_FILES;
+  const isZoneDisabled = disabled || isAtLimit;
+
   const handleZoneClick = useCallback((): void => {
-    if (!disabled) inputRef.current?.click();
-  }, [disabled]);
+    if (!isZoneDisabled) inputRef.current?.click();
+  }, [isZoneDisabled]);
 
   const handleZoneKeyDown = useCallback((e: React.KeyboardEvent): void => {
-    if (!disabled && (e.key === 'Enter' || e.key === ' ')) {
+    if (!isZoneDisabled && (e.key === 'Enter' || e.key === ' ')) {
       inputRef.current?.click();
     }
-  }, [disabled]);
+  }, [isZoneDisabled]);
 
   return (
     <div className="flex flex-col gap-3">
@@ -75,18 +84,18 @@ export function ResumeUploadZone({ files, onFilesChange, disabled = false }: Res
       {/* Drop zone */}
       <div
         role="button"
-        tabIndex={disabled ? -1 : 0}
+        tabIndex={isZoneDisabled ? -1 : 0}
         aria-label={t('upload.dropLink')}
-        aria-disabled={disabled}
+        aria-disabled={isZoneDisabled}
         className={clsx(
           'flex flex-col items-center justify-center rounded-xl border-2 border-dashed px-4 py-8 text-center transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/30',
-          disabled
+          isZoneDisabled
             ? 'cursor-not-allowed border-border-muted bg-surface-muted/40 opacity-60'
             : dragOver
               ? 'cursor-pointer border-primary bg-primary-subtle/20'
               : 'cursor-pointer border-border hover:border-primary/50 hover:bg-surface-hover/30',
         )}
-        onDragOver={(e) => { e.preventDefault(); if (!disabled) setDragOver(true); }}
+        onDragOver={(e) => { e.preventDefault(); if (!isZoneDisabled) setDragOver(true); }}
         onDragLeave={() => setDragOver(false)}
         onDrop={handleDrop}
         onClick={handleZoneClick}
@@ -97,7 +106,7 @@ export function ResumeUploadZone({ files, onFilesChange, disabled = false }: Res
           type="file"
           accept={ACCEPT_ATTR}
           multiple
-          disabled={disabled}
+          disabled={isZoneDisabled}
           onChange={handleInputChange}
           className="hidden"
         />
@@ -143,7 +152,7 @@ export function ResumeUploadZone({ files, onFilesChange, disabled = false }: Res
       {files.length > 0 && (
         <div className="flex flex-col gap-1.5">
           <p className="text-xs text-text-muted">
-            {files.length}{' '}
+            {files.length} / {MAX_FILES}{' '}
             {files.length === 1 ? t('upload.fileSelected') : t('upload.filesSelected')}
           </p>
           <div className="max-h-44 overflow-y-auto rounded-lg border border-border">

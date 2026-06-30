@@ -1,0 +1,35 @@
+{
+  "overview": {
+    "title": "نظرة عامة",
+    "subtitle": "عمليات التوظيف الخاصة بك في لمحة",
+    "newJd": "+ توصيف وظيفي جديد",
+    "loadError": "فشل تحميل بيانات لوحة التحكم. يرجى تحديث الصفحة."
+  },
+  "stats": {
+    "totalJobs": "إجمالي الوظائف",
+    "totalCandidates": "إجمالي المرشحين",
+    "activeInterviews": "المقابلات النشطة",
+    "hiredThisMonth": "التعيينات هذا الشهر",
+    "pendingReviews": "المراجعات المعلقة"
+  },
+  "recentActivity": {
+    "title": "النشاط الأخير",
+    "events_one": "{{count}} حدث",
+    "events_other": "{{count}} أحداث",
+    "empty": "لا يوجد نشاط حديث بعد.",
+    "items": {
+      "candidateApplied": "مرشح جديد تقدم لوظيفة مطور React أول",
+      "jdPublished": "نُشر توصيف وظيفي «مدير المنتج»",
+      "interviewScheduled": "تمت جدولة مقابلة مع John Doe",
+      "profileUpdated": "تم تحديث ملف الشركة",
+      "cvReviewed": "تمت مراجعة السيرة الذاتية لوظيفة مصمم UX"
+    }
+  },
+  "quickActions": {
+    "title": "الإجراءات السريعة",
+    "companyProfile": "ملف الشركة",
+    "createJd": "إنشاء توصيف وظيفي",
+    "viewJdList": "قائمة التوصيفات",
+    "candidates": "المرشحون"
+  }
+}

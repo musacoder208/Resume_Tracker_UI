@@ -6,3 +6,4 @@ export { JdDetailSkeleton } from './skeletons/JdDetailSkeleton';
 export { CandidateCardSkeleton } from './skeletons/CandidateCardSkeleton';
 export { CandidateListCardSkeleton } from './skeletons/CandidateListCardSkeleton';
 export { CandidateDetailSkeleton } from './skeletons/CandidateDetailSkeleton';
+export { DashboardSkeleton } from './skeletons/DashboardSkeleton';

@@ -12,10 +12,13 @@
     "saveAll": "Save All Candidates",
     "cancel": "Cancel",
     "processError": "Failed to process resumes. Please try again.",
-    "streaming": "Processing resumes, please wait…",
+    "processSuccess": "Resumes uploaded successfully. Click Refresh to view results.",
+    "refresh": "Refresh",
+    "refreshing": "Refreshing…",
     "saveCandidates": "Save Candidates",
     "saving": "Saving...",
     "saveAndScore": "Save & Start Scoring",
+    "startScoring": "Start Scoring",
     "saveSuccess": "Candidates saved successfully.",
     "saveError": "Failed to save candidates. Please try again.",
     "scoreError": "Failed to start AI scoring. Please try again."
@@ -29,13 +32,15 @@
     "placeholder": "Search job descriptions...",
     "noResults": "No job descriptions found",
     "searchPlaceholder": "Search...",
-    "hint": "Select a job description to enable resume upload"
+    "hint": "Select a job description to enable resume upload",
+    "required": "Please select a job description"
   },
   "upload": {
     "sectionTitle": "Upload Resumes",
     "dropLink": "Click to upload",
     "dropText": "or drag and drop",
-    "hint": "PDF, DOC, DOCX — multiple files supported",
+    "hint": "PDF, DOC, DOCX — max 5 files",
+    "maxFilesError": "Maximum 5 files allowed",
     "supportedFormats": "Supported formats",
     "removeFile": "Remove file",
     "filesSelected": "files selected",

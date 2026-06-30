@@ -4,7 +4,8 @@ import { PageContainer } from '@/components/containers/PageContainer';
 import { Button } from '@/components/ui/button';
 import { toastService } from '@/components/ui/toast/toastService';
 import { useT } from '@/i18n/useT';
-import { ArrowLeftIcon, PencilIcon, UsersIcon, ArrowUpTrayIcon } from '@/icons';
+import { ArrowLeftIcon, PencilIcon, UsersIcon, ArrowUpTrayIcon, EyeIcon } from '@/icons';
+import { JdPreviewModal } from '../jdPreviewModal';
 import {
   useGetMasterDataQuery,
   useStartJdMutation,
@@ -467,6 +468,16 @@ export function AddJdPage(): JSX.Element {
                   </Button>
                 ) : (
                   <>
+                    {jdDetails?.theory != null && (
+                      <Button
+                        variant="secondary"
+                        size="xs"
+                        leadingIcon={<EyeIcon className="h-3.5 w-3.5" />}
+                        onClick={() => { setIsPreviewOpen(true); }}
+                      >
+                        {t('actions.previewJd')}
+                      </Button>
+                    )}
                     <Button
                       variant="primary"
                       size="xs"
@@ -592,6 +603,18 @@ export function AddJdPage(): JSX.Element {
           initialQuestion={editModalQuestion}
           onClose={() => { setEditModalOpen(false); }}
           onSuccess={handleEditSuccess}
+        />
+      )}
+
+      {/* Page-level preview modal — for non-edit detail view */}
+      {isJdCompleted && !isEditMode && jdDetails?.theory != null && jdDetails.jdId != null && (
+        <JdPreviewModal
+          open={isPreviewOpen}
+          theory={jdDetails.theory}
+          jdId={jdDetails.jdId}
+          fieldValues={jdDetails.dataBlob.field_values}
+          onClose={() => { setIsPreviewOpen(false); }}
+          onTheoryUpdated={() => { void refetchJdDetails(); }}
         />
       )}
     </PageContainer>

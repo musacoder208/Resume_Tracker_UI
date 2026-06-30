@@ -187,6 +187,6 @@ const baseQueryWithRetry: BaseQueryFn<string | FetchArgs, unknown, ApiError, Bas
 export const baseApi = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithRetry,
-  tagTypes: [],
+  tagTypes: ['CandidateList'],
   endpoints: () => ({}),
 });

@@ -159,6 +159,7 @@ export interface UploadResumesResult {
 
 export interface UploadResumesRequest {
   positionTitle: string;
+  jdId: number;
   files: File[];
 }
 
@@ -348,6 +349,7 @@ export interface RawCandidateDetailExperience {
 }
 
 export interface RawScoreGroupBreakdown {
+  group_score_id: number;
   group_key: string;
   weight: number;
   group_score: number;
@@ -356,6 +358,7 @@ export interface RawScoreGroupBreakdown {
   missing_required: string[];
   optional_present: string[];
   optional_missing: string[];
+  hr_feedback: { feedback_type_id: number; user_feedback: string } | null;
 }
 
 export interface RawCandidateDetailScore {
@@ -384,9 +387,53 @@ export interface RawCandidateDetailResponse {
   };
 }
 
+// ── Upload Status types ───────────────────────────────────────────────────────
+
+export interface RawUploadStatusCandidate {
+  candidate_id: number;
+  full_name: string;
+  email: string | null;
+  phone: string | null;
+  current_job_title: string | null;
+  upload_status: string;
+  status_code: string | null;
+  reason: string | null;
+  created_date: string;
+}
+
+export interface RawUploadStatusResponse {
+  success: boolean;
+  code: string;
+  message: string;
+  data: {
+    complete: RawUploadStatusCandidate[];
+    duplicate: RawUploadStatusCandidate[];
+    incomplete: RawUploadStatusCandidate[];
+  };
+}
+
+export interface UploadStatusCandidate {
+  candidateId: number;
+  fullName: string;
+  email: string | null;
+  phone: string | null;
+  currentJobTitle: string | null;
+  uploadStatus: 'complete' | 'duplicate' | 'incomplete';
+  statusCode: string | null;
+  reason: string | null;
+  createdDate: string;
+}
+
+export interface UploadStatusResult {
+  complete: UploadStatusCandidate[];
+  duplicate: UploadStatusCandidate[];
+  incomplete: UploadStatusCandidate[];
+}
+
 // ── Candidate Detail Domain Types ─────────────────────────────────────────────
 
 export interface CandidateDetailScoreGroup {
+  groupScoreId: number;
   groupKey: string;
   weight: number;
   groupScore: number;
@@ -395,6 +442,7 @@ export interface CandidateDetailScoreGroup {
   missingRequired: string[];
   optionalPresent: string[];
   optionalMissing: string[];
+  hrFeedback: { feedbackTypeId: number; userFeedback: string } | null;
 }
 
 export interface CandidateDetailScore {
@@ -420,6 +468,7 @@ export interface CandidateDetailExperience {
 }
 
 export interface CandidateDetail {
+  candidateId: number;
   personal: {
     fullName: string;
     email: string;
@@ -448,4 +497,17 @@ export interface CandidateDetail {
   score: CandidateDetailScore | null;
   jdId: number | null;
   jdTitle: string | null;
+}
+
+// ── Save HR Feedback ──────────────────────────────────────────────────────────
+
+export interface SaveHRFeedbackItem {
+  group_score_id: number;
+  feedback_type_id: number;
+  user_feedback: string;
+}
+
+export interface SaveHRFeedbackRequest {
+  candidate_id: number;
+  feedbacks: SaveHRFeedbackItem[];
 }

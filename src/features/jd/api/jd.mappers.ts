@@ -16,6 +16,8 @@ import type {
   RawUpdateTheoryData,
   GenerateWeightageData,
   UpdateWeightageData,
+  RawJdDropdownItem,
+  JdDropdownItem,
 } from '../types/jd.types';
 
 export const mapStartJdResponse = (raw: ApiResponse<RawStartJdData>): StartJdData => ({
@@ -127,3 +129,6 @@ export const mapUpdateWeightageResponse = (raw: ApiResponse<RawUpdateWeightageDa
   weightsUpdated: raw.data?.weights_updated ?? false,
   responseText: raw.data?.response ?? '',
 });
+
+export const mapJdDropdownResponse = (raw: ApiResponse<RawJdDropdownItem[]>): JdDropdownItem[] =>
+  (raw.data ?? []).map((item) => ({ jdId: item.jd_id, label: item.label }));

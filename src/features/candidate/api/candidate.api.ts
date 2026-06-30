@@ -1,7 +1,6 @@
 import { baseApi } from '@/services/baseApi';
 import type {
   UploadResumesRequest,
-  UploadResumesResult,
   SaveCandidatesRequest,
   SaveCandidatesResponse,
   UpdateCandidateScoreRequest,
@@ -9,29 +8,45 @@ import type {
   CandidateListParams,
   CandidateListResult,
   CandidateDetail,
+  UploadStatusResult,
+  SaveHRFeedbackRequest,
 } from '../types/candidate.types';
 import {
-  mapUploadResumesResponse,
+  mapUploadStatusResponse,
   mapCandidateListResponse,
   mapCandidateDetailResponse,
 } from './candidate.mappers';
 
 export const candidateApi = baseApi.injectEndpoints({
   endpoints: (builder) => ({
-    uploadResumes: builder.mutation<UploadResumesResult, UploadResumesRequest>({
-      query: ({ positionTitle, files }) => {
+    uploadResumes: builder.mutation<{ success: boolean }, UploadResumesRequest>({
+      query: ({ positionTitle, jdId, files }) => {
         const formData = new FormData();
         formData.append('position_title', positionTitle);
+        formData.append('jd_id', String(jdId));
         files.forEach((file) => {
           formData.append('files', file);
         });
         return {
-          url: 'candidate/uploadResumes',
+          url: 'candidate/uploadResumesStream',
           method: 'POST',
           body: formData,
+          // uploadResumesStream returns SSE (text/event-stream), not JSON.
+          // Drain the stream body and return a simple success flag so RTK
+          // does not attempt JSON.parse on the event stream.
+          responseHandler: async (response: Response) => {
+            if (response.body != null) {
+              const reader = response.body.getReader();
+              try {
+                while (!(await reader.read()).done) { /* drain */ }
+              } finally {
+                reader.releaseLock();
+              }
+            }
+            return { success: response.ok };
+          },
         };
       },
-      transformResponse: mapUploadResumesResponse,
     }),
 
     saveCandidates: builder.mutation<SaveCandidatesResponse, SaveCandidatesRequest>({
@@ -48,6 +63,7 @@ export const candidateApi = baseApi.injectEndpoints({
         method: 'POST',
         body,
       }),
+      invalidatesTags: ['CandidateList'],
     }),
 
     getCandidateList: builder.query<CandidateListResult, CandidateListParams>({
@@ -56,6 +72,7 @@ export const candidateApi = baseApi.injectEndpoints({
         params,
       }),
       transformResponse: mapCandidateListResponse,
+      providesTags: ['CandidateList'],
     }),
 
     getCandidateDetails: builder.query<CandidateDetail, number>({
@@ -63,6 +80,22 @@ export const candidateApi = baseApi.injectEndpoints({
         url: `candidate/getCandidateDetails/${candidateId}`,
       }),
       transformResponse: mapCandidateDetailResponse,
+    }),
+
+    getUploadStatus: builder.query<UploadStatusResult, number>({
+      query: (jd_id) => ({
+        url: 'candidate/getUploadStatus',
+        params: { jd_id },
+      }),
+      transformResponse: mapUploadStatusResponse,
+    }),
+
+    saveHRFeedback: builder.mutation<{ success: boolean; message: string }, SaveHRFeedbackRequest>({
+      query: (body) => ({
+        url: 'candidate/saveHRFeedback',
+        method: 'POST',
+        body,
+      }),
     }),
   }),
 });
@@ -73,4 +106,6 @@ export const {
   useUpdateCandidateScoreMutation,
   useGetCandidateListQuery,
   useGetCandidateDetailsQuery,
+  useLazyGetUploadStatusQuery,
+  useSaveHRFeedbackMutation,
 } = candidateApi;
