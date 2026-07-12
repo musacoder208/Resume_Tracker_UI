@@ -2,7 +2,8 @@ import { useState, useEffect, type JSX } from 'react';
 import clsx from 'clsx';
 import { useT } from '@/i18n/useT';
 import { Button } from '@/components/ui/button';
-import { InboxArrowDownIcon } from '@/icons';
+import { InboxArrowDownIcon, EyeIcon, XMarkIcon } from '@/icons';
+import { env } from '@/config/env';
 import { CandidateCardSkeleton } from '@/components/ui/loader';
 import type { CandidateTab, UploadStatusCandidate, UploadStatusResult } from '../types/candidate.types';
 
@@ -96,11 +97,13 @@ function StatusCard({
   tab,
   checkboxConfig,
   onToggle,
+  onPreview,
 }: {
   candidate: UploadStatusCandidate;
   tab: CandidateTab;
   checkboxConfig: CheckboxConfig;
   onToggle: () => void;
+  onPreview: () => void;
 }): JSX.Element {
   const initials = candidate.fullName
     .split(' ')
@@ -164,6 +167,16 @@ function StatusCard({
         )}
       </div>
 
+      {/* Preview resume */}
+      <button
+        type="button"
+        onClick={onPreview}
+        className="shrink-0 rounded-lg p-1.5 text-text-muted transition-colors hover:bg-surface-muted hover:text-primary"
+        title="Preview resume"
+      >
+        <EyeIcon className="h-4 w-4" />
+      </button>
+
     </div>
   );
 }
@@ -179,6 +192,7 @@ export function UploadStatusTabs({
 }: UploadStatusTabsProps): JSX.Element {
   const { t } = useT('candidate');
   const [activeTab, setActiveTab] = useState<CandidateTab>('success');
+  const [previewCandidate, setPreviewCandidate] = useState<{ id: number; name: string } | null>(null);
 
   // candidateIds that are checked (managed for editable rows)
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
@@ -250,6 +264,7 @@ export function UploadStatusTabs({
             tab={activeTab}
             checkboxConfig={getCheckboxConfig(c, selectedIds)}
             onToggle={() => { toggleCandidate(c.candidateId); }}
+            onPreview={() => { setPreviewCandidate({ id: c.candidateId, name: c.fullName }); }}
           />
         ))}
       </div>
@@ -317,6 +332,67 @@ export function UploadStatusTabs({
           {isSaving ? t('actions.processing') : t('actions.startScoring')}
         </Button>
       </div>
+
+      {/* Resume preview — right-side drawer */}
+      {previewCandidate != null && (
+        <>
+          {/* Backdrop — subtle blur so page context stays readable */}
+          <div
+            className="fixed inset-0 z-40 bg-black/25 backdrop-blur-[2px]"
+            onClick={() => { setPreviewCandidate(null); }}
+          />
+
+          {/* Drawer — slides in from right */}
+          <div
+            className="fixed inset-y-0 end-0 z-50 flex flex-col"
+            style={{ width: 'min(680px, 95vw)' }}
+          >
+            {/* Accent top bar */}
+            <div className="h-1 w-full shrink-0 bg-primary rounded-ss-2xl" />
+
+            {/* Card wrapper */}
+            <div className="flex min-h-0 flex-1 flex-col bg-surface shadow-[−8px_0_40px_rgba(0,0,0,0.18)]">
+
+              {/* Header */}
+              <div className="flex shrink-0 items-center gap-4 border-b border-border bg-surface-muted/50 px-6 py-4">
+                {/* Initials avatar */}
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-sm font-bold text-primary">
+                  {previewCandidate.name
+                    .split(' ')
+                    .slice(0, 2)
+                    .map((w) => w[0]?.toUpperCase() ?? '')
+                    .join('')}
+                </div>
+
+                {/* Name + label */}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-text leading-tight">
+                    {previewCandidate.name}
+                  </p>
+                  <p className="mt-0.5 text-xs text-text-muted">Resume Preview</p>
+                </div>
+
+                {/* Close */}
+                <button
+                  type="button"
+                  onClick={() => { setPreviewCandidate(null); }}
+                  className="shrink-0 rounded-lg p-2 text-text-muted transition-colors hover:bg-surface-muted hover:text-text"
+                  title="Close"
+                >
+                  <XMarkIcon className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* PDF viewer — fills remaining height */}
+              <iframe
+                src={`${env.API_BASE_URL}/candidate/previewResume/${previewCandidate.id}`}
+                className="min-h-0 flex-1 w-full border-0 bg-[#525659]"
+                title={`Resume — ${previewCandidate.name}`}
+              />
+            </div>
+          </div>
+        </>
+      )}
 
     </div>
   );

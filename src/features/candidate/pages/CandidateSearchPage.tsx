@@ -115,8 +115,7 @@ export function CandidateSearchPage(): JSX.Element {
   }, [searchInput]);
 
   const queryParams = useMemo((): CandidateListParams => {
-    const p: CandidateListParams = { page, page_size: PAGE_SIZE };
-    if (selectedJd !== '') p.jd_id = selectedJd;
+    const p: CandidateListParams = { page, page_size: PAGE_SIZE, jd_id: selectedJd };
     if (debouncedSearch !== '') p.search_text = debouncedSearch;
     if (selectedVerdict !== '') p.verdict = selectedVerdict;
     if (selectedExperience !== '') p.experience_range = selectedExperience;
@@ -129,14 +128,15 @@ export function CandidateSearchPage(): JSX.Element {
   const { data: jdList = [] } = useGetJDDropdownQuery();
   const jdOptions = jdList.map((item) => ({ value: String(item.jdId), label: item.label }));
   const moduleStatuses = moduleId != null ? (masterData?.statuses?.[String(moduleId)] ?? []) : [];
-  const { data, isLoading, isFetching } = useGetCandidateListQuery(queryParams);
+  const { data, isLoading, isFetching } = useGetCandidateListQuery(queryParams, {
+    skip: selectedJd === '',
+  });
 
   const hasActiveFilters =
-    selectedJd !== '' || searchInput !== '' || selectedVerdict !== '' || selectedExperience !== '' || selectedStatus !== '';
+    searchInput !== '' || selectedVerdict !== '' || selectedExperience !== '' || selectedStatus !== '';
 
   function clearFilters(): void {
     setSearchInput('');
-    setSelectedJd('');
     setSelectedVerdict('');
     setSelectedExperience('');
     setSelectedStatus('');
@@ -228,82 +228,88 @@ export function CandidateSearchPage(): JSX.Element {
         </div>
 
         {/* ── Filter toolbar ────────────────────────────────────────────── */}
-        <div className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4 sm:flex-row sm:items-center">
-          {/* Search */}
-          <div className="relative flex-1">
-            <MagnifyingGlassIcon className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
-            <input
-              type="text"
-              value={searchInput}
-              onChange={(e) => { setSearchInput(e.target.value); }}
-              placeholder={t('filters.search')}
-              className="w-full rounded-md border border-border bg-transparent py-1.5 ps-9 pe-3 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary"
-            />
+        <div className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4">
+
+          {/* Row 1 — search + JD */}
+          <div className="flex items-start gap-3">
+            <div className="relative min-w-0 flex-1">
+              <MagnifyingGlassIcon className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(e) => { setSearchInput(e.target.value); }}
+                placeholder={t('filters.search')}
+                className="w-full rounded-md border border-border bg-transparent py-1.5 ps-9 pe-3 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            </div>
+            <div className="flex flex-col gap-1">
+              <select
+                value={selectedJd}
+                onChange={(e) => { handleJdChange(e.target.value); }}
+                className={clsx(
+                  'w-56 rounded-md border bg-surface py-1.5 ps-3 pe-8 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary',
+                  selectedJd === '' ? 'border-error' : 'border-border',
+                )}
+              >
+                <option value="">{t('jdSelection.placeholder')}</option>
+                {jdOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+              {selectedJd === '' && (
+                <p className="text-xs text-error">{t('jdSelection.required')}</p>
+              )}
+            </div>
           </div>
 
-          {/* JD dropdown */}
-          <select
-            value={selectedJd}
-            onChange={(e) => { handleJdChange(e.target.value); }}
-            className="rounded-md border border-border bg-surface py-1.5 ps-3 pe-8 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option value="">{t('filters.allJds')}</option>
-            {jdOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
-
-          {/* Verdict dropdown */}
-          <select
-            value={selectedVerdict}
-            onChange={(e) => { handleVerdictChange(e.target.value); }}
-            className="rounded-md border border-border bg-surface py-1.5 ps-3 pe-8 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option value="">{t('filters.allVerdicts')}</option>
-            <option value="Excellent Match">{t('filters.verdictExcellent')}</option>
-            <option value="Strong Match">{t('filters.verdictStrong')}</option>
-            <option value="Good Match">{t('filters.verdictGood')}</option>
-            <option value="Moderate Match">{t('filters.verdictModerate')}</option>
-            <option value="Weak Match">{t('filters.verdictWeak')}</option>
-          </select>
-
-          {/* Experience dropdown */}
-          <select
-            value={selectedExperience}
-            onChange={(e) => { handleExperienceChange(e.target.value); }}
-            className="rounded-md border border-border bg-surface py-1.5 ps-3 pe-8 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option value="">{t('filters.allExperience')}</option>
-            <option value="0-1">{t('filters.expFresher')}</option>
-            <option value="1-3">{t('filters.expJunior')}</option>
-            <option value="3-5">{t('filters.expMid')}</option>
-            <option value="5-8">{t('filters.expSenior')}</option>
-            <option value="8+">{t('filters.expExpert')}</option>
-          </select>
-
-          {/* Status dropdown */}
-          <select
-            value={selectedStatus}
-            onChange={(e) => { handleStatusChange(e.target.value); }}
-            className="rounded-md border border-border bg-surface py-1.5 ps-3 pe-8 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option value="">{t('filters.allStatuses')}</option>
-            {moduleStatuses.map((s) => (
-              <option key={s.id} value={String(s.id)}>{s.name}</option>
-            ))}
-          </select>
-
-          {/* Clear filters */}
-          {hasActiveFilters && (
-            <Button
-              variant="soft"
-              size="sm"
-              leadingIcon={<XMarkIcon className="h-4 w-4" />}
-              onClick={clearFilters}
+          {/* Row 2 — refinement filters */}
+          <div className="flex flex-wrap items-center gap-3">
+            <select
+              value={selectedVerdict}
+              onChange={(e) => { handleVerdictChange(e.target.value); }}
+              className="rounded-md border border-border bg-surface py-1.5 ps-3 pe-8 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary"
             >
-              {t('filters.clear')}
-            </Button>
-          )}
+              <option value="">{t('filters.allVerdicts')}</option>
+              <option value="Excellent Match">{t('filters.verdictExcellent')}</option>
+              <option value="Strong Match">{t('filters.verdictStrong')}</option>
+              <option value="Good Match">{t('filters.verdictGood')}</option>
+              <option value="Moderate Match">{t('filters.verdictModerate')}</option>
+              <option value="Weak Match">{t('filters.verdictWeak')}</option>
+            </select>
+            <select
+              value={selectedExperience}
+              onChange={(e) => { handleExperienceChange(e.target.value); }}
+              className="rounded-md border border-border bg-surface py-1.5 ps-3 pe-8 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="">{t('filters.allExperience')}</option>
+              <option value="0-1">{t('filters.expFresher')}</option>
+              <option value="1-3">{t('filters.expJunior')}</option>
+              <option value="3-5">{t('filters.expMid')}</option>
+              <option value="5-8">{t('filters.expSenior')}</option>
+              <option value="8+">{t('filters.expExpert')}</option>
+            </select>
+            <select
+              value={selectedStatus}
+              onChange={(e) => { handleStatusChange(e.target.value); }}
+              className="rounded-md border border-border bg-surface py-1.5 ps-3 pe-8 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="">{t('filters.allStatuses')}</option>
+              {moduleStatuses.map((s) => (
+                <option key={s.id} value={String(s.id)}>{s.name}</option>
+              ))}
+            </select>
+            {hasActiveFilters && (
+              <Button
+                variant="soft"
+                size="sm"
+                leadingIcon={<XMarkIcon className="h-4 w-4" />}
+                onClick={clearFilters}
+              >
+                {t('filters.clear')}
+              </Button>
+            )}
+          </div>
+
         </div>
 
         {/* ── Results section ───────────────────────────────────────────── */}

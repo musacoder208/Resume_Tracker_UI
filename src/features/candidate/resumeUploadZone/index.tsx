@@ -18,7 +18,7 @@ const ACCEPTED_MIME_TYPES = [
 
 const ACCEPT_ATTR = '.pdf,.doc,.docx';
 const FORMAT_BADGES = ['PDF', 'DOC', 'DOCX'] as const;
-const MAX_FILES = 5;
+const MAX_FILES = 10;
 
 export function ResumeUploadZone({ files, onFilesChange, onLimitExceeded, disabled = false }: ResumeUploadZoneProps): JSX.Element {
   const { t } = useT('candidate');

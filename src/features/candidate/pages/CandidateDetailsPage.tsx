@@ -23,13 +23,18 @@ import {
   ChevronDownIcon,
   ChevronUpIcon,
   DocumentTextIcon,
-  EyeIcon,
 } from '@/icons';
+import { env } from '@/config/env';
 import {
   useGetCandidateDetailsQuery,
   useUpdateCandidateScoreMutation,
   useSaveHRFeedbackMutation,
+  useGetHRAnswersQuery,
+  useSaveHRAnswersMutation,
+  useUpdateCandidateInfoMutation,
 } from '../api/candidate.api';
+import { toastService } from '@/components/ui/toast/toastService';
+import type { HRAnswerQuestion } from '../types/candidate.types';
 import { useGetMasterDataQuery } from '@/features/jd/api/jd.api';
 import { useGetModuleIdQuery } from '@/features/common/api/common.api';
 import type { MasterDataItem } from '@/features/jd/types/jd.types';
@@ -41,7 +46,7 @@ import type {
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
 
-type DetailTab = 'overview' | 'experience' | 'education' | 'skills' | 'resume' | 'score';
+type DetailTab = 'overview' | 'experience' | 'education' | 'skills' | 'resume' | 'score' | 'hrQuestions';
 
 const AVATAR_PALETTE = [
   'bg-primary/15 text-primary',
@@ -260,17 +265,122 @@ function InfoField({ label, value }: { label: string; value: string }): JSX.Elem
   );
 }
 
-function OverviewTab({ detail, t }: { detail: CandidateDetail; t: (key: string) => string }): JSX.Element {
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const PHONE_RE = /^[0-9+\-\s()]*$/;
+
+function EditableField({ label, value, onChange, error, type = 'text', placeholder }: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  error?: string;
+  type?: string;
+  placeholder?: string;
+}): JSX.Element {
+  return (
+    <div>
+      <p className="mb-1 text-xs font-medium text-text-muted">{label}</p>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => { onChange(e.target.value); }}
+        placeholder={placeholder}
+        className={clsx(
+          'w-full rounded-md border bg-transparent px-3 py-1.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary',
+          error != null && error !== '' ? 'border-error' : 'border-border',
+        )}
+      />
+      {error != null && error !== '' && (
+        <p className="mt-0.5 text-xs text-error">{error}</p>
+      )}
+    </div>
+  );
+}
+
+function OverviewTab({ detail, candidateId, onUpdated, t }: {
+  detail: CandidateDetail;
+  candidateId: number;
+  onUpdated: () => void;
+  t: (key: string) => string;
+}): JSX.Element {
   const noValue = t('details.overview.noValue');
+  const [updateCandidateInfo, { isLoading: isUpdating }] = useUpdateCandidateInfoMutation();
+
+  const [email, setEmail] = useState(detail.personal.email);
+  const [phone, setPhone] = useState(detail.personal.phone);
+  const [experience, setExperience] = useState(String(detail.professional.totalExperience));
+  const [errors, setErrors] = useState<{ email?: string; phone?: string; experience?: string }>({});
+
+  // Sync when detail refreshes
+  useEffect(() => {
+    setEmail(detail.personal.email);
+    setPhone(detail.personal.phone);
+    setExperience(String(detail.professional.totalExperience));
+    setErrors({});
+  }, [detail]);
+
+  function validate(): boolean {
+    const next: typeof errors = {};
+    if (email.trim() !== '' && !EMAIL_RE.test(email.trim())) {
+      next.email = 'Please enter a valid email address.';
+    }
+    if (!PHONE_RE.test(phone)) {
+      next.phone = 'Phone number must contain only digits, spaces, +, -, or ().';
+    }
+    if (experience.trim() !== '' && (isNaN(Number(experience)) || Number(experience) < 0)) {
+      next.experience = 'Please enter a valid number.';
+    }
+    setErrors(next);
+    return Object.keys(next).length === 0;
+  }
+
+  async function handleUpdate(): Promise<void> {
+    if (!validate()) return;
+    await updateCandidateInfo({
+      candidate_id: candidateId,
+      email: email.trim(),
+      phone: phone.trim(),
+      total_experience: Number(experience) || 0,
+    }).unwrap();
+    onUpdated();
+  }
+
   return (
     <div className="flex flex-col gap-5">
+      {/* Personal info */}
       <div className="rounded-xl border border-border bg-surface p-5">
         <h3 className="mb-4 text-xs font-semibold uppercase tracking-wide text-text-muted">
           {t('details.overview.personalInfo')}
         </h3>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <InfoField label={t('details.overview.email')} value={detail.personal.email !== '' ? detail.personal.email : noValue} />
-          <InfoField label={t('details.overview.phone')} value={detail.personal.phone !== '' ? detail.personal.phone : noValue} />
+          <EditableField
+            label={t('details.overview.email')}
+            value={email}
+            onChange={(v) => {
+              setEmail(v);
+              if (v.trim() !== '' && !EMAIL_RE.test(v.trim())) {
+                setErrors((prev) => ({ ...prev, email: 'Email not valid.' }));
+              } else {
+                setErrors((prev) => ({ ...prev, email: undefined }));
+              }
+            }}
+            error={errors.email}
+            placeholder="Enter email"
+          />
+          <EditableField
+            label={t('details.overview.phone')}
+            value={phone}
+            onChange={(v) => {
+              // Block non-phone characters as you type
+              if (PHONE_RE.test(v)) {
+                setPhone(v);
+                setErrors((prev) => ({ ...prev, phone: undefined }));
+              } else {
+                setErrors((prev) => ({ ...prev, phone: 'Phone number must contain only digits, spaces, +, -, or ().' }));
+              }
+            }}
+            error={errors.phone}
+            placeholder="Enter phone"
+          />
           <InfoField label={t('details.overview.location')} value={detail.personal.location !== '' ? detail.personal.location : noValue} />
           <InfoField label={t('details.overview.linkedin')} value={detail.personal.linkedinUrl ?? noValue} />
           <InfoField label={t('details.overview.github')} value={detail.personal.githubUrl ?? noValue} />
@@ -280,6 +390,7 @@ function OverviewTab({ detail, t }: { detail: CandidateDetail; t: (key: string) 
         </div>
       </div>
 
+      {/* Professional info */}
       <div className="rounded-xl border border-border bg-surface p-5">
         <h3 className="mb-4 text-xs font-semibold uppercase tracking-wide text-text-muted">
           {t('details.overview.professionalInfo')}
@@ -287,11 +398,26 @@ function OverviewTab({ detail, t }: { detail: CandidateDetail; t: (key: string) 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <InfoField label={t('details.overview.currentRole')} value={detail.professional.currentJobTitle !== '' ? detail.professional.currentJobTitle : noValue} />
           <InfoField label={t('details.overview.currentCompany')} value={detail.professional.currentCompany !== '' ? detail.professional.currentCompany : noValue} />
-          <InfoField
+          <EditableField
             label={t('details.overview.experience')}
-            value={`${detail.professional.totalExperience} ${t('details.profile.yearsExp')}`}
+            value={experience}
+            onChange={setExperience}
+            error={errors.experience}
+            placeholder="Years of experience"
           />
         </div>
+      </div>
+
+      {/* Update button */}
+      <div className="flex justify-end">
+        <Button
+          variant="primary"
+          size="sm"
+          disabled={isUpdating}
+          onClick={() => { void handleUpdate(); }}
+        >
+          {isUpdating ? 'Updating…' : 'Update Details'}
+        </Button>
       </div>
     </div>
   );
@@ -415,6 +541,18 @@ function SkillsTab({ detail, t }: { detail: CandidateDetail; t: (key: string) =>
 
 // ── Resume Tab ────────────────────────────────────────────────────────────────
 
+async function downloadResume(candidateId: number, fileName: string): Promise<void> {
+  const url = `${env.API_BASE_URL}/candidate/previewResume/${candidateId}`;
+  const response = await fetch(url, { credentials: 'include' });
+  const blob = await response.blob();
+  const blobUrl = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = blobUrl;
+  a.download = fileName !== '' ? fileName : 'resume.pdf';
+  a.click();
+  URL.revokeObjectURL(blobUrl);
+}
+
 function ResumeTab({ detail, t }: { detail: CandidateDetail; t: (key: string) => string }): JSX.Element {
   if (detail.resume.fileName === '') {
     return <EmptyTabState message={t('details.resume.noResume')} />;
@@ -432,14 +570,14 @@ function ResumeTab({ detail, t }: { detail: CandidateDetail; t: (key: string) =>
             <p className="mt-0.5 text-xs text-text-muted">{t('details.resume.pdfDocument')}</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="secondary" size="sm" leadingIcon={<EyeIcon className="h-4 w-4" />}>
-            {t('details.resume.preview')}
-          </Button>
-          <Button variant="primary" size="sm" leadingIcon={<ArrowDownTrayIcon className="h-4 w-4" />}>
-            {t('details.resume.download')}
-          </Button>
-        </div>
+        <Button
+          variant="primary"
+          size="sm"
+          leadingIcon={<ArrowDownTrayIcon className="h-4 w-4" />}
+          onClick={() => { void downloadResume(detail.candidateId, detail.resume.fileName); }}
+        >
+          {t('details.resume.download')}
+        </Button>
       </div>
     </div>
   );
@@ -512,7 +650,7 @@ function ScoreGroupCard({ group, assessment, comment, error, feedbackStatuses, o
       <div className="p-4">
         <div className="grid grid-cols-[minmax(0,1.5fr)_3.5rem_3.5rem_4.5rem_9rem_minmax(0,1fr)_1.5rem] items-start gap-x-2">
           <p className="truncate pt-0.5 text-xs font-semibold text-text">
-            {t(`details.score.groups.${group.groupKey}`)}
+            {group.groupName}
           </p>
           <p className="pt-0.5 text-center text-xs font-medium text-text">{group.weight}%</p>
           <p className={clsx('pt-0.5 text-center text-xs font-semibold', colorClass)}>{fmt(groupScorePct)}%</p>
@@ -726,6 +864,228 @@ function ScoreBreakdownTab({
   );
 }
 
+// ── HR Questions Tab ──────────────────────────────────────────────────────────
+
+// key → string (textbox/textarea/single_select) or string[] (multi_select)
+type HRFormState = Record<string, string | string[]>;
+
+function QuestionRow({ question, formState, onChange }: {
+  question: HRAnswerQuestion;
+  formState: HRFormState;
+  onChange: (key: string, value: string | string[]) => void;
+}): JSX.Element {
+  const inputCls = 'w-full rounded-md border border-border bg-transparent px-3 py-1.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary';
+  const val = formState[question.questionKey];
+
+  return (
+    <div className="grid grid-cols-[minmax(160px,220px)_1fr] items-start gap-4">
+      <label className="pt-1.5 text-sm font-medium text-text leading-snug">
+        {question.questionText}
+        {question.isRequired && <span className="ms-0.5 text-error">*</span>}
+      </label>
+
+      <div>
+        {question.inputType === 'textbox' && (
+          <input
+            type="text"
+            value={(val as string) ?? ''}
+            onChange={(e) => { onChange(question.questionKey, e.target.value); }}
+            className={inputCls}
+          />
+        )}
+
+        {question.inputType === 'textarea' && (
+          <textarea
+            rows={3}
+            value={(val as string) ?? ''}
+            onChange={(e) => { onChange(question.questionKey, e.target.value); }}
+            placeholder="Enter your comments…"
+            className={`${inputCls} resize-none`}
+          />
+        )}
+
+        {question.inputType === 'single_select' && (
+          <select
+            value={(val as string) ?? ''}
+            onChange={(e) => { onChange(question.questionKey, e.target.value); }}
+            className="w-full rounded-md border border-border bg-surface py-1.5 ps-3 pe-8 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            <option value="">Select…</option>
+            {question.options.map((o) => (
+              <option key={o.optionId} value={o.optionValue}>{o.optionLabel}</option>
+            ))}
+          </select>
+        )}
+
+        {question.inputType === 'multi_select' && (
+          <div className="flex flex-wrap gap-3 pt-1">
+            {question.options.map((o) => {
+              const selected = (val as string[] | undefined) ?? [];
+              return (
+                <label key={o.optionId} className="flex cursor-pointer items-center gap-2">
+                  <input
+                    type="checkbox"
+                    checked={selected.includes(o.optionValue)}
+                    onChange={(e) => {
+                      const current = (val as string[] | undefined) ?? [];
+                      const next = e.target.checked
+                        ? [...current, o.optionValue]
+                        : current.filter((v) => v !== o.optionValue);
+                      onChange(question.questionKey, next);
+                    }}
+                    className="h-4 w-4 cursor-pointer rounded accent-[var(--color-primary)]"
+                  />
+                  <span className="text-sm text-text">{o.optionLabel}</span>
+                </label>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function HRQuestionsTab({ candidateId }: { candidateId: number }): JSX.Element {
+  const { data: questions = [], isLoading, refetch } = useGetHRAnswersQuery(candidateId, {
+    refetchOnMountOrArgChange: true,
+  });
+  const [saveHRAnswers, { isLoading: isSaving }] = useSaveHRAnswersMutation();
+  const [formState, setFormState] = useState<HRFormState>({});
+
+  // Pre-fill from API answers whenever data loads
+  useEffect(() => {
+    if (questions.length === 0) return;
+    const initial: HRFormState = {};
+    questions.forEach((q) => {
+      if (q.answerText === null) return;
+      if (q.inputType === 'multi_select') {
+        try { initial[q.questionKey] = JSON.parse(q.answerText) as string[]; }
+        catch { initial[q.questionKey] = []; }
+      } else {
+        initial[q.questionKey] = q.answerText;
+      }
+    });
+    setFormState(initial);
+  }, [questions]);
+
+  function handleChange(key: string, value: string | string[]): void {
+    setFormState((prev) => ({ ...prev, [key]: value }));
+  }
+
+  async function handleSave(): Promise<void> {
+    const answers = questions
+      .filter((q) => {
+        const val = formState[q.questionKey];
+        if (val === undefined) return false;
+        if (Array.isArray(val)) return val.length > 0;
+        return (val as string).trim() !== '';
+      })
+      .map((q) => {
+        const val = formState[q.questionKey];
+        const answerText = Array.isArray(val)
+          ? JSON.stringify(val)
+          : (val as string);
+        return { question_key: q.questionKey, answer_text: answerText };
+      });
+
+    if (answers.length === 0) {
+      toastService.info('Please answer at least one question before saving.');
+      return;
+    }
+
+    await saveHRAnswers({ candidate_id: candidateId, answers }).unwrap();
+    void refetch();
+  }
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col gap-4">
+        {Array.from({ length: 4 }).map((_, i) => (
+          <div key={i} className="h-10 animate-pulse rounded-lg bg-surface-muted" />
+        ))}
+      </div>
+    );
+  }
+
+  if (questions.length === 0) {
+    return <EmptyTabState message="No HR questions configured." />;
+  }
+
+  const sorted = [...questions].sort((a, b) => a.displayOrder - b.displayOrder);
+
+  // Separate the comment question (last by display_order) from the rest
+  const commentQuestion = sorted.findLast((q) => q.questionKey === 'comment');
+  const mainQuestions = sorted.filter((q) => q.questionKey !== 'comment');
+
+  const ungrouped = mainQuestions.filter((q) => q.groupId === null);
+  const groupMap = new Map<number, { groupName: string; questions: HRAnswerQuestion[] }>();
+  mainQuestions
+    .filter((q) => q.groupId !== null)
+    .forEach((q) => {
+      const gid = q.groupId!;
+      if (!groupMap.has(gid)) groupMap.set(gid, { groupName: q.groupName!, questions: [] });
+      groupMap.get(gid)!.questions.push(q);
+    });
+
+  return (
+    <div className="flex flex-col" style={{ maxHeight: 'calc(100vh - 160px)' }}>
+      {/* Scrollable questions area */}
+      <div className="flex flex-col gap-5 overflow-y-auto pe-1 pb-2">
+
+        {/* Ungrouped questions */}
+        {ungrouped.length > 0 && (
+          <div className="rounded-xl border border-border bg-surface p-5">
+            <div className="flex flex-col gap-5 divide-y divide-border-muted">
+              {ungrouped.map((q, i) => (
+                <div key={q.questionId} className={i > 0 ? 'pt-5' : ''}>
+                  <QuestionRow question={q} formState={formState} onChange={handleChange} />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Grouped sections */}
+        {Array.from(groupMap.values()).map((group) => (
+          <div key={group.groupName} className="rounded-xl border border-border bg-surface p-5">
+            <h3 className="mb-5 text-xs font-semibold uppercase tracking-wide text-text-muted">
+              {group.groupName}
+            </h3>
+            <div className="flex flex-col gap-5 divide-y divide-border-muted">
+              {group.questions.map((q, i) => (
+                <div key={q.questionId} className={i > 0 ? 'pt-5' : ''}>
+                  <QuestionRow question={q} formState={formState} onChange={handleChange} />
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+
+        {/* Comment — always last */}
+        {commentQuestion != null && (
+          <div className="rounded-xl border border-border bg-surface p-5">
+            <QuestionRow question={commentQuestion} formState={formState} onChange={handleChange} />
+          </div>
+        )}
+
+      </div>
+
+      {/* Save — pinned at bottom */}
+      <div className="mt-2 flex shrink-0 justify-end border-t border-border pt-4">
+        <Button
+          variant="primary"
+          size="sm"
+          disabled={isSaving}
+          onClick={() => { void handleSave(); }}
+        >
+          {isSaving ? 'Saving…' : 'Save'}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 // ── Empty state ───────────────────────────────────────────────────────────────
 
 function EmptyTabState({ message }: { message: string }): JSX.Element {
@@ -785,7 +1145,7 @@ function ScoreSummaryCard({ score, t }: { score: CandidateDetailScore; t: (key: 
             return (
               <div key={group.groupKey} className="grid grid-cols-[7rem_1fr_3rem] items-center gap-3">
                 <p className="truncate text-xs text-text-muted">
-                  {t(`details.score.groups.${group.groupKey}`)}
+                  {group.groupName}
                 </p>
                 <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-muted">
                   <div
@@ -865,12 +1225,13 @@ export function CandidateDetailsPage(): JSX.Element {
   }
 
   const tabs: Array<{ key: DetailTab; label: string }> = [
-    { key: 'overview', label: t('details.tabs.overview') },
-    { key: 'experience', label: t('details.tabs.experience') },
-    { key: 'education', label: t('details.tabs.education') },
-    { key: 'skills', label: t('details.tabs.skills') },
-    { key: 'resume', label: t('details.tabs.resume') },
-    { key: 'score', label: t('details.tabs.aiScore') },
+    { key: 'overview',     label: t('details.tabs.overview') },
+    { key: 'hrQuestions',  label: t('details.tabs.hrQuestions') },
+    { key: 'experience',   label: t('details.tabs.experience') },
+    { key: 'education',    label: t('details.tabs.education') },
+    { key: 'skills',       label: t('details.tabs.skills') },
+    { key: 'resume',       label: t('details.tabs.resume') },
+    { key: 'score',        label: t('details.tabs.aiScore') },
   ];
 
   return (
@@ -891,6 +1252,7 @@ export function CandidateDetailsPage(): JSX.Element {
               variant="secondary"
               size="xs"
               leadingIcon={<ArrowDownTrayIcon className="h-3.5 w-3.5" />}
+              onClick={() => { void downloadResume(detail.candidateId, detail.resume.fileName); }}
             >
               {t('details.header.downloadResume')}
             </Button>
@@ -944,12 +1306,13 @@ export function CandidateDetailsPage(): JSX.Element {
             </div>
 
             {/* Tab content */}
-            {activeTab === 'overview' && <OverviewTab detail={detail} t={t} />}
+            {activeTab === 'overview' && <OverviewTab detail={detail} candidateId={candidateId} onUpdated={refetch} t={t} />}
             {activeTab === 'experience' && <ExperienceTab detail={detail} t={t} />}
             {activeTab === 'education' && <EducationTab detail={detail} t={t} />}
             {activeTab === 'skills' && <SkillsTab detail={detail} t={t} />}
             {activeTab === 'resume' && <ResumeTab detail={detail} t={t} />}
             {activeTab === 'score' && <ScoreBreakdownTab detail={detail} t={t} onSaved={refetch} />}
+            {activeTab === 'hrQuestions' && <HRQuestionsTab candidateId={candidateId} />}
           </div>
         </div>
       </div>

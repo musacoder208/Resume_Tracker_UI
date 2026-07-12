@@ -16,6 +16,8 @@ import type {
   CandidateDetail,
   RawUploadStatusResponse,
   UploadStatusResult,
+  RawHRAnswersResponse,
+  HRAnswerQuestion,
 } from '../types/candidate.types';
 
 const mapEducation = (raw: RawEducationEntry): CandidateEducation => ({
@@ -191,6 +193,7 @@ export const mapCandidateDetailResponse = (raw: RawCandidateDetailResponse): Can
     groupBreakdown: (raw.data.score.group_breakdown ?? []).map((g) => ({
       groupScoreId: g.group_score_id,
       groupKey: g.group_key,
+      groupName: g.group_name ?? g.group_key,
       weight: g.weight,
       groupScore: g.group_score,
       finalContribution: g.final_contribution ?? 0,
@@ -206,3 +209,21 @@ export const mapCandidateDetailResponse = (raw: RawCandidateDetailResponse): Can
   jdId: raw.data.meta?.jd_id ?? null,
   jdTitle: null,
 });
+
+export const mapHRAnswersResponse = (raw: RawHRAnswersResponse): HRAnswerQuestion[] =>
+  raw.data.map((q) => ({
+    questionId: q.question_id,
+    questionKey: q.question_key,
+    questionText: q.question_text,
+    inputType: q.input_type as HRAnswerQuestion['inputType'],
+    isRequired: q.is_required,
+    displayOrder: q.display_order,
+    groupId: q.group?.group_id ?? null,
+    groupName: q.group?.group_name ?? null,
+    options: q.options.map((o) => ({
+      optionId: o.option_id,
+      optionLabel: o.option_label,
+      optionValue: o.option_value,
+    })),
+    answerText: q.answer_text,
+  }));

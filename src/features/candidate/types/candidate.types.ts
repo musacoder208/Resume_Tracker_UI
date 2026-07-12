@@ -351,6 +351,7 @@ export interface RawCandidateDetailExperience {
 export interface RawScoreGroupBreakdown {
   group_score_id: number;
   group_key: string;
+  group_name: string;
   weight: number;
   group_score: number;
   final_contribution: number;
@@ -435,6 +436,7 @@ export interface UploadStatusResult {
 export interface CandidateDetailScoreGroup {
   groupScoreId: number;
   groupKey: string;
+  groupName: string;
   weight: number;
   groupScore: number;
   finalContribution: number;
@@ -497,6 +499,73 @@ export interface CandidateDetail {
   score: CandidateDetailScore | null;
   jdId: number | null;
   jdTitle: string | null;
+}
+
+// ── HR Questions ──────────────────────────────────────────────────────────────
+
+export interface RawHRQuestionOption {
+  option_id: number;
+  option_label: string;
+  option_value: string;
+}
+
+export interface RawHRAnswerItem {
+  question_id: number;
+  question_key: string;
+  question_text: string;
+  input_type: string;
+  is_required: boolean;
+  display_order: number;
+  group: { group_id: number; group_name: string } | null;
+  options: RawHRQuestionOption[];
+  answer_text: string | null;
+}
+
+export interface RawHRAnswersResponse {
+  success: boolean;
+  data: RawHRAnswerItem[];
+}
+
+export interface HRQuestionOption {
+  optionId: number;
+  optionLabel: string;
+  optionValue: string;
+}
+
+export type HRInputType = 'textbox' | 'textarea' | 'single_select' | 'multi_select';
+
+export interface HRAnswerQuestion {
+  questionId: number;
+  questionKey: string;
+  questionText: string;
+  inputType: HRInputType;
+  isRequired: boolean;
+  displayOrder: number;
+  groupId: number | null;
+  groupName: string | null;
+  options: HRQuestionOption[];
+  answerText: string | null;
+}
+
+// ── Save HR Answers ───────────────────────────────────────────────────────────
+
+export interface SaveHRAnswerItem {
+  question_key: string;
+  answer_text: string;
+}
+
+export interface SaveHRAnswersRequest {
+  candidate_id: number;
+  answers: SaveHRAnswerItem[];
+}
+
+// ── Update Candidate Info ─────────────────────────────────────────────────────
+
+export interface UpdateCandidateInfoRequest {
+  candidate_id: number;
+  email: string;
+  phone: string;
+  total_experience: number;
 }
 
 // ── Save HR Feedback ──────────────────────────────────────────────────────────

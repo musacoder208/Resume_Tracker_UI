@@ -191,10 +191,22 @@ export interface WeightageCapability {
   description: string;
 }
 
+export interface WeightageConstraint {
+  id: string;
+  type: 'hard_filter' | 'preference';
+  value: string | number;
+  impact: number;
+  reason: string;
+  source: string;
+  target: string;
+  operator: string;
+  isSelected: boolean;
+}
+
 export interface WeightageJson {
   role_title: string;
   capabilities: Record<string, WeightageCapability>;
-  constraints: unknown[];
+  constraints: WeightageConstraint[];
   total_weight: number;
   generated_from: string[];
 }
@@ -330,6 +342,17 @@ export interface GenerateWeightageBody {
 }
 
 export interface GenerateWeightageData {
+  message: string;
+}
+
+// ── Update Weightage Constraints ──────────────────────────────────────────────
+
+export interface UpdateConstraintsBody {
+  jd_id: number;
+  constraints: WeightageConstraint[];
+}
+
+export interface UpdateConstraintsData {
   message: string;
 }
 

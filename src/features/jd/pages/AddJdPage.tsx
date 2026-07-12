@@ -482,6 +482,7 @@ export function AddJdPage(): JSX.Element {
                       variant="primary"
                       size="xs"
                       leadingIcon={<PencilIcon className="h-3.5 w-3.5" />}
+                      disabled={jdDetails?.statusCode?.toLowerCase() === 'ready'}
                       onClick={() => { setIsEditMode(true); }}
                     >
                       {t('actions.editJd')}

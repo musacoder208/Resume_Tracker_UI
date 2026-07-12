@@ -17,6 +17,8 @@ import type {
   GenerateWeightageData,
   UpdateWeightageBody,
   UpdateWeightageData,
+  UpdateConstraintsBody,
+  UpdateConstraintsData,
   JdDropdownItem,
 } from '../types/jd.types';
 import {
@@ -30,6 +32,7 @@ import {
   mapUpdateTheoryResponse,
   mapGenerateWeightageResponse,
   mapUpdateWeightageResponse,
+  mapUpdateConstraintsResponse,
   mapJdDropdownResponse,
 } from './jd.mappers';
 
@@ -133,6 +136,15 @@ export const jdApi = baseApi.injectEndpoints({
       extraOptions: { skipRetry: true, timeout: 60000 },
     }),
 
+    updateWeightageConstraints: builder.mutation<UpdateConstraintsData, UpdateConstraintsBody>({
+      query: (body) => ({
+        url: 'jd/updateWeightageConstraints',
+        method: 'PUT',
+        body,
+      }),
+      transformResponse: mapUpdateConstraintsResponse,
+    }),
+
     getJDDropdown: builder.query<JdDropdownItem[], void>({
       query: () => ({
         url: 'jd/getJDDropdown',
@@ -155,5 +167,6 @@ export const {
   useUpdateTheoryMutation,
   useGenerateWeightageMutation,
   useUpdateWeightageMutation,
+  useUpdateWeightageConstraintsMutation,
   useGetJDDropdownQuery,
 } = jdApi;

@@ -1,9 +1,9 @@
-import { useState, useEffect, useMemo, type JSX } from 'react';
+import { useState, useEffect, useMemo, useRef, type JSX } from 'react';
 import { BaseModal } from '@/components/modals/BaseModal';
 import { useT } from '@/i18n/useT';
 import { toastService } from '@/components/ui/toast/toastService';
-import { useUpdateWeightageMutation } from '../api/jd.api';
-import type { WeightageJson, WeightageCapability, FieldValues } from '../types/jd.types';
+import { useUpdateWeightageMutation, useUpdateWeightageConstraintsMutation } from '../api/jd.api';
+import type { WeightageJson, WeightageCapability, WeightageConstraint, FieldValues } from '../types/jd.types';
 
 interface WeightageModalProps {
   open: boolean;
@@ -61,6 +61,39 @@ function SkillTable({
   );
 }
 
+function ConstraintCard({
+  constraint,
+  checked,
+  onChange,
+}: {
+  constraint: WeightageConstraint;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}): JSX.Element {
+  const isHard = constraint.type === 'hard_filter';
+  return (
+    <div className={`inline-flex items-center gap-2 rounded-lg border px-3 py-2 transition-colors ${
+      checked ? 'border-border bg-surface' : 'border-border/40 bg-surface-muted/40 opacity-55'
+    }`}>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => { onChange(e.target.checked); }}
+        className="h-3.5 w-3.5 shrink-0 cursor-pointer accent-primary"
+      />
+      <span className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${
+        isHard ? 'bg-error/10 text-error' : 'bg-info/10 text-info'
+      }`}>
+        {isHard ? 'Hard Filter' : 'Preference'}
+      </span>
+      <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-semibold text-primary">
+        Impact: {constraint.impact > 0 ? `+${constraint.impact}` : constraint.impact}
+      </span>
+      <p className="text-xs text-text">{constraint.reason}</p>
+    </div>
+  );
+}
+
 export function WeightageModal({
   open,
   weightageJson,
@@ -75,6 +108,7 @@ export function WeightageModal({
   const [aiError, setAiError] = useState('');
   const [weightError, setWeightError] = useState('');
   const [updateWeightage, { isLoading: isUpdating }] = useUpdateWeightageMutation();
+  const [updateConstraints, { isLoading: isUpdatingConstraints }] = useUpdateWeightageConstraintsMutation();
 
   const [adjustedWeights, setAdjustedWeights] = useState<Record<string, number>>(() =>
     Object.fromEntries(
@@ -82,14 +116,24 @@ export function WeightageModal({
     )
   );
 
+  const buildInitialChecked = (): Record<string, boolean> =>
+    Object.fromEntries((weightageJson.constraints ?? []).map((c) => [c.id, c.isSelected]));
+
+  const initialCheckedRef = useRef<Record<string, boolean>>(buildInitialChecked());
+  const [checkedConstraints, setCheckedConstraints] = useState<Record<string, boolean>>(buildInitialChecked);
+
   useEffect(() => {
     setAdjustedWeights(
       Object.fromEntries(
         Object.entries(weightageJson.capabilities).map(([k, v]) => [k, v.weight])
       )
     );
+    const initial = buildInitialChecked();
+    initialCheckedRef.current = initial;
+    setCheckedConstraints(initial);
     setWeightError('');
     setAiError('');
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [weightageJson]);
 
   const totalWeight = useMemo(
@@ -166,6 +210,21 @@ export function WeightageModal({
     }
   }
 
+  async function handleUpdateConstraints(): Promise<void> {
+    const payload = (weightageJson.constraints ?? []).map((c) => ({
+      ...c,
+      isSelected: checkedConstraints[c.id] ?? c.isSelected,
+    }));
+    try {
+      const data = await updateConstraints({ jd_id: jdId, constraints: payload }).unwrap();
+      if (data.message) toastService.success(data.message);
+      onClose();
+      onWeightageUpdated();
+    } catch {
+      // error handled by apiToastMiddleware
+    }
+  }
+
   function toggle(key: string): void {
     setExpanded((prev) => {
       const next = new Set(prev);
@@ -178,123 +237,157 @@ export function WeightageModal({
     .map(([key, data]) => ({ key, label: toLabel(key), data }))
     .sort((a, b) => b.data.weight - a.data.weight);
 
+  const currentConstraints = weightageJson.constraints ?? [];
+  const hasConstraints = currentConstraints.length > 0;
+  // True only when the user has manually changed at least one checkbox from its initial state
+  const hasConstraintChanges = hasConstraints && Object.keys(initialCheckedRef.current).some(
+    (id) => checkedConstraints[id] !== initialCheckedRef.current[id]
+  );
+
   return (
     <BaseModal open={open} title={t('weightage.modalTitle')} onClose={onClose} size="2xl" panelClassName="!max-w-5xl">
-      <div className="flex flex-col gap-4">
-        {/* Capabilities table */}
-        <div className="max-h-[50vh] overflow-y-auto rounded-lg border border-border">
-          {/* Table header */}
-          <div className="sticky top-0 grid grid-cols-[2rem_1fr_9rem_7rem] bg-surface-muted px-3 py-2 text-xs font-semibold text-text-muted">
-            <span />
-            <span>{t('weightage.capability')}</span>
-            <span>{t('weightage.weight')}</span>
-            <span className="text-end">{t('weightage.adjustWeight')}</span>
-          </div>
+      <div className="flex flex-col gap-0">
 
-          {rows.map(({ key, label, data }) => {
-            const isOpen = expanded.has(key);
-            const originalWeight = data.weight;
-            const adjustedWeight = adjustedWeights[key] ?? originalWeight;
+        {/* ── Scrollable content ── */}
+        <div className="flex max-h-[62vh] flex-col gap-4 overflow-y-auto pb-4 pr-1">
 
-            return (
-              <div key={key} className="border-t border-border">
-                <div className="grid w-full grid-cols-[2rem_1fr_9rem_7rem] items-center px-3 py-3">
-                  {/* Expand toggle */}
-                  <button
-                    type="button"
-                    onClick={() => { toggle(key); }}
-                    className="text-[10px] text-text-muted text-start"
-                  >
-                    {isOpen ? '▼' : '▶'}
-                  </button>
+          {/* Capabilities table */}
+          <div className="rounded-lg border border-border">
+            {/* Table header */}
+            <div className="sticky top-0 grid grid-cols-[2rem_1fr_9rem_7rem] bg-surface-muted px-3 py-2 text-xs font-semibold text-text-muted">
+              <span />
+              <span>{t('weightage.capability')}</span>
+              <span>{t('weightage.weight')}</span>
+              <span className="text-end">{t('weightage.adjustWeight')}</span>
+            </div>
 
-                  {/* Capability name */}
-                  <button
-                    type="button"
-                    onClick={() => { toggle(key); }}
-                    className="text-xs font-medium text-text text-start transition-colors hover:text-primary"
-                  >
-                    {label}
-                  </button>
+            {rows.map(({ key, label, data }) => {
+              const isOpen = expanded.has(key);
+              const originalWeight = data.weight;
+              const adjustedWeight = adjustedWeights[key] ?? originalWeight;
 
-                  {/* Weight bar — always shows original weight, never changes */}
-                  <div className="flex items-center gap-2 pe-1">
-                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-border">
-                      <div
-                        className="h-full rounded-full bg-primary"
-                        style={{ width: `${Math.min(originalWeight, 100)}%` }}
+              return (
+                <div key={key} className="border-t border-border">
+                  <div className="grid w-full grid-cols-[2rem_1fr_9rem_7rem] items-center px-3 py-3">
+                    <button
+                      type="button"
+                      onClick={() => { toggle(key); }}
+                      className="text-[10px] text-text-muted text-start"
+                    >
+                      {isOpen ? '▼' : '▶'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => { toggle(key); }}
+                      className="text-xs font-medium text-text text-start transition-colors hover:text-primary"
+                    >
+                      {label}
+                    </button>
+                    <div className="flex items-center gap-2 pe-1">
+                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-border">
+                        <div
+                          className="h-full rounded-full bg-primary"
+                          style={{ width: `${Math.min(originalWeight, 100)}%` }}
+                        />
+                      </div>
+                      <span className="w-8 text-end text-xs font-semibold text-text">{originalWeight}</span>
+                    </div>
+                    <div className="flex justify-end">
+                      <input
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="any"
+                        value={adjustedWeight}
+                        onChange={(e) => { handleWeightChange(key, e.target.value); }}
+                        className="w-16 rounded border border-border bg-surface px-2 py-1 text-end text-xs text-text focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
                       />
                     </div>
-                    <span className="w-8 text-end text-xs font-semibold text-text">{originalWeight}</span>
                   </div>
 
-                  {/* Adjust weight input — editable, independent of original */}
-                  <div className="flex justify-end">
-                    <input
-                      type="number"
-                      min="0"
-                      max="100"
-                      step="any"
-                      value={adjustedWeight}
-                      onChange={(e) => { handleWeightChange(key, e.target.value); }}
-                      className="w-16 rounded border border-border bg-surface px-2 py-1 text-end text-xs text-text focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-                    />
-                  </div>
+                  {isOpen && (
+                    <div className="flex flex-col gap-4 border-t border-border bg-surface-muted/30 px-5 py-4">
+                      <SkillTable
+                        title={t('weightage.requiredSkills')}
+                        skills={data.required}
+                        skillLabel={t('weightage.skill')}
+                      />
+                      <SkillTable
+                        title={t('weightage.optionalSkills')}
+                        skills={data.optional}
+                        skillLabel={t('weightage.skill')}
+                        emptyText={t('weightage.noOptionalSkills')}
+                      />
+                    </div>
+                  )}
                 </div>
+              );
+            })}
 
-                {isOpen && (
-                  <div className="flex flex-col gap-4 border-t border-border bg-surface-muted/30 px-5 py-4">
-                    <SkillTable
-                      title={t('weightage.requiredSkills')}
-                      skills={data.required}
-                      skillLabel={t('weightage.skill')}
-                    />
-                    <SkillTable
-                      title={t('weightage.optionalSkills')}
-                      skills={data.optional}
-                      skillLabel={t('weightage.skill')}
-                      emptyText={t('weightage.noOptionalSkills')}
-                    />
-                  </div>
-                )}
+            {/* Total weight footer */}
+            <div className="grid grid-cols-[2rem_1fr_9rem_7rem] items-center border-t-2 border-border bg-surface-muted px-3 py-2">
+              <span />
+              <span className="text-xs font-semibold text-text">{t('weightage.totalWeight')}</span>
+              <span />
+              <div className="flex justify-end">
+                <span className={`text-sm font-bold ${totalWeight === 100 ? 'text-success' : 'text-error'}`}>
+                  {Number(totalWeight.toFixed(2))}
+                </span>
               </div>
-            );
-          })}
-
-          {/* Total weight footer */}
-          <div className="sticky bottom-0 grid grid-cols-[2rem_1fr_9rem_7rem] items-center border-t-2 border-border bg-surface-muted px-3 py-2">
-            <span />
-            <span className="text-xs font-semibold text-text">{t('weightage.totalWeight')}</span>
-            <span />
-            <div className="flex justify-end">
-              <span className={`text-sm font-bold ${totalWeight === 100 ? 'text-success' : 'text-error'}`}>
-                {Number(totalWeight.toFixed(2))}
-              </span>
             </div>
           </div>
+
+          {/* Constraints section */}
+          {hasConstraints && (
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-2">
+                <div className="h-px flex-1 bg-border" />
+                <p className="shrink-0 text-xs font-semibold uppercase tracking-wide text-text-muted">
+                  Constraints
+                </p>
+                <div className="h-px flex-1 bg-border" />
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {currentConstraints.map((c) => (
+                  <ConstraintCard
+                    key={c.id}
+                    constraint={c}
+                    checked={checkedConstraints[c.id] ?? true}
+                    onChange={(val) => { setCheckedConstraints((prev) => ({ ...prev, [c.id]: val })); }}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
-        {/* Validation error */}
-        {weightError !== '' && (
-          <p className="text-xs font-bold text-error">{weightError}</p>
-        )}
-
-        {/* AI response error */}
-        {aiError !== '' && (
-          <p className="text-xs font-bold text-error">{aiError}</p>
-        )}
-
-        {/* Validate with AI button */}
-        <div className="flex justify-end">
-          <button
-            type="button"
-            disabled={!hasChanges || isUpdating}
-            onClick={() => { void handleSubmit(); }}
-            className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            {isUpdating ? t('loading.submitting') : t('weightage.validateWithAi')}
-          </button>
+        {/* ── Fixed footer — always visible ── */}
+        <div className="flex flex-col gap-2 border-t border-border pt-3">
+          {(weightError !== '' || aiError !== '') && (
+            <p className="text-xs font-bold text-error">{weightError !== '' ? weightError : aiError}</p>
+          )}
+          <div className="flex items-center justify-end gap-2">
+            {hasConstraintChanges && (
+              <button
+                type="button"
+                disabled={isUpdatingConstraints}
+                onClick={() => { void handleUpdateConstraints(); }}
+                className="rounded-md border border-primary px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                {isUpdatingConstraints ? t('loading.submitting') : 'Update Constraint'}
+              </button>
+            )}
+            <button
+              type="button"
+              disabled={!hasChanges || isUpdating}
+              onClick={() => { void handleSubmit(); }}
+              className="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              {isUpdating ? t('loading.submitting') : t('weightage.validateWithAi')}
+            </button>
+          </div>
         </div>
+      </div>
 
         {/* --- Textarea + send icon (hidden — kept for future use) ---
         <div className="flex flex-col gap-1.5">
@@ -323,7 +416,6 @@ export function WeightageModal({
           )}
         </div>
         --- end hidden section --- */}
-      </div>
     </BaseModal>
   );
 }

@@ -54,6 +54,10 @@
       "dateIsAfter": "التاريخ بعد"
     }
   },
+  "serverCodes": {
+    "HR_ANSWERS_SAVED": "تم حفظ الإجابات بنجاح.",
+    "CANDIDATE_DETAILS_UPDATED": "تم تحديث بيانات المرشح بنجاح."
+  },
   "errors": {
     "sessionExpired": "انتهت الجلسة",
     "sessionExpiredDesc": "يرجى تسجيل الدخول مجدداً.",

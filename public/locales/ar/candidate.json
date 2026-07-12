@@ -39,8 +39,8 @@
     "sectionTitle": "رفع السير الذاتية",
     "dropLink": "انقر للرفع",
     "dropText": "أو اسحب وأفلت",
-    "hint": "PDF, DOC, DOCX — حتى 5 ملفات",
-    "maxFilesError": "الحد الأقصى 5 ملفات فقط",
+    "hint": "PDF, DOC, DOCX — حتى 10 ملفات",
+    "maxFilesError": "الحد الأقصى 10 ملفات فقط",
     "supportedFormats": "الصيغ المدعومة",
     "removeFile": "حذف الملف",
     "filesSelected": "ملفات محددة",
@@ -155,7 +155,8 @@
       "education": "التعليم",
       "skills": "المهارات",
       "resume": "السيرة الذاتية",
-      "aiScore": "تقييم الذكاء الاصطناعي"
+      "aiScore": "تقييم الذكاء الاصطناعي",
+      "hrQuestions": "تقييم الموارد البشرية"
     },
     "header": {
       "backToCandidates": "رجوع",

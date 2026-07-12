@@ -1,10 +1,11 @@
-import { useState, type JSX } from 'react';
+import type { JSX } from 'react';
 import { BaseModal } from '@/components/modals/BaseModal';
 import { MarkdownRenderer } from '@/components/ui/MarkdownRenderer/MarkdownRenderer';
-import { toastService } from '@/components/ui/toast/toastService';
-import { PaperAirplaneIcon } from '@/icons';
+// import { toastService } from '@/components/ui/toast/toastService';
+// import { PaperAirplaneIcon } from '@/icons';
 import { useT } from '@/i18n/useT';
-import { useUpdateTheoryMutation } from '../api/jd.api';
+// import { useState } from 'react';
+// import { useUpdateTheoryMutation } from '../api/jd.api';
 import type { FieldValues } from '../types/jd.types';
 
 interface JdPreviewModalProps {
@@ -19,34 +20,34 @@ interface JdPreviewModalProps {
 export function JdPreviewModal({
   open,
   theory,
-  jdId,
-  fieldValues,
+  jdId: _jdId,
+  fieldValues: _fieldValues,
   onClose,
-  onTheoryUpdated,
+  onTheoryUpdated: _onTheoryUpdated,
 }: JdPreviewModalProps): JSX.Element {
   const { t } = useT('jd');
-  const [userText, setUserText] = useState('');
-  const [updateTheory, { isLoading }] = useUpdateTheoryMutation();
+  // const [userText, setUserText] = useState('');
+  // const [updateTheory, { isLoading }] = useUpdateTheoryMutation();
 
-  async function handleSubmit(): Promise<void> {
-    if (userText.trim() === '') return;
-    try {
-      const data = await updateTheory({
-        jd_id: jdId,
-        edit_command: userText,
-        field_values: fieldValues,
-        rendered_text: theory,
-      }).unwrap();
-      if (data.message) toastService.success(data.message);
-      if (data.success) {
-        setUserText('');
-        onClose();
-        onTheoryUpdated();
-      }
-    } catch {
-      // error toast handled by apiToastMiddleware
-    }
-  }
+  // async function handleSubmit(): Promise<void> {
+  //   if (userText.trim() === '') return;
+  //   try {
+  //     const data = await updateTheory({
+  //       jd_id: _jdId,
+  //       edit_command: userText,
+  //       field_values: _fieldValues,
+  //       rendered_text: theory,
+  //     }).unwrap();
+  //     if (data.message) toastService.success(data.message);
+  //     if (data.success) {
+  //       setUserText('');
+  //       onClose();
+  //       _onTheoryUpdated();
+  //     }
+  //   } catch {
+  //     // error toast handled by apiToastMiddleware
+  //   }
+  // }
 
   return (
     <BaseModal

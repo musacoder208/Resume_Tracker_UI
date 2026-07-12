@@ -38,8 +38,9 @@ const QUICK_ACTIONS = [
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function formatRelativeTime(isoDate: string): string {
-  const diffMs  = Date.now() - new Date(isoDate).getTime();
+  const diffMs  = Math.max(0, Date.now() - new Date(isoDate).getTime());
   const diffMin = Math.floor(diffMs / 60_000);
+  if (diffMin < 1)   return 'just now';
   if (diffMin < 60)  return `${diffMin}m ago`;
   const diffHr = Math.floor(diffMin / 60);
   if (diffHr  < 24)  return `${diffHr}h ago`;

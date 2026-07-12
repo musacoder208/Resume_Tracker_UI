@@ -10,11 +10,16 @@ import type {
   CandidateDetail,
   UploadStatusResult,
   SaveHRFeedbackRequest,
+  HRAnswerQuestion,
+  RawHRAnswersResponse,
+  SaveHRAnswersRequest,
+  UpdateCandidateInfoRequest,
 } from '../types/candidate.types';
 import {
   mapUploadStatusResponse,
   mapCandidateListResponse,
   mapCandidateDetailResponse,
+  mapHRAnswersResponse,
 } from './candidate.mappers';
 
 export const candidateApi = baseApi.injectEndpoints({
@@ -97,6 +102,30 @@ export const candidateApi = baseApi.injectEndpoints({
         body,
       }),
     }),
+
+    getHRAnswers: builder.query<HRAnswerQuestion[], number>({
+      query: (candidateId) => ({
+        url: 'candidate/getHRAnswers',
+        params: { candidate_id: candidateId },
+      }),
+      transformResponse: (raw: RawHRAnswersResponse) => mapHRAnswersResponse(raw),
+    }),
+
+    updateCandidateInfo: builder.mutation<{ success: boolean; code: string; message: string }, UpdateCandidateInfoRequest>({
+      query: (body) => ({
+        url: 'candidate/updateCandidateDetails',
+        method: 'PUT',
+        body,
+      }),
+    }),
+
+    saveHRAnswers: builder.mutation<{ success: boolean }, SaveHRAnswersRequest>({
+      query: (body) => ({
+        url: 'candidate/saveHRAnswers',
+        method: 'POST',
+        body,
+      }),
+    }),
   }),
 });
 
@@ -108,4 +137,7 @@ export const {
   useGetCandidateDetailsQuery,
   useLazyGetUploadStatusQuery,
   useSaveHRFeedbackMutation,
+  useGetHRAnswersQuery,
+  useSaveHRAnswersMutation,
+  useUpdateCandidateInfoMutation,
 } = candidateApi;

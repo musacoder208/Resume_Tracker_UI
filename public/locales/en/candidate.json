@@ -39,8 +39,8 @@
     "sectionTitle": "Upload Resumes",
     "dropLink": "Click to upload",
     "dropText": "or drag and drop",
-    "hint": "PDF, DOC, DOCX — max 5 files",
-    "maxFilesError": "Maximum 5 files allowed",
+    "hint": "PDF, DOC, DOCX — max 10 files",
+    "maxFilesError": "Maximum 10 files allowed",
     "supportedFormats": "Supported formats",
     "removeFile": "Remove file",
     "filesSelected": "files selected",
@@ -155,7 +155,8 @@
       "education": "Education",
       "skills": "Skills",
       "resume": "Resume",
-      "aiScore": "AI Score"
+      "aiScore": "AI Score",
+      "hrQuestions": "HR Evaluation"
     },
     "header": {
       "backToCandidates": "Back",
