@@ -10,6 +10,7 @@
 
 export {
   // Navigation
+  ArrowLeftIcon,
   Bars3Icon,
   ChevronDownIcon,
   ChevronLeftIcon,
@@ -35,6 +36,7 @@ export {
 
   // Forms / Selection
   CheckIcon,
+  ArrowUpTrayIcon,
 
   // General
   HomeIcon,
@@ -43,6 +45,7 @@ export {
   ChartBarIcon,
   TableCellsIcon,
   UserIcon,
+  UsersIcon,
   UserCircleIcon,
   Cog6ToothIcon,
   GlobeAltIcon,
@@ -52,4 +55,21 @@ export {
   PlusIcon,
   PencilIcon,
   ArrowDownTrayIcon,
+  ClockIcon,
+  PaperAirplaneIcon,
+  BuildingOffice2Icon,
+  SparklesIcon,
+  CloudArrowUpIcon,
+  DocumentDuplicateIcon,
+  ExclamationCircleIcon,
+  AcademicCapIcon,
+  BriefcaseIcon,
+  StarIcon,
+  InboxArrowDownIcon,
+  MapPinIcon,
+  PhoneIcon,
+  EnvelopeIcon,
+  BuildingOfficeIcon,
 } from '@heroicons/react/24/outline';
+
+export { WavingHandIcon } from './svg';

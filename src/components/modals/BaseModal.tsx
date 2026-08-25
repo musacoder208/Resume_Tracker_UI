@@ -10,7 +10,7 @@ type BaseModalProps = {
   onClose?: () => void;
   children: ReactNode;
   footer?: ReactNode;
-  size?: 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl';
   disableBackdropClose?: boolean;
   /** Hide the default header (title + close button). Useful for custom modal layouts. */
   hideHeader?: boolean;
@@ -23,6 +23,7 @@ const sizeClasses = {
   md: 'max-w-md',
   lg: 'max-w-lg',
   xl: 'max-w-xl',
+  '2xl': 'max-w-2xl',
 };
 
 export function BaseModal({

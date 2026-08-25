@@ -4,7 +4,14 @@ import { RequireAuth } from '../guards/RequireAuth';
 import { AppShell } from '../layout/pageLayout/privateLayout/AppShell';
 import { NotFound } from '@/components/ui/notFound';
 import { LoginPage } from '@/features/auth/LoginPage';
-import { env } from '@/config/env';
+import { DashboardPage } from '@/features/dashboard/pages/DashboardPage';
+import { CompanyProfilePage } from '@/features/companyProfile/pages/CompanyProfilePage';
+import { JdLandingPage } from '@/features/jd/pages/JdLandingPage';
+import { AddJdPage } from '@/features/jd/pages/AddJdPage';
+import { CandidateSearchPage } from '@/features/candidate/pages/CandidateSearchPage';
+import { AddCandidatePage } from '@/features/candidate/pages/AddCandidatePage';
+import { CandidateDetailsPage } from '@/features/candidate/pages/CandidateDetailsPage';
+//import { env } from '@/config/env';
 
 export const router = createBrowserRouter(
   [
@@ -23,6 +30,38 @@ export const router = createBrowserRouter(
           element: <></>,
         },
         {
+          path: '/dashboard',
+          element: <DashboardPage />,
+        },
+        {
+          path: '/company-profile',
+          element: <CompanyProfilePage />,
+        },
+        {
+          path: '/jd',
+          element: <JdLandingPage />,
+        },
+        {
+          path: '/jd/create',
+          element: <AddJdPage />,
+        },
+        {
+          path: '/jd/create/:jdId',
+          element: <AddJdPage />,
+        },
+        {
+          path: '/candidate',
+          element: <CandidateSearchPage />,
+        },
+        {
+          path: '/candidate/upload',
+          element: <AddCandidatePage />,
+        },
+        {
+          path: '/candidate/:candidateId',
+          element: <CandidateDetailsPage />,
+        },
+        {
           path: '*',
           element: <NotFound />,
         },
@@ -39,6 +78,6 @@ export const router = createBrowserRouter(
     },
   ],
   {
-    basename: env.SERVER_MODE === 'production' ? '/resume-tracker' : '/',
+    basename: '/resumetracker',
   }
 );

@@ -26,9 +26,12 @@ function getErrorMessage(error: unknown): string {
 
 export const rtkQueryToastMiddleware: Middleware = () => (next) => (action) => {
   if (isRejectedWithValue(action)) {
-    const errorCode = getErrorMessage(action.payload);
-    const message = i18n.t(errorCode, { defaultValue: errorCode });
-    toastService.error('Error', message);
+    const kind = (action.payload as { meta?: { kind?: string } } | undefined)?.meta?.kind;
+    if (kind !== 'auth') {
+      const errorCode = getErrorMessage(action.payload);
+      const message = i18n.t(errorCode, { defaultValue: errorCode });
+      toastService.error('Error', message);
+    }
   }
 
   return next(action);

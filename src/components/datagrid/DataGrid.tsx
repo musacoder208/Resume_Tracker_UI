@@ -70,7 +70,7 @@ export const DataGrid = <TData,>({
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
   const tableRef = useRef<HTMLTableElement | null>(null);
 
-  // Last pinned column ID drives the right-side box-shadow separator
+  // Last left-pinned column ID drives the right-side shadow separator
   const lastPinnedColumnId = useMemo(() => {
     let lastId: string | null = null;
     for (const col of finalColumns) {
@@ -81,7 +81,17 @@ export const DataGrid = <TData,>({
     return lastId;
   }, [finalColumns]);
 
-  // Pinned column IDs in order (for DOM measurement)
+  // First right-pinned column ID drives the left-side shadow separator
+  const firstRightPinnedColumnId = useMemo(() => {
+    for (const col of finalColumns) {
+      if ((col.meta as GridColumnMeta | undefined)?.pin === 'right' && typeof col.id === 'string') {
+        return col.id;
+      }
+    }
+    return null;
+  }, [finalColumns]);
+
+  // Left-pinned column IDs in order (for DOM measurement)
   const pinnedColumnIds = useMemo(() => {
     const ids: string[] = [];
     for (const col of finalColumns) {
@@ -92,16 +102,28 @@ export const DataGrid = <TData,>({
     return ids;
   }, [finalColumns]);
 
-  // DOM-measured offsets — computed after render from actual <th> widths
+  // Right-pinned column IDs in order (for DOM measurement)
+  const pinnedRightColumnIds = useMemo(() => {
+    const ids: string[] = [];
+    for (const col of finalColumns) {
+      if ((col.meta as GridColumnMeta | undefined)?.pin === 'right' && typeof col.id === 'string') {
+        ids.push(col.id);
+      }
+    }
+    return ids;
+  }, [finalColumns]);
+
+  // DOM-measured offsets for left-pinned columns
   const [pinnedLeftOffsets, setPinnedLeftOffsets] = useState<Record<string, number>>({});
 
-  // Measure actual rendered widths from the first header row's <th> elements
-  // This is the same technique as the HTML demo's setStickyOffsets()
+  // DOM-measured offsets for right-pinned columns
+  const [pinnedRightOffsets, setPinnedRightOffsets] = useState<Record<string, number>>({});
+
+  // Measure left-pinned offsets — left-pinned columns are the FIRST n <th> elements
   useLayoutEffect(() => {
     const tableEl = tableRef.current;
     if (tableEl == null || pinnedColumnIds.length === 0) return;
 
-    // Get the first header row (sort row)
     const headerRow = tableEl.querySelector('thead tr');
     if (headerRow == null) return;
 
@@ -109,7 +131,6 @@ export const DataGrid = <TData,>({
     const offsets: Record<string, number> = {};
     let cumulative = 0;
 
-    // Walk through <th> elements in DOM order — pinned columns come first
     for (let i = 0; i < pinnedColumnIds.length && i < thElements.length; i++) {
       const colId = pinnedColumnIds[i];
       offsets[colId] = cumulative;
@@ -118,6 +139,31 @@ export const DataGrid = <TData,>({
 
     setPinnedLeftOffsets(offsets);
   }, [pinnedColumnIds, data, state]);
+
+  // Measure right-pinned offsets — right-pinned columns are the LAST n <th> elements
+  useLayoutEffect(() => {
+    const tableEl = tableRef.current;
+    if (tableEl == null || pinnedRightColumnIds.length === 0) return;
+
+    const headerRow = tableEl.querySelector('thead tr');
+    if (headerRow == null) return;
+
+    const thElements = Array.from(headerRow.querySelectorAll('th'));
+    const offsets: Record<string, number> = {};
+    let cumulative = 0;
+    const total = thElements.length;
+    const rightCount = pinnedRightColumnIds.length;
+
+    // Walk from rightmost to leftmost of right-pinned columns
+    for (let i = rightCount - 1; i >= 0; i--) {
+      const colId = pinnedRightColumnIds[i];
+      offsets[colId] = cumulative;
+      const thIndex = total - rightCount + i;
+      cumulative += thElements[thIndex]?.offsetWidth ?? 0;
+    }
+
+    setPinnedRightOffsets(offsets);
+  }, [pinnedRightColumnIds, data, state]);
 
   const ctxValue: DataGridContextValue<TData> = {
     table: table as unknown as Table<TData>,
@@ -131,6 +177,8 @@ export const DataGrid = <TData,>({
     loading,
     lastPinnedColumnId,
     pinnedLeftOffsets,
+    firstRightPinnedColumnId,
+    pinnedRightOffsets,
     renderExpandedRow,
   };
 

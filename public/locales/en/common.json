@@ -16,6 +16,7 @@
     "logoutConfirm": {
       "title": "Sign Out",
       "message": "Are you sure you want to sign out?",
+      "question": "",
       "cancel": "Cancel",
       "confirm": "Sign Out"
     },
@@ -32,6 +33,10 @@
       "demo": "Demos"
     },
     "menu": {}
+  },
+  "serverCodes": {
+    "HR_ANSWERS_SAVED": "Answers saved successfully.",
+    "CANDIDATE_DETAILS_UPDATED": "Candidate details updated successfully."
   },
   "errors": {
     "sessionExpired": "Session Expired",

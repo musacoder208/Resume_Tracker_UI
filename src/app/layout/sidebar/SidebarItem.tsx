@@ -59,10 +59,10 @@ export function SidebarItem({ item, collapsed, onNavigate }: SidebarItemProps): 
   const Icon = item.icon;
 
   const activeClass = isHovered
-    ? 'bg-white/15 text-white'
+    ? 'bg-surface-hover text-text'
     : isActive
-      ? 'bg-white/10 text-white'
-      : 'text-white/80 hover:bg-white/10 hover:text-white';
+      ? 'bg-primary-subtle text-primary'
+      : 'text-text-muted hover:bg-surface-hover hover:text-text';
 
   // Collapsed: icon-only with hover cascade
   if (collapsed) {
@@ -76,8 +76,8 @@ export function SidebarItem({ item, collapsed, onNavigate }: SidebarItemProps): 
         <button
           type="button"
           onClick={handleClick}
-          title={t(item.labelKey)}
-          aria-label={t(item.labelKey)}
+          title={item.label ?? t(item.labelKey ?? '')}
+          aria-label={item.label ?? t(item.labelKey ?? '')}
           aria-haspopup={hasChildren ? 'menu' : undefined}
           aria-expanded={hasChildren ? isHovered : undefined}
           className={clsx(
@@ -91,7 +91,7 @@ export function SidebarItem({ item, collapsed, onNavigate }: SidebarItemProps): 
         {isHovered && hasChildren && item.children && (
           <SidebarCascade
             items={item.children}
-            title={item.labelKey}
+            title={item.labelKey ?? ''}
             collapsed={collapsed}
             triggerRef={wrapperEl}
             onNavigate={() => {
@@ -125,26 +125,26 @@ export function SidebarItem({ item, collapsed, onNavigate }: SidebarItemProps): 
         )}
       >
         {isActive && (
-          <div className="absolute start-0 top-1/2 h-[18px] w-[3px] -translate-y-1/2 rounded-e-sm bg-white" />
+          <div className="absolute start-0 top-1/2 h-[18px] w-[3px] -translate-y-1/2 rounded-e-sm bg-primary" />
         )}
         {Icon && (
           <div
             className={clsx(
               'flex h-7 w-7 shrink-0 items-center justify-center rounded-md transition-colors',
-              isActive ? 'bg-white/20' : 'bg-white/10'
+              isActive ? 'bg-primary/10 text-primary' : 'bg-surface-hover text-text-muted'
             )}
           >
-            <Icon className="h-4 w-4 text-white" />
+            <Icon className="h-4 w-4" />
           </div>
         )}
-        <span className="flex-1 truncate text-start text-[13px] font-medium">{t(item.labelKey)}</span>
-        {hasChildren && <ChevronRightIcon className="h-3 w-3 shrink-0 text-white/40" />}
+        <span className="flex-1 truncate text-start text-[13px] font-medium">{item.label ?? t(item.labelKey ?? '')}</span>
+        {hasChildren && <ChevronRightIcon className="h-3 w-3 shrink-0 text-text-subtle" />}
       </button>
 
       {isHovered && hasChildren && item.children && (
         <SidebarCascade
           items={item.children}
-          title={item.labelKey}
+          title={item.labelKey ?? ''}
           collapsed={collapsed}
           triggerRef={wrapperEl}
           onNavigate={() => {

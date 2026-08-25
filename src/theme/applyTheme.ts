@@ -16,6 +16,10 @@ export function applyTheme(theme: ThemeName): void {
   /* Colors */
   setColorVars(root, t.colors);
 
+  /* Gradient accent pair */
+  root.style.setProperty('--accent', t.colors.accent);
+  root.style.setProperty('--accent2', t.colors.accent2);
+
   /* Typography */
   root.style.setProperty('--font-family-primary', t.font.familyPrimary);
   root.style.setProperty('--font-family-mono', t.font.familyMono);

@@ -1,0 +1,35 @@
+{
+  "overview": {
+    "title": "Overview",
+    "subtitle": "Your recruitment operations at a glance",
+    "newJd": "+ New JD",
+    "loadError": "Failed to load dashboard data. Please refresh the page."
+  },
+  "stats": {
+    "totalJobs": "Total Jobs",
+    "totalCandidates": "Total Candidates",
+    "activeInterviews": "Active Interviews",
+    "hiredThisMonth": "Hired This Month",
+    "pendingReviews": "Pending Reviews"
+  },
+  "recentActivity": {
+    "title": "Recent Activity",
+    "events_one": "{{count}} event",
+    "events_other": "{{count}} events",
+    "empty": "No recent activity yet.",
+    "items": {
+      "candidateApplied": "New candidate applied for Senior React Developer",
+      "jdPublished": "JD \"Product Manager\" published",
+      "interviewScheduled": "Interview scheduled with John Doe",
+      "profileUpdated": "Company profile updated",
+      "cvReviewed": "CV reviewed for UX Designer position"
+    }
+  },
+  "quickActions": {
+    "title": "Quick Actions",
+    "companyProfile": "Company Profile",
+    "createJd": "Create JD",
+    "viewJdList": "View JD List",
+    "candidates": "Candidates"
+  }
+}

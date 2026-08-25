@@ -1,0 +1,56 @@
+{
+  "sections": {
+    "companyInformation": "معلومات الشركة",
+    "aiBuilder": "منشئ ملف الشركة بالذكاء الاصطناعي"
+  },
+  "modes": {
+    "initial": "أولي",
+    "clarification": "توضيح",
+    "crossfield": "متقاطع"
+  },
+  "actions": {
+    "submit": "إرسال",
+    "skip": "تخطي",
+    "selectAll": "تحديد الكل",
+    "previewProfile": "معاينة ملف الشركة",
+    "editAnswer": "تعديل الإجابة",
+    "saveDraft": "حفظ كمسودة",
+    "saveAndPublish": "حفظ ونشر",
+    "editAnswers": "تعديل الإجابات",
+    "viewProfile": "عرض الملف"
+  },
+  "chat": {
+    "editTooltip": "تعديل الإجابة",
+    "historyTooltip": "عرض السجل",
+    "noHistory": "لا يوجد سجل سابق",
+    "answeredAt": "تمت الإجابة",
+    "previousAnswers": "الإجابات السابقة لهذا الحقل"
+  },
+  "loading": {
+    "starting": "جارٍ بدء جلسة الملف…",
+    "submitting": "جارٍ إرسال الإجابة…"
+  },
+  "errors": {
+    "startFailed": "فشل بدء جلسة الملف. يرجى المحاولة مجدداً.",
+    "submitFailed": "فشل إرسال الإجابة. يرجى المحاولة مجدداً."
+  },
+  "noPermission": {
+    "notCreated": "لم يتم إنشاء ملف الشركة بعد.",
+    "contactAdmin": "ليس لديك صلاحية إنشائه. يرجى التواصل مع المسؤول."
+  },
+  "preview": {
+    "title": "معاينة ملف الشركة"
+  },
+  "edit": {
+    "modalTitle": "تحديث الإجابة",
+    "confirm": "تأكيد",
+    "cancel": "إلغاء",
+    "successTitle": "تم التحديث بنجاح"
+  },
+  "progress": {
+    "title": "تقدم بناء الملف",
+    "questionOf": "س{{current}} من {{total}}",
+    "answered": "{{count}} من {{total}} سؤال تمت الإجابة عليه",
+    "completed": "تمت الإجابة على جميع الأسئلة!"
+  }
+}

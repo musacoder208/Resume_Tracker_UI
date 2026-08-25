@@ -30,7 +30,7 @@ type ThemeOption = { value: ThemeName; label: string; dot: string };
 
 // Primary color for each theme — used as the dot indicator in the cascade
 const THEME_OPTIONS: ThemeOption[] = [
-  { value: 'eqas', label: 'EQAS (Default)', dot: '#00A457' },
+  { value: 'eqas', label: 'Default', dot: '#6366F1' },
   { value: 'light', label: 'Light', dot: '#2563eb' },
   { value: 'dark', label: 'Dark', dot: '#6366f1' },
   { value: 'blue', label: 'Blue', dot: '#0284c7' },

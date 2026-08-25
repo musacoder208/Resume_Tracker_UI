@@ -1,0 +1,139 @@
+{
+  "page": {
+    "addTitle": "إنشاء وصف وظيفي"
+  },
+  "landing": {
+    "title": "الأوصاف الوظيفية",
+    "subtitle": "إدارة الوظائف ورفع سير ذاتية المرشحين",
+    "allJobTitles": "جميع المسميات",
+    "allSeniorities": "جميع المستويات",
+    "allStatuses": "جميع الحالات",
+    "empty": "لا توجد أوصاف وظيفية.",
+    "counts": {
+      "totalJds": "إجمالي الأوصاف",
+      "addedThisWeek": "مضاف هذا الأسبوع",
+      "remoteRoles": "الأدوار عن بُعد",
+      "hybridRoles": "الأدوار الهجينة",
+      "draftCount": "مسودة",
+      "inProgressCount": "قيد التنفيذ",
+      "completedCount": "مكتمل"
+    },
+    "table": {
+      "no": "#",
+      "srNo": "م",
+      "jobTitle": "المسمى الوظيفي",
+      "seniority": "مستوى الأقدمية",
+      "workType": "نوع العمل",
+      "experience": "الخبرة",
+      "resumes": "السير الذاتية",
+      "status": "الحالة",
+      "createdBy": "أنشئ بواسطة",
+      "createdDate": "تاريخ الإنشاء",
+      "actions": "الإجراءات"
+    }
+  },
+  "sections": {
+    "jdSection": "الوصف الوظيفي",
+    "aiBuilder": "منشئ الوصف الوظيفي بالذكاء الاصطناعي"
+  },
+  "fields": {
+    "jobTitle": "المسمى الوظيفي",
+    "seniorityLevel": "مستوى الأقدمية",
+    "status": "الحالة",
+    "generatedTitle": "العنوان المُنشأ"
+  },
+  "modes": {
+    "initial": "أولي",
+    "clarification": "توضيح",
+    "crossfield": "متقاطع"
+  },
+  "actions": {
+    "submit": "إرسال",
+    "skip": "تخطي",
+    "selectAll": "تحديد الكل",
+    "createJd": "إنشاء وصف وظيفي جديد",
+    "previewJd": "معاينة",
+    "editAnswer": "تعديل الإجابة",
+    "view": "عرض",
+    "upload": "رفع",
+    "edit": "تعديل",
+    "delete": "حذف",
+    "search": "تطبيق",
+    "clearFilters": "إعادة تعيين",
+    "back": "رجوع",
+    "editJd": "تعديل الوصف الوظيفي",
+    "viewJd": "معاينة الوصف الوظيفي",
+    "viewCandidates": "عرض المرشحين",
+    "uploadResumes": "رفع السير الذاتية"
+  },
+  "chat": {
+    "historyTooltip": "عرض السجل",
+    "editTooltip": "تعديل الإجابة",
+    "noHistory": "لا يوجد سجل سابق",
+    "answeredAt": "تمت الإجابة",
+    "previousAnswers": "الإجابات السابقة لهذا الحقل",
+    "discussWithAi": "تريد تغييرات؟ ناقش مع الذكاء الاصطناعي"
+  },
+  "edit": {
+    "modalTitle": "تعديل الإجابة",
+    "successTitle": "تم تحديث الإجابة",
+    "confirmMessage": "هل أنت متأكد أنك تريد تطبيق هذا التحديث؟",
+    "cancel": "إلغاء",
+    "confirm": "تأكيد"
+  },
+  "loading": {
+    "starting": "جارٍ بدء جلسة الوصف الوظيفي…",
+    "submitting": "جارٍ إرسال الإجابة…",
+    "loadingData": "جارٍ التحميل…",
+    "fetchingJds": "جارٍ تحميل الأوصاف الوظيفية…"
+  },
+  "errors": {
+    "startFailed": "فشل بدء جلسة الوصف الوظيفي. يرجى المحاولة مجدداً.",
+    "submitFailed": "فشل إرسال الإجابة. يرجى المحاولة مجدداً.",
+    "masterDataFailed": "فشل تحميل الخيارات. يرجى تحديث الصفحة.",
+    "fetchFailed": "فشل تحميل الأوصاف الوظيفية. يرجى المحاولة مجدداً."
+  },
+  "preview": {
+    "title": "معاينة الوصف الوظيفي",
+    "theoryInputPlaceholder": "يرجى إدخال النص هنا"
+  },
+  "weightage": {
+    "note": "لم يتم إنشاء الأوزان لهذا الوصف الوظيفي بعد. يرجى النقر على زر إنشاء الأوزان.",
+    "additionalNotesPlaceholder": "ملاحظات إضافية (اختياري)",
+    "generate": "إنشاء الأوزان",
+    "view": "عرض الأوزان",
+    "modalTitle": "أوزان الوصف الوظيفي",
+    "capability": "الكفاءة",
+    "weight": "الوزن",
+    "skill": "المهارة",
+    "requiredSkills": "المهارات المطلوبة",
+    "optionalSkills": "المهارات الاختيارية",
+    "noOptionalSkills": "لا توجد مهارات اختيارية",
+    "weightsNotUpdated": "لم نتمكن من إتمام هذا الطلب. يرجى تحسين مدخلاتك والمحاولة مرة أخرى.",
+    "adjustWeight": "تعديل الوزن",
+    "totalWeight": "إجمالي الوزن",
+    "weightLessThan100": "إجمالي الوزن أقل من 100. يرجى تعديل الأوزان لتصل إلى 100.",
+    "weightGreaterThan100": "إجمالي الوزن أكبر من 100. يرجى تعديل الأوزان لتصل إلى 100.",
+    "validateWithAi": "التحقق بالذكاء الاصطناعي",
+    "totalMustBe100": "يجب أن يكون مجموع الأوزان 100 بالضبط.",
+    "weightOutOfRange": "يجب أن يكون الوزن بين 0 و100.",
+    "emptyWeight": "يرجى إدخال وزن لجميع الكفاءات."
+  },
+  "detail": {
+    "title": "تفاصيل الوصف الوظيفي",
+    "department": "القسم",
+    "roleTitle": "المسمى الوظيفي",
+    "workModel": "نموذج العمل",
+    "employmentType": "نوع التوظيف",
+    "seniorityLevel": "مستوى الأقدمية",
+    "experience": "الخبرة",
+    "requiredSkills": "المهارات المطلوبة",
+    "preferredSkills": "المهارات المفضلة",
+    "coreResponsibilities": "المسؤوليات الأساسية",
+    "additionalInfo": "معلومات إضافية",
+    "uploadResumes": "رفع السير الذاتية",
+    "topCandidates": "أفضل المرشحين",
+    "noData": "—",
+    "theory": "الوصف الوظيفي المُنشأ"
+  }
+}

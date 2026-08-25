@@ -33,63 +33,62 @@ const poppinsFont = {
 export const THEMES: Record<ThemeName, TenantTheme> = {
   // ─────────────────────────────────────────────
   // eqas — Default brand theme
-  // Primary palette: Green (#00A457)
-  // Neutral palette: Green-tinted grey
-  // Status: Red / Amber / Green from brand palette
+  // Primary palette: Indigo (#6366F1)
+  // Neutral palette: Indigo-tinted
   // ─────────────────────────────────────────────
   eqas: {
     colors: {
-      /* Background — Neutral 50 / 100 */
-      background: '#F5F7F5',
-      backgroundSubtle: '#E6EAE7',
+      /* Background */
+      background: '#F8F7FF',
+      backgroundSubtle: '#F0EEFF',
 
       /* Surface */
       surface: '#FFFFFF',
-      surfaceMuted: '#EBFAF2',       // Green 50 — brand tint for table headers / subtle areas
-      surfaceHover: '#E6EAE7',       // Neutral 100
+      surfaceMuted: '#EEF2FF',
+      surfaceHover: '#E0E7FF',
       surfaceElevated: '#FFFFFF',
-      surfaceActive: '#CDD4CE',      // Neutral 200
-      surfaceDisabled: '#f1f1f1',    // Neutral 50
+      surfaceActive: '#C7D2FE',
+      surfaceDisabled: '#f1f1f1',
 
-      /* Text — Neutral 900 → 300 */
-      text: '#141A14',               // Neutral 900
-      textMuted: '#546757',          // Neutral 600
-      textSubtle: '#798F7C',         // Neutral 400
+      /* Text */
+      text: '#1E1B4B',
+      textMuted: '#4C4891',
+      textSubtle: '#818CF8',
       textInverted: '#FFFFFF',
-      textDisabled: '#1d1d1d',       // Neutral 300
+      textDisabled: '#9CA3AF',
 
-      /* Border — Neutral scale */
-      border: '#CDD4CE',             // Neutral 200
-      borderMuted: '#E6EAE7',        // Neutral 100
-      borderFocus: '#00A457',        // Green 400 (primary)
-      borderDanger: '#F03526',       // Red 400
-      borderStrong: '#394839',       // Neutral 700 — selected rows, active cards
-      borderInfo: '#3B77BC',         // Blue 400 — informational / interactive
-      borderInverse: '#141A14',      // Neutral 900 — on-dark surfaces
+      /* Border */
+      border: '#C7D2FE',
+      borderMuted: '#E0E7FF',
+      borderFocus: '#6366F1',
+      borderDanger: '#F03526',
+      borderStrong: '#3730A3',
+      borderInfo: '#3B77BC',
+      borderInverse: '#1E1B4B',
 
-      /* Primary — Green brand */
-      primary: '#00A457',            // Green 400
-      primaryHover: '#007A3F',       // Green 600
-      primaryActive: '#005629',      // Green 700
-      primarySubtle: '#EBFAF2',      // Green 50
+      /* Primary — Indigo brand */
+      primary: '#6366F1',
+      primaryHover: '#4F46E5',
+      primaryActive: '#4338CA',
+      primarySubtle: '#EEF2FF',
       primaryForeground: '#FFFFFF',
-      primaryBorder: '#C4EED8',
+      primaryBorder: '#C7D2FE',
 
-      /* Status — Success (green) */
-      success: '#00A457',            // Green 400
+      /* Status — Success */
+      success: '#00A457',
       successForeground: '#FFFFFF',
-      successSubtle: '#EBFAF2',      // Green 50
+      successSubtle: '#EBFAF2',
 
-      /* Status — Warning (amber) */
-      warning: '#F59200',            // Amber 400
-      warningForeground: '#141A14',  // Neutral 900 — dark text on amber bg
-      warningSubtle: '#FFF7E6',      // Amber 50
-      warningText: '#92400E',        // Amber 800 — readable text on amber subtle bg
+      /* Status — Warning */
+      warning: '#F59200',
+      warningForeground: '#1E1B4B',
+      warningSubtle: '#FFF7E6',
+      warningText: '#92400E',
 
-      /* Status — Error (red) */
-      error: '#F03526',              // Red 400
+      /* Status — Error */
+      error: '#F03526',
       errorForeground: '#FFFFFF',
-      errorSubtle: '#FFF0ED',        // Red 50
+      errorSubtle: '#FFF0ED',
 
       info: '#1A5499',
       infoForeground: '#FFFFFF',
@@ -97,7 +96,11 @@ export const THEMES: Record<ThemeName, TenantTheme> = {
       infoBorder: '#BDD0EC',
 
       label: '#374151',
-      skeletonBg: '#E6EAE7',
+      skeletonBg: '#E0E7FF',
+
+      /* Gradient accent pair */
+      accent: '#6366F1',
+      accent2: '#A855F7',
     },
 
     font: poppinsFont,
@@ -106,14 +109,17 @@ export const THEMES: Record<ThemeName, TenantTheme> = {
     borderWidth: sharedBorderWidth,
 
     shadow: {
-      sm: '0 1px 2px rgba(0, 164, 87, 0.10)',
-      md: '0 4px 6px rgba(0, 164, 87, 0.15)',
-      lg: '0 10px 15px rgba(0, 164, 87, 0.20)',
+      sm: '0 1px 2px rgba(99, 102, 241, 0.10)',
+      md: '0 4px 6px rgba(99, 102, 241, 0.15)',
+      lg: '0 10px 15px rgba(99, 102, 241, 0.20)',
     },
   },
 
   light: {
     colors: {
+      accent: '#2563eb',
+      accent2: '#7c3aed',
+
       background: '#f9fafb',
       backgroundSubtle: '#f1f5f9',
 
@@ -181,6 +187,9 @@ export const THEMES: Record<ThemeName, TenantTheme> = {
 
   dark: {
     colors: {
+      accent: '#6366f1',
+      accent2: '#a855f7',
+
       /* Background */
       background: '#020617',
       backgroundSubtle: '#020617',
@@ -254,6 +263,9 @@ export const THEMES: Record<ThemeName, TenantTheme> = {
 
   blue: {
     colors: {
+      accent: '#0284c7',
+      accent2: '#7c3aed',
+
       background: '#f0f9ff',
       backgroundSubtle: '#e0f2fe',
 
@@ -321,6 +333,9 @@ export const THEMES: Record<ThemeName, TenantTheme> = {
 
   green: {
     colors: {
+      accent: '#16a34a',
+      accent2: '#0284c7',
+
       background: '#f0fdf4',
       backgroundSubtle: '#dcfce7',
 

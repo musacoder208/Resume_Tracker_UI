@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:prod": "tsc -b && vite build --mode production",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
     "lint:ci": "eslint . --max-warnings 0",
     "preview": "vite preview",
@@ -24,6 +25,7 @@
     "@heroicons/react": "^2.2.0",
     "@hookform/resolvers": "^5.2.2",
     "@reduxjs/toolkit": "^2.11.2",
+    "@tailwindcss/typography": "^0.5.19",
     "@tanstack/react-table": "^8.21.3",
     "@tanstack/react-virtual": "^3.13.18",
     "clsx": "^2.1.1",
@@ -36,6 +38,7 @@
     "react-dom": "^19.2.0",
     "react-hook-form": "^7.71.1",
     "react-i18next": "^16.5.3",
+    "react-markdown": "^10.1.0",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.12.0",
     "xlsx": "^0.18.5",

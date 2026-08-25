@@ -13,27 +13,38 @@ interface DataGridCellProps<TData> {
 
 export const DataGridCell = <TData,>({ cell, isRowSelected }: DataGridCellProps<TData>): JSX.Element => {
   const meta = cell.column.columnDef.meta as GridColumnMeta | undefined;
-  const { layout, lastPinnedColumnId, pinnedLeftOffsets } = useDataGridContext();
+  const {
+    layout,
+    lastPinnedColumnId,
+    pinnedLeftOffsets,
+    firstRightPinnedColumnId,
+    pinnedRightOffsets,
+  } = useDataGridContext();
   const isFit = layout?.widthMode === 'fit';
 
   const align = meta?.align;
   const cellClassName = meta?.cellClassName;
-  const isPinned = meta?.pin === 'left';
+  const isPinnedLeft = meta?.pin === 'left';
+  const isPinnedRight = meta?.pin === 'right';
   const isLastPinned = cell.column.id === lastPinnedColumnId;
+  const isFirstRightPinned = cell.column.id === firstRightPinnedColumnId;
 
   return (
     <td
       style={{
         width: cell.column.getSize(),
-        ...(isPinned ? { insetInlineStart: pinnedLeftOffsets[cell.column.id] ?? 0 } : {}),
+        ...(isPinnedLeft ? { insetInlineStart: pinnedLeftOffsets[cell.column.id] ?? 0 } : {}),
+        ...(isPinnedRight ? { insetInlineEnd: pinnedRightOffsets[cell.column.id] ?? 0 } : {}),
       }}
       className={clsx(
         gridTheme.tdBase,
         isFit ? gridTheme.wrap : gridTheme.nowrap,
         align === 'right' && gridTheme.tdNumeric,
-        isRowSelected === true && gridTheme.tdSelected,
-        isPinned && (isRowSelected === true ? gridTheme.tdPinnedSelected : gridTheme.tdPinned),
+        isRowSelected === true && !isPinnedLeft && !isPinnedRight && gridTheme.tdSelected,
+        isPinnedLeft && (isRowSelected === true ? gridTheme.tdPinnedSelected : gridTheme.tdPinned),
+        isPinnedRight && (isRowSelected === true ? gridTheme.tdPinnedRightSelected : gridTheme.tdPinnedRight),
         isLastPinned && gridTheme.lastPinnedBorder,
+        isFirstRightPinned && gridTheme.firstRightPinnedBorder,
         cellClassName,
       )}
     >

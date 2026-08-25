@@ -1,0 +1,139 @@
+{
+  "page": {
+    "addTitle": "Create Job Description"
+  },
+  "landing": {
+    "title": "Job Descriptions",
+    "subtitle": "Manage postings and upload candidate resumes",
+    "allJobTitles": "All Job Titles",
+    "allSeniorities": "All Levels",
+    "allStatuses": "All Statuses",
+    "empty": "No job descriptions found.",
+    "counts": {
+      "totalJds": "Total JDs",
+      "addedThisWeek": "Added This Week",
+      "remoteRoles": "Remote Roles",
+      "hybridRoles": "Hybrid Roles",
+      "draftCount": "Draft",
+      "inProgressCount": "In Progress",
+      "completedCount": "Completed"
+    },
+    "table": {
+      "no": "#",
+      "srNo": "Sr.No",
+      "jobTitle": "Job Title",
+      "seniority": "Seniority",
+      "workType": "Work Type",
+      "experience": "Experience",
+      "resumes": "Resumes",
+      "status": "Status",
+      "createdBy": "Created By",
+      "createdDate": "Created Date",
+      "actions": "Actions"
+    }
+  },
+  "sections": {
+    "jdSection": "Job Description",
+    "aiBuilder": "AI Job Description Builder"
+  },
+  "fields": {
+    "jobTitle": "Job Title",
+    "seniorityLevel": "Seniority Level",
+    "status": "Status",
+    "generatedTitle": "Generated Title"
+  },
+  "modes": {
+    "initial": "Initial",
+    "clarification": "Clarification",
+    "crossfield": "Cross-field"
+  },
+  "actions": {
+    "submit": "Submit",
+    "skip": "Skip",
+    "selectAll": "Select All",
+    "createJd": "Create New JD",
+    "previewJd": "Preview",
+    "editAnswer": "Edit Answer",
+    "view": "View",
+    "upload": "Upload",
+    "edit": "Edit",
+    "delete": "Delete",
+    "search": "Apply",
+    "clearFilters": "Reset",
+    "back": "Back",
+    "editJd": "Edit JD",
+    "viewJd": "Preview JD",
+    "viewCandidates": "View Candidates",
+    "uploadResumes": "Upload Resumes"
+  },
+  "chat": {
+    "historyTooltip": "View history",
+    "editTooltip": "Edit answer",
+    "noHistory": "No previous history",
+    "answeredAt": "Answered",
+    "previousAnswers": "Previous answers for this field",
+    "discussWithAi": "Need Changes? Discuss with AI"
+  },
+  "edit": {
+    "modalTitle": "Edit Answer",
+    "successTitle": "Answer Updated",
+    "confirmMessage": "Are you sure you want to apply this update?",
+    "cancel": "Cancel",
+    "confirm": "Confirm"
+  },
+  "loading": {
+    "starting": "Starting JD session…",
+    "submitting": "Submitting answer…",
+    "loadingData": "Loading…",
+    "fetchingJds": "Loading job descriptions…"
+  },
+  "errors": {
+    "startFailed": "Failed to start JD session. Please try again.",
+    "submitFailed": "Failed to submit answer. Please try again.",
+    "masterDataFailed": "Failed to load options. Please refresh.",
+    "fetchFailed": "Failed to load job descriptions. Please try again."
+  },
+  "preview": {
+    "title": "Job Description Preview",
+    "theoryInputPlaceholder": "Please enter your text here"
+  },
+  "weightage": {
+    "note": "Weightage not generated yet against that JD. Please click on Generate Weightage button.",
+    "additionalNotesPlaceholder": "Additional notes (optional)",
+    "generate": "Generate Weightage",
+    "view": "View Weightage",
+    "modalTitle": "JD Weightage",
+    "capability": "Capability",
+    "weight": "Weight",
+    "skill": "Skill",
+    "requiredSkills": "Required Skills",
+    "optionalSkills": "Optional Skills",
+    "noOptionalSkills": "No Optional Skills",
+    "weightsNotUpdated": "Couldn't complete this request. Please refine your input and try again.",
+    "adjustWeight": "Adjust Weight",
+    "totalWeight": "Total Weight",
+    "weightLessThan100": "Total weight is less than 100. Please adjust the weights to sum to 100.",
+    "weightGreaterThan100": "Total weight is greater than 100. Please adjust the weights to sum to 100.",
+    "validateWithAi": "Validate with AI",
+    "totalMustBe100": "Total weight must be exactly 100.",
+    "weightOutOfRange": "Weight must be between 0 and 100.",
+    "emptyWeight": "Please enter weight for all capabilities."
+  },
+  "detail": {
+    "title": "Job Description Details",
+    "department": "Department",
+    "roleTitle": "Role Title",
+    "workModel": "Work Model",
+    "employmentType": "Employment Type",
+    "seniorityLevel": "Seniority Level",
+    "experience": "Experience",
+    "requiredSkills": "Required Skills",
+    "preferredSkills": "Preferred Skills",
+    "coreResponsibilities": "Core Responsibilities",
+    "additionalInfo": "Additional Information",
+    "uploadResumes": "Upload Resumes",
+    "topCandidates": "Top Candidates",
+    "noData": "—",
+    "theory": "Generated Job Description"
+  }
+}

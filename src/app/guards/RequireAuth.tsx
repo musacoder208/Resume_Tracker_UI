@@ -12,7 +12,7 @@ type Props = {
 export function RequireAuth({ children }: Props): ReactNode {
   const isAuthenticated = useAppSelector(selectIsAuthenticated);
 
-  if (!!isAuthenticated) {
+  if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 

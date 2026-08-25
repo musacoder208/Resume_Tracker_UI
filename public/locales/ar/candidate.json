@@ -1,0 +1,245 @@
+{
+  "page": {
+    "title": "إدارة المرشحين",
+    "subtitle": "إدارة ومراجعة وتتبع المرشحين الذين تم فرزهم بالذكاء الاصطناعي عبر الأوصاف الوظيفية النشطة.",
+    "uploadTitle": "رفع السير الذاتية",
+    "uploadSubtitle": "ارفع السير الذاتية وراجع معلومات المرشحين المستخرجة"
+  },
+  "actions": {
+    "uploadCandidates": "رفع المرشحين",
+    "processResumes": "معالجة السير الذاتية",
+    "processing": "جارٍ المعالجة...",
+    "saveAll": "حفظ جميع المرشحين",
+    "cancel": "إلغاء",
+    "processError": "فشل في معالجة السير الذاتية. يرجى المحاولة مرة أخرى.",
+    "processSuccess": "تم رفع السير الذاتية بنجاح. انقر على تحديث لعرض النتائج.",
+    "refresh": "تحديث",
+    "refreshing": "جارٍ التحديث…",
+    "saveCandidates": "حفظ المرشحين",
+    "saving": "جارٍ الحفظ...",
+    "saveAndScore": "حفظ وبدء التقييم الذكي",
+    "startScoring": "بدء التقييم الذكي",
+    "saveSuccess": "تم حفظ المرشحين بنجاح.",
+    "saveError": "فشل في حفظ المرشحين. يرجى المحاولة مرة أخرى.",
+    "scoreError": "فشل في بدء التقييم الذكي. يرجى المحاولة مرة أخرى."
+  },
+  "emptyState": {
+    "title": "لا يوجد مرشحون بعد",
+    "description": "ارفع السير الذاتية للبدء. سيظهر المرشحون هنا بعد المعالجة."
+  },
+  "jdSelection": {
+    "label": "الوصف الوظيفي",
+    "placeholder": "ابحث في الأوصاف الوظيفية...",
+    "noResults": "لا توجد أوصاف وظيفية",
+    "searchPlaceholder": "بحث...",
+    "hint": "اختر وصفاً وظيفياً لتفعيل رفع السير الذاتية",
+    "required": "يرجى اختيار وصف وظيفي"
+  },
+  "upload": {
+    "sectionTitle": "رفع السير الذاتية",
+    "dropLink": "انقر للرفع",
+    "dropText": "أو اسحب وأفلت",
+    "hint": "PDF, DOC, DOCX — حتى 10 ملفات",
+    "maxFilesError": "الحد الأقصى 10 ملفات فقط",
+    "supportedFormats": "الصيغ المدعومة",
+    "removeFile": "حذف الملف",
+    "filesSelected": "ملفات محددة",
+    "fileSelected": "ملف محدد",
+    "processing": "جارٍ معالجة الملفات..."
+  },
+  "summary": {
+    "sectionTitle": "ملخص المعالجة",
+    "total": "إجمالي المعالجة",
+    "success": "ناجح",
+    "duplicate": "مكرر",
+    "incomplete": "غير مكتمل",
+    "totalCandidates": "إجمالي المرشحين",
+    "scored": "المرشحون المُقيَّمون",
+    "pending": "قيد التقييم",
+    "avgScore": "متوسط نقاط التطابق",
+    "activeJds": "الأوصاف الوظيفية النشطة"
+  },
+  "filters": {
+    "search": "البحث باسم المرشح أو البريد الإلكتروني...",
+    "allJds": "جميع الأوصاف الوظيفية",
+    "allVerdicts": "جميع النتائج",
+    "allExperience": "جميع الخبرات",
+    "allStatuses": "جميع الحالات",
+    "clear": "مسح الفلاتر",
+    "verdictExcellent": "تطابق ممتاز",
+    "verdictStrong": "تطابق قوي",
+    "verdictGood": "تطابق جيد",
+    "verdictModerate": "تطابق متوسط",
+    "verdictWeak": "تطابق ضعيف",
+    "expFresher": "0–1 سنة (مبتدئ)",
+    "expJunior": "1–3 سنوات",
+    "expMid": "3–5 سنوات",
+    "expSenior": "5–8 سنوات",
+    "expExpert": "8+ سنوات"
+  },
+  "landing": {
+    "showing": "عرض {{count}} من {{total}} مرشح",
+    "noResults": "لا يوجد مرشحون يطابقون الفلاتر",
+    "noResultsHint": "حاول تعديل الفلاتر أو مسحها لرؤية المزيد من النتائج.",
+    "page": "صفحة {{page}} من {{total}}",
+    "prev": "السابق",
+    "next": "التالي"
+  },
+  "listCard": {
+    "exp": "سنوات خبرة",
+    "more": "المزيد",
+    "allSkills": "جميع المهارات",
+    "pendingScore": "قيد الانتظار",
+    "pendingBadge": "قيد التقييم",
+    "noEmail": "لا يوجد بريد إلكتروني"
+  },
+  "tabs": {
+    "success": "ناجح",
+    "duplicate": "مكرر",
+    "incomplete": "غير مكتمل"
+  },
+  "card": {
+    "experience": "الخبرة",
+    "education": "التعليم",
+    "skills": "المهارات",
+    "score": "النتيجة",
+    "noExperience": "غير محدد",
+    "noEducation": "غير محدد",
+    "noSkills": "لا توجد مهارات",
+    "scoreNotAvailable": "—",
+    "years": "سنوات",
+    "missingFields": "حقول مفقودة",
+    "duplicateBadge": "مكرر",
+    "incompleteBadge": "غير مكتمل",
+    "viewDetails": "عرض التفاصيل",
+    "needsReview": "يحتاج مراجعة",
+    "duplicate": "مكرر"
+  },
+  "drawer": {
+    "title": "تفاصيل المرشح",
+    "close": "إغلاق",
+    "personalInfo": "المعلومات الشخصية",
+    "skills": "المهارات",
+    "education": "التعليم",
+    "workHistory": "الخبرة العملية",
+    "resume": "السيرة الذاتية",
+    "downloadResume": "تحميل السيرة الذاتية",
+    "present": "حتى الآن"
+  },
+  "results": {
+    "emptySuccess": "لا يوجد مرشحون تم معالجتهم بنجاح",
+    "emptyDuplicate": "لا توجد مرشحون مكررون",
+    "emptyIncomplete": "لا توجد مرشحون غير مكتملين",
+    "emptyHint": "ارفع السير الذاتية لرؤية النتائج هنا",
+    "unsavedNote": "المرشحون المستخرجون لم يتم حفظهم بعد. اختر حفظ المرشحين أو الحفظ وبدء التقييم الذكي.",
+    "selectAll": "تحديد الكل",
+    "selected": "محدد"
+  },
+  "status": {
+    "pending": "قيد الانتظار",
+    "reviewed": "تمت المراجعة",
+    "shortlisted": "في القائمة المختصرة",
+    "rejected": "مرفوض"
+  },
+  "missing": {
+    "email": "البريد الإلكتروني",
+    "experience": "الخبرة",
+    "education": "التعليم",
+    "skills": "المهارات",
+    "name": "الاسم"
+  },
+  "details": {
+    "tabs": {
+      "overview": "نظرة عامة",
+      "experience": "الخبرة",
+      "education": "التعليم",
+      "skills": "المهارات",
+      "resume": "السيرة الذاتية",
+      "aiScore": "تقييم الذكاء الاصطناعي",
+      "hrQuestions": "تقييم الموارد البشرية"
+    },
+    "header": {
+      "backToCandidates": "رجوع",
+      "downloadResume": "تحميل السيرة الذاتية"
+    },
+    "profile": {
+      "yearsExp": "سنوات خبرة",
+      "linkedin": "ملف LinkedIn",
+      "github": "ملف GitHub"
+    },
+    "aiMatch": {
+      "title": "نتيجة التطابق بالذكاء الاصطناعي",
+      "notAvailable": "نتيجة التطابق غير متاحة",
+      "notAvailableDesc": "لم يتم تقييم هذا المرشح مقابل الوصف الوظيفي المحدد.",
+      "calculateScore": "احتساب نتيجة التطابق",
+      "calculating": "جارٍ الاحتساب...",
+      "baseScore": "النتيجة الأساسية",
+      "finalScore": "النتيجة النهائية"
+    },
+    "overview": {
+      "personalInfo": "المعلومات الشخصية",
+      "professionalInfo": "المعلومات المهنية",
+      "email": "البريد الإلكتروني",
+      "phone": "الهاتف",
+      "location": "الموقع",
+      "linkedin": "لينكد إن",
+      "github": "جيت هاب",
+      "portfolio": "ملف الأعمال",
+      "currentRole": "المنصب الحالي",
+      "currentCompany": "الشركة الحالية",
+      "experience": "إجمالي الخبرة",
+      "noValue": "غير محدد"
+    },
+    "experience": {
+      "present": "حتى الآن",
+      "responsibilities": "المهام والمسؤوليات",
+      "noExperience": "لا توجد سجلات خبرة."
+    },
+    "education": {
+      "noEducation": "لا توجد سجلات تعليمية."
+    },
+    "skills": {
+      "technical": "المهارات التقنية",
+      "core": "المهارات الأساسية",
+      "soft": "المهارات الشخصية",
+      "noSkills": "لا توجد مهارات مدرجة."
+    },
+    "resume": {
+      "pdfDocument": "ملف PDF",
+      "preview": "معاينة",
+      "download": "تحميل",
+      "noResume": "لا تتوفر سيرة ذاتية."
+    },
+    "score": {
+      "notScored": "لم يتم تقييم هذا المرشح بعد.",
+      "breakdownTitle": "تفصيل نتيجة الذكاء الاصطناعي",
+      "overall": "الإجمالي",
+      "parameter": "المعامل",
+      "weight": "الوزن",
+      "candidateScore": "النتيجة",
+      "contribution": "المساهمة",
+      "yourAssessment": "تقييمك",
+      "feedbackComments": "ملاحظات / تعليقات",
+      "feedbackPlaceholder": "أدخل تعليقاتك...",
+      "feedbackRequired": "يرجى إدخال ملاحظاتك",
+      "saveFeedback": "حفظ التقييم",
+      "selectAssessment": "اختر...",
+      "requiredPresent": "المهارات المطلوبة المتوفرة",
+      "requiredMissing": "المهارات المطلوبة المفقودة",
+      "optionalPresent": "الاختيارية المتوفرة",
+      "optionalMissing": "الاختيارية المفقودة",
+      "groups": {
+        "technical_execution": "التنفيذ التقني",
+        "experience_requirement": "متطلبات الخبرة",
+        "education_requirement": "متطلبات التعليم",
+        "behavioral_traits": "السمات السلوكية",
+        "work_environment_fit": "التوافق مع بيئة العمل",
+        "tools_or_technology_stack": "الأدوات والتقنيات"
+      }
+    },
+    "errors": {
+      "invalidId": "معرف المرشح غير صالح.",
+      "fetchFailed": "فشل تحميل تفاصيل المرشح. يرجى المحاولة مرة أخرى."
+    }
+  }
+}

@@ -61,6 +61,10 @@ export interface ThemeColors {
 
   label: string;
   skeletonBg: string;
+
+  /* Gradient accent pair */
+  accent: string;
+  accent2: string;
 }
 
 export interface ThemeFont {

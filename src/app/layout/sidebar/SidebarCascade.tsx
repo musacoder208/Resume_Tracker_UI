@@ -94,7 +94,7 @@ export function SidebarCascade({
                   <Icon className="h-4 w-4" />
                 </span>
               )}
-              <span className="flex-1 text-start">{t(child.labelKey)}</span>
+              <span className="flex-1 text-start">{t(child.labelKey ?? '')}</span>
               {child.children && child.children.length > 0 && (
                 <ChevronRightIcon className="h-3 w-3 shrink-0 text-white/40" />
               )}

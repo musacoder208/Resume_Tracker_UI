@@ -7,7 +7,7 @@ export const buttonBase =
   'inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus:outline-none disabled:pointer-events-none disabled:opacity-50';
 
 export const variantClasses: Record<ButtonVariant, string> = {
-  primary: 'bg-primary text-white border border-primary hover:bg-primary-hover hover:border-primary-hover focus:ring-2 focus:ring-primary',
+  primary: '[background:linear-gradient(135deg,var(--accent),var(--accent2))] text-white border border-[var(--accent)] hover:opacity-90 focus:ring-2 focus:ring-[var(--accent)]',
   secondary: 'bg-surface text-text border border-border hover:bg-surface-muted focus:ring-2 focus:ring-primary',
   danger: 'bg-error text-white border border-error hover:bg-error/90 hover:border-error/90 focus:ring-2 focus:ring-error',
   soft: 'bg-surface-muted text-text border border-surface-muted hover:bg-surface hover:border-surface focus:ring-2 focus:ring-primary',

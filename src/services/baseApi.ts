@@ -5,6 +5,12 @@ import { clearAuthContext } from '@/features/auth/redux/auth.slice';
 import { clearActiveSession } from '@/utils/authSession';
 import type { ApiError, ApiErrorKind, ApiErrorMeta } from '@/types/apiError';
 
+export type BaseQueryExtraOptions = {
+  skipRetry?: boolean;
+  skipReauth?: boolean;
+  timeout?: number;
+};
+
 const MAX_RETRIES = 3;
 
 const rawBaseQuery = fetchBaseQuery({
@@ -12,16 +18,27 @@ const rawBaseQuery = fetchBaseQuery({
   credentials: 'include',
 });
 
+// Shared refresh promise — ensures only one token refresh runs at a time.
+// All concurrent 401s wait for this single promise instead of each firing
+// their own refresh, which would exhaust the single-use refresh token.
+let pendingRefresh: Promise<{ data: unknown } | { error: unknown }> | null = null;
+
 // @ts-expect-error -- FetchBaseQueryError is structurally compatible with ApiError
-const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, ApiError> = async (
+const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, ApiError, BaseQueryExtraOptions> = async (
   args,
   api,
   extraOptions
 ) => {
   let result = await rawBaseQuery(args, api, extraOptions);
 
-  if (result.error?.status === 401) {
-    const skip = (extraOptions as { skipReauth?: boolean } | undefined)?.skipReauth;
+  // fetchBaseQuery wraps 401 in PARSING_ERROR when the body is empty/non-JSON.
+  // Check both the primary status and originalStatus to catch both shapes.
+  const errStatus = result.error?.status;
+  const origStatus = (result.error as { originalStatus?: number } | undefined)?.originalStatus;
+  const is401 = errStatus === 401 || origStatus === 401;
+
+  if (is401) {
+    const skip = extraOptions?.skipReauth;
 
     if (skip) {
       clearActiveSession();
@@ -38,16 +55,28 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, ApiError> = 
       };
     }
 
-    const refreshResult = await rawBaseQuery(
-      {
-        url: `${env.AUTH_SERVICE_BASE_URL}/auth/refresh`,
-        method: 'POST',
-      },
-      api,
-      extraOptions
-    );
+    // If no refresh is in flight, start one. Otherwise reuse the existing promise.
+    if (pendingRefresh == null) {
+      pendingRefresh = (async () => {
+        try {
+          return await rawBaseQuery({ url: 'auth/session', method: 'GET' }, api, extraOptions);
+        } finally {
+          pendingRefresh = null;
+        }
+      })();
+    }
 
-    if (refreshResult.data != null) {
+    const refreshResult = await pendingRefresh;
+
+    // Treat the refresh as failed only if it explicitly returned a 401.
+    // A 204/empty-body 200 arrives as PARSING_ERROR with originalStatus 2xx —
+    // the cookie was still set, so we must retry rather than log out.
+    const refreshErr = (refreshResult as { error?: { status?: unknown; originalStatus?: number } }).error;
+    const refreshFailed =
+      refreshErr !== undefined &&
+      (refreshErr.status === 401 || refreshErr.originalStatus === 401);
+
+    if (!refreshFailed) {
       result = await rawBaseQuery(args, api, extraOptions);
     } else {
       api.dispatch(clearAuthContext());
@@ -65,12 +94,29 @@ const baseQueryWithReauth: BaseQueryFn<string | FetchArgs, unknown, ApiError> = 
   return result;
 };
 
-const baseQueryWithErrorHandling: BaseQueryFn<string | FetchArgs, unknown, ApiError> = async (
+const baseQueryWithErrorHandling: BaseQueryFn<string | FetchArgs, unknown, ApiError, BaseQueryExtraOptions> = async (
   args,
   api,
   extraOptions
 ) => {
-  const result = await baseQueryWithReauth(args, api, extraOptions);
+  const timeoutMs = extraOptions?.timeout;
+  let resolvedArgs: string | FetchArgs = args;
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+
+  if (timeoutMs != null) {
+    const controller = new AbortController();
+    timeoutId = setTimeout(() => { controller.abort(); }, timeoutMs);
+    resolvedArgs = typeof args === 'string'
+      ? { url: args, signal: controller.signal }
+      : { ...(args as FetchArgs), signal: controller.signal };
+  }
+
+  let result: Awaited<ReturnType<typeof baseQueryWithReauth>>;
+  try {
+    result = await baseQueryWithReauth(resolvedArgs, api, extraOptions);
+  } finally {
+    if (timeoutId != null) clearTimeout(timeoutId);
+  }
 
   if (result.error) {
     const err = result.error;
@@ -100,11 +146,17 @@ const baseQueryWithErrorHandling: BaseQueryFn<string | FetchArgs, unknown, ApiEr
   return result;
 };
 
-const baseQueryWithRetry: BaseQueryFn<string | FetchArgs, unknown, ApiError> = async (
+const baseQueryWithRetry: BaseQueryFn<string | FetchArgs, unknown, ApiError, BaseQueryExtraOptions> = async (
   args,
   api,
   extraOptions
 ) => {
+  const skipRetry = extraOptions?.skipRetry === true;
+
+  if (skipRetry) {
+    return baseQueryWithErrorHandling(args, api, extraOptions);
+  }
+
   let attempt = 0;
   let result;
 
@@ -135,6 +187,6 @@ const baseQueryWithRetry: BaseQueryFn<string | FetchArgs, unknown, ApiError> = a
 export const baseApi = createApi({
   reducerPath: 'api',
   baseQuery: baseQueryWithRetry,
-  tagTypes: [],
+  tagTypes: ['CandidateList'],
   endpoints: () => ({}),
 });

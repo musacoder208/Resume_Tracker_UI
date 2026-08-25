@@ -1,23 +1,37 @@
-import type { User } from '../types/auth.types';
+import type { User, PageAccess } from '../types/auth.types';
 
-type RawAuthResponse = {
+type RawPageAccess = {
+  page_name: string;
+  route: string;
+  icon: string | null;
+  display_order: number;
+  permissions: string[];
+};
+
+type RawLoginResponse = {
   data: {
-    id: string;
-    name: string;
-    email: string;
-    role: string;
-    sessionExpiresAt?: string;
-    permissions?: string[];
+    user: {
+      userId: number;
+    };
+    page_access: RawPageAccess[];
+    permissions: string[];
+    sessionExpiresIn: string;
   };
 };
 
-export const mapAuthResponse = (raw: RawAuthResponse): { user: User; sessionExpiresAt: string | null } => ({
-  user: {
-    id: raw.data.id,
-    name: raw.data.name,
-    email: raw.data.email,
-    role: raw.data.role,
-    permissions: raw.data.permissions ?? [],
-  },
-  sessionExpiresAt: raw.data.sessionExpiresAt ?? null,
+export type MappedAuthData = {
+  user: User;
+  pageAccess: PageAccess[];
+  permissions: string[];
+  sessionExpiresAt: string | null;
+};
+
+export const mapLoginResponse = (raw: RawLoginResponse): MappedAuthData => ({
+  user: { userId: raw.data.user.userId },
+  pageAccess: raw.data.page_access,
+  permissions: raw.data.permissions,
+  sessionExpiresAt: raw.data.sessionExpiresIn ?? null,
 });
+
+// /auth/session returns the same shape as /auth/login
+export const mapAuthResponse = mapLoginResponse;

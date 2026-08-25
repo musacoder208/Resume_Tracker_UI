@@ -9,16 +9,13 @@ import { setAuthContext } from '../redux/auth.slice';
 import { useT } from '@/i18n/useT';
 import { Input, PasswordInput } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import { FormErrorBanner } from '@/components/form/FormErrorBanner';
-import { LockClosedIcon } from '@/icons';
 import { IMAGES } from '@/icons/images';
 import { setActiveSession } from '@/utils/authSession';
 
-// Schema at module level — no i18n dependency.
-// Type is derived from the schema so they can never diverge.
+// Schema at module level — type derived so they never diverge.
 const loginSchema = z.object({
-  email: z.string().email(),
+  username: z.string().min(1),
   password: z.string().min(1),
   rememberMe: z.boolean().optional(),
 });
@@ -33,15 +30,15 @@ export function LoginForm(): JSX.Element {
 
   const { register, handleSubmit, formState } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
-    defaultValues: { email: '', password: '', rememberMe: false },
+    defaultValues: { username: '', password: '', rememberMe: false },
   });
 
   const onSubmit = async (values: LoginFormValues): Promise<void> => {
     try {
-      const data = await login({ email: values.email, password: values.password }).unwrap();
+      const data = await login({ username: values.username, password: values.password }).unwrap();
       setActiveSession();
       dispatch(setAuthContext(data));
-      await navigate('/', { replace: true });
+      await navigate('/dashboard', { replace: true });
     } catch {
       // error surfaced via RTK Query `error` state
     }
@@ -51,67 +48,72 @@ export function LoginForm(): JSX.Element {
 
   return (
     <div className="w-full max-w-md">
-      {/* Logo + heading */}
-      <div className="mb-7 flex flex-col items-center gap-y-5 text-center">
-        <img src={IMAGES.logo} alt="EQAS" className="h-13 w-auto" />
-        <div>
-          <h1 className="text-3xl font-bold text-text">{t('login.title')}</h1>
-          <p className="mt-2 text-sm font-medium text-primary-hover">{t('login.subtitle')}</p>
-        </div>
+
+      {/* Logo + app name */}
+      <div className="mb-8 flex items-center justify-center">
+        <img src={IMAGES.logo} alt="Resume Tracker" className="h-10 w-auto" />
       </div>
 
-      <form
-        onSubmit={(e) => {
-          void handleSubmit(onSubmit)(e);
-        }}
-        className="space-y-3.5"
-      >
-        <FormErrorBanner message={apiError} />
+      {/* Card */}
+      <div className="rounded-2xl bg-surface px-8 py-10 shadow-lg">
 
-        {/* Email field */}
-        <div>
-          <Input
-            {...register('email')}
-            placeholder={t('login.form.placeholders.email')}
-            variant={formState.errors.email ? 'error' : 'default'}
-            autoComplete="email"
-          />
-          {formState.errors.email && (
-            <p className="mt-1 text-xs text-error">{t('login.errors.emailRequired')}</p>
-          )}
+        {/* Heading */}
+        <div className="mb-6">
+          <h1 className="text-2xl font-bold text-text">{t('login.title')}</h1>
+          <p className="mt-1 text-sm text-text-muted">{t('login.subtitle')}</p>
         </div>
 
-        {/* Password field */}
-        <div>
-          <PasswordInput
-            {...register('password')}
-            placeholder={t('login.form.placeholders.password')}
-            hasError={Boolean(formState.errors.password)}
-            autoComplete="current-password"
-          />
-          {formState.errors.password && (
-            <p className="mt-1 text-xs text-error">{t('login.errors.passwordRequired')}</p>
-          )}
-        </div>
+        <form
+          onSubmit={(e) => { void handleSubmit(onSubmit)(e); }}
+          className="space-y-4"
+        >
+          <FormErrorBanner message={apiError} />
 
-        <div className="flex items-center justify-between pt-0.5">
-          <Checkbox {...register('rememberMe')} label={t('login.form.labels.rememberMe')} />
-          <a href="#" className="text-[12.5px] font-semibold text-primary-hover hover:underline">
-            {t('login.form.actions.forgotPassword')}
-          </a>
-        </div>
+          {/* Username */}
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-text">
+              {t('login.form.labels.username')}
+              <span className="ms-0.5 text-error">*</span>
+            </label>
+            <Input
+              {...register('username')}
+              placeholder={t('login.form.placeholders.username')}
+              variant={formState.errors.username ? 'error' : 'default'}
+              autoComplete="username"
+            />
+            {formState.errors.username && (
+              <p className="mt-1 text-xs text-error">{t('login.errors.usernameRequired')}</p>
+            )}
+          </div>
 
-        <div className="pt-2">
-          <Button
-            type="submit"
-            fullWidth
-            disabled={isLoading}
-            leadingIcon={<LockClosedIcon className="h-[15px] w-[15px]" />}
-          >
-            {isLoading ? t('login.buttons.signingIn') : t('login.buttons.signIn')}
-          </Button>
-        </div>
-      </form>
+          {/* Password */}
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-text">
+              {t('login.form.labels.password')}
+              <span className="ms-0.5 text-error">*</span>
+            </label>
+            <PasswordInput
+              {...register('password')}
+              placeholder={t('login.form.placeholders.password')}
+              hasError={Boolean(formState.errors.password)}
+              autoComplete="current-password"
+            />
+            {formState.errors.password && (
+              <p className="mt-1 text-xs text-error">{t('login.errors.passwordRequired')}</p>
+            )}
+          </div>
+
+          <div className="pt-2">
+            <Button type="submit" fullWidth disabled={isLoading}>
+              {isLoading ? t('login.buttons.signingIn') : t('login.buttons.signIn')}
+            </Button>
+          </div>
+        </form>
+      </div>
+
+      {/* Footer */}
+      <p className="mt-8 text-center text-xs text-text-muted">{t('login.footer', { year: new Date().getFullYear() })}</p>
+
     </div>
   );
 }
