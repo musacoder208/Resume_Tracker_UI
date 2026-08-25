@@ -11,7 +11,7 @@ export default defineConfig(({ mode }) => ({
     },
   },
   server: {
-    port: 9858,
+    port: 9850,
     open: true,
   },
   build: {
