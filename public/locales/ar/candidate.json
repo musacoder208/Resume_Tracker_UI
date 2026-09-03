@@ -65,6 +65,7 @@
     "allVerdicts": "جميع النتائج",
     "allExperience": "جميع الخبرات",
     "allStatuses": "جميع الحالات",
+    "allHrStatuses": "جميع حالات الموارد البشرية",
     "clear": "مسح الفلاتر",
     "verdictExcellent": "تطابق ممتاز",
     "verdictStrong": "تطابق قوي",
@@ -165,7 +166,11 @@
     "profile": {
       "yearsExp": "سنوات خبرة",
       "linkedin": "ملف LinkedIn",
-      "github": "ملف GitHub"
+      "github": "ملف GitHub",
+      "previewResume": "معاينة السيرة الذاتية",
+      "hidePreview": "إخفاء المعاينة",
+      "previewLoading": "جارٍ تحميل المعاينة...",
+      "previewError": "فشل تحميل معاينة السيرة الذاتية."
     },
     "aiMatch": {
       "title": "نتيجة التطابق بالذكاء الاصطناعي",

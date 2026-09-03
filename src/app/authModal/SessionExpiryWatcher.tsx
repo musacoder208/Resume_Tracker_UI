@@ -32,10 +32,10 @@ export function SessionExpiryWatcher(): JSX.Element | null {
 
     const handleLogout = async (): Promise<void> => {
       try {
-        sessionStorage.removeItem(dismissKey);
         await logout().unwrap();
       } finally {
         clearActiveSession();
+        sessionStorage.clear();
         dispatch(clearAuthContext());
         clearStoredTheme();
         applyTheme(DEFAULT_THEME);

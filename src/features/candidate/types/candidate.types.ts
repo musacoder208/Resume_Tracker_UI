@@ -263,6 +263,7 @@ export interface CandidateListParams {
   verdict?: string;
   experience_range?: string;
   status_id?: string;
+  hr_status_code?: string;
   page?: number;
   page_size?: number;
 }
@@ -507,6 +508,8 @@ export interface RawHRQuestionOption {
   option_id: number;
   option_label: string;
   option_value: string;
+  parent_status_code: string | null;
+  disabled: boolean;
 }
 
 export interface RawHRAnswerItem {
@@ -530,6 +533,8 @@ export interface HRQuestionOption {
   optionId: number;
   optionLabel: string;
   optionValue: string;
+  parentStatusCode: string | null;
+  disabled: boolean;
 }
 
 export type HRInputType = 'textbox' | 'textarea' | 'single_select' | 'multi_select';

@@ -49,6 +49,7 @@ export const mapMasterDataResponse = (raw: ApiResponse<RawMasterData>): MasterDa
   seniorities: raw.data.seniorities,
   feedbackStatuses: raw.data.feedbackStatuses ?? [],
   statuses: raw.data.statuses ?? {},
+  hrStatuses: raw.data.hrStatuses ?? [],
 });
 
 type RawJdCounts = Record<string, number | undefined>;

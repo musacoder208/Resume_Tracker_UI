@@ -65,6 +65,7 @@
     "allVerdicts": "All Verdicts",
     "allExperience": "All Experience",
     "allStatuses": "All Statuses",
+    "allHrStatuses": "All HR Status",
     "clear": "Clear Filters",
     "verdictExcellent": "Excellent Match",
     "verdictStrong": "Strong Match",
@@ -165,7 +166,11 @@
     "profile": {
       "yearsExp": "yrs experience",
       "linkedin": "LinkedIn Profile",
-      "github": "GitHub Profile"
+      "github": "GitHub Profile",
+      "previewResume": "Preview Resume",
+      "hidePreview": "Hide Preview",
+      "previewLoading": "Loading preview...",
+      "previewError": "Failed to load resume preview."
     },
     "aiMatch": {
       "title": "AI Match Score",

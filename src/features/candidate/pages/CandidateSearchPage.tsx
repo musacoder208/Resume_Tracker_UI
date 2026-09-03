@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo, type JSX } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect, useMemo, useRef, type JSX } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import clsx from 'clsx';
 import { PageContainer } from '@/components/containers/PageContainer';
 import { Button } from '@/components/ui/button';
@@ -26,6 +26,8 @@ import type { CandidateListParams, CandidateListSummary } from '../types/candida
 
 const SKELETON_COUNT = 6;
 const PAGE_SIZE = 10;
+const FILTERS_STORAGE_KEY = 'candidateSearchFilters';
+const HR_STATUS_DEFAULTED_KEY = 'candidateSearchHrStatusDefaulted';
 
 // ── Inline sub-components ─────────────────────────────────────────────────────
 
@@ -95,23 +97,93 @@ function EmptyState({ title, hint, onUpload, uploadLabel, onClear, clearLabel }:
 export function CandidateSearchPage(): JSX.Element {
   const { t } = useT('candidate');
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  // Filter state
-  const [searchInput, setSearchInput] = useState('');
-  const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [selectedJd, setSelectedJd] = useState('');
-  const [selectedVerdict, setSelectedVerdict] = useState('');
-  const [selectedExperience, setSelectedExperience] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('');
-  const [page, setPage] = useState(1);
+  // Filter state — persisted in the URL so it survives navigating away (e.g. to a
+  // candidate's detail page) and back, instead of resetting on remount.
+  const selectedJd = searchParams.get('jd') ?? '';
+  const selectedVerdict = searchParams.get('verdict') ?? '';
+  const selectedExperience = searchParams.get('experience') ?? '';
+  const selectedStatus = searchParams.get('status') ?? '';
+  const selectedHrStatus = searchParams.get('hrStatus') ?? '';
+  const debouncedSearch = searchParams.get('search') ?? '';
+  const page = Number(searchParams.get('page') ?? '1');
 
-  // Debounce search input (400ms) — also resets page
+  // Search input's initial value: prefer the URL, else fall back to sessionStorage —
+  // computed once up front so no setState call is needed once the restore effect runs.
+  const [searchInput, setSearchInput] = useState<string>(() => {
+    if (debouncedSearch !== '') return debouncedSearch;
+    const saved = sessionStorage.getItem(FILTERS_STORAGE_KEY);
+    if (saved == null) return '';
+    try {
+      const parsed = JSON.parse(saved) as Record<string, string>;
+      return parsed.search ?? '';
+    } catch {
+      return '';
+    }
+  });
+
+  // Restore filters from sessionStorage when arriving with a clean URL (e.g. via a
+  // sidebar link to another page and back) — the URL alone doesn't survive that.
+  useEffect(() => {
+    if (searchParams.toString() !== '') return;
+    const saved = sessionStorage.getItem(FILTERS_STORAGE_KEY);
+    if (saved == null) return;
+    try {
+      const parsed = JSON.parse(saved) as Record<string, string>;
+      const next = new URLSearchParams();
+      Object.entries(parsed).forEach(([key, value]) => {
+        if (value !== '') next.set(key, value);
+      });
+      setSearchParams(next, { replace: true });
+    } catch {
+      // corrupt storage value — ignore and start fresh
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Keep sessionStorage in sync with the current filter state so it survives
+  // navigating to another page and back. Skips its very first run after mount —
+  // otherwise it would fire in the same commit as the restore effect above,
+  // using the still-empty pre-restore values and wiping out what was just restored.
+  const hasMountedRef = useRef(false);
+  useEffect(() => {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      return;
+    }
+    sessionStorage.setItem(FILTERS_STORAGE_KEY, JSON.stringify({
+      jd: selectedJd,
+      verdict: selectedVerdict,
+      experience: selectedExperience,
+      status: selectedStatus,
+      hrStatus: selectedHrStatus,
+      search: debouncedSearch,
+      page: String(page),
+    }));
+  }, [selectedJd, selectedVerdict, selectedExperience, selectedStatus, selectedHrStatus, debouncedSearch, page]);
+
+  // Updates one filter param in the URL (replacing history entry) and resets to page 1.
+  function setFilterParam(key: string, value: string): void {
+    const next = new URLSearchParams(searchParams);
+    if (value === '') next.delete(key); else next.set(key, value);
+    next.set('page', '1');
+    setSearchParams(next, { replace: true });
+  }
+
+  function setPageParam(nextPage: number): void {
+    const next = new URLSearchParams(searchParams);
+    next.set('page', String(nextPage));
+    setSearchParams(next, { replace: true });
+  }
+
+  // Debounce search input (400ms) before writing it to the URL — also resets page
   useEffect(() => {
     const id = setTimeout(() => {
-      setDebouncedSearch(searchInput);
-      setPage(1);
+      if (searchInput !== debouncedSearch) setFilterParam('search', searchInput);
     }, 400);
     return () => { clearTimeout(id); };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchInput]);
 
   const queryParams = useMemo((): CandidateListParams => {
@@ -120,33 +192,79 @@ export function CandidateSearchPage(): JSX.Element {
     if (selectedVerdict !== '') p.verdict = selectedVerdict;
     if (selectedExperience !== '') p.experience_range = selectedExperience;
     if (selectedStatus !== '') p.status_id = selectedStatus;
+    if (selectedHrStatus !== '') p.hr_status_code = selectedHrStatus;
     return p;
-  }, [selectedJd, debouncedSearch, selectedVerdict, selectedExperience, selectedStatus, page]);
+  }, [selectedJd, debouncedSearch, selectedVerdict, selectedExperience, selectedStatus, selectedHrStatus, page]);
 
   const { data: moduleId } = useGetModuleIdQuery('CAND_MGT');
   const { data: masterData } = useGetMasterDataQuery();
   const { data: jdList = [] } = useGetJDDropdownQuery();
   const jdOptions = jdList.map((item) => ({ value: String(item.jdId), label: item.label }));
   const moduleStatuses = moduleId != null ? (masterData?.statuses?.[String(moduleId)] ?? []) : [];
+  const hrStatuses = masterData?.hrStatuses ?? [];
   const { data, isLoading, isFetching } = useGetCandidateListQuery(queryParams, {
     skip: selectedJd === '',
   });
 
+  // Default the HR Status filter to "Pending" once per session (fresh login —
+  // sessionStorage is cleared on logout), the first time the master data with
+  // HR statuses becomes available. Uses its own dedicated storage flag (set at
+  // the exact moment the decision is made) rather than "is anything stored
+  // under the filters key yet" — an unrelated filter change (e.g. picking a
+  // JD, which is required before results load) can write to the filters key
+  // first if it happens before this master data finishes loading, which would
+  // otherwise be mistaken for "the default was already decided".
+  const hasAppliedHrStatusDefaultRef = useRef(false);
+  // Marks the HR Status default as decided immediately, so an explicit user
+  // action (clearing filters, or picking "All" from the HR Status dropdown)
+  // can't be overridden later if the master data query hasn't resolved yet —
+  // the effect below can't otherwise tell "never touched" apart from
+  // "user just chose All", since both read as an empty selectedHrStatus.
+  function markHrStatusDecided(): void {
+    hasAppliedHrStatusDefaultRef.current = true;
+    sessionStorage.setItem(HR_STATUS_DEFAULTED_KEY, 'true');
+  }
+  useEffect(() => {
+    if (hasAppliedHrStatusDefaultRef.current) return;
+    if (hrStatuses.length === 0) return;
+    if (selectedHrStatus !== '') { markHrStatusDecided(); return; }
+    if (sessionStorage.getItem(HR_STATUS_DEFAULTED_KEY) === 'true') { hasAppliedHrStatusDefaultRef.current = true; return; }
+
+    const pending = hrStatuses.find((s) => s.name.toLowerCase() === 'pending')
+      ?? hrStatuses.find((s) => s.code.toLowerCase() === 'pending');
+
+    markHrStatusDecided();
+    if (pending != null) setFilterParam('hrStatus', pending.code);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hrStatuses]);
+
   const hasActiveFilters =
-    searchInput !== '' || selectedVerdict !== '' || selectedExperience !== '' || selectedStatus !== '';
+    searchInput !== '' || selectedVerdict !== '' || selectedExperience !== '' || selectedStatus !== '' || selectedHrStatus !== '';
 
   function clearFilters(): void {
+    markHrStatusDecided();
     setSearchInput('');
-    setSelectedVerdict('');
-    setSelectedExperience('');
-    setSelectedStatus('');
-    setPage(1);
+    const next = new URLSearchParams(searchParams);
+    next.delete('search');
+    next.delete('verdict');
+    next.delete('experience');
+    next.delete('status');
+
+    // Reset HR Status to its "Pending" default (same as a fresh page load)
+    // rather than clearing it to "All".
+    const pending = hrStatuses.find((s) => s.name.toLowerCase() === 'pending')
+      ?? hrStatuses.find((s) => s.code.toLowerCase() === 'pending');
+    if (pending != null) next.set('hrStatus', pending.code); else next.delete('hrStatus');
+
+    next.set('page', '1');
+    setSearchParams(next, { replace: true });
   }
 
-  function handleJdChange(value: string): void { setSelectedJd(value); setPage(1); }
-  function handleVerdictChange(value: string): void { setSelectedVerdict(value); setPage(1); }
-  function handleExperienceChange(value: string): void { setSelectedExperience(value); setPage(1); }
-  function handleStatusChange(value: string): void { setSelectedStatus(value); setPage(1); }
+  function handleJdChange(value: string): void { setFilterParam('jd', value); }
+  function handleVerdictChange(value: string): void { setFilterParam('verdict', value); }
+  function handleExperienceChange(value: string): void { setFilterParam('experience', value); }
+  function handleStatusChange(value: string): void { setFilterParam('status', value); }
+  function handleHrStatusChange(value: string): void { markHrStatusDecided(); setFilterParam('hrStatus', value); }
 
   function handleUpload(): void {
     void navigate('/candidate/upload');
@@ -298,6 +416,16 @@ export function CandidateSearchPage(): JSX.Element {
                 <option key={s.id} value={String(s.id)}>{s.name}</option>
               ))}
             </select>
+            <select
+              value={selectedHrStatus}
+              onChange={(e) => { handleHrStatusChange(e.target.value); }}
+              className="rounded-md border border-border bg-surface py-1.5 ps-3 pe-8 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="">{t('filters.allHrStatuses')}</option>
+              {hrStatuses.map((s) => (
+                <option key={s.id} value={s.code}>{s.name}</option>
+              ))}
+            </select>
             {hasActiveFilters && (
               <Button
                 variant="soft"
@@ -319,7 +447,7 @@ export function CandidateSearchPage(): JSX.Element {
             <p className="text-xs text-text-muted">
               {t('landing.showing', {
                 count: candidates.length,
-                total: summary.totalCandidates,
+                total: totalCount,
               })}
             </p>
           )}
@@ -377,7 +505,7 @@ export function CandidateSearchPage(): JSX.Element {
               </p>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => { setPage((p) => Math.max(1, p - 1)); }}
+                  onClick={() => { setPageParam(Math.max(1, page - 1)); }}
                   disabled={page <= 1 || isFetching}
                   className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-text disabled:cursor-not-allowed disabled:opacity-40 hover:bg-surface-muted"
                 >
@@ -385,7 +513,7 @@ export function CandidateSearchPage(): JSX.Element {
                   {t('landing.prev')}
                 </button>
                 <button
-                  onClick={() => { setPage((p) => Math.min(totalPages, p + 1)); }}
+                  onClick={() => { setPageParam(Math.min(totalPages, page + 1)); }}
                   disabled={page >= totalPages || isFetching}
                   className="flex items-center gap-1.5 rounded-md border border-border px-3 py-1.5 text-xs font-medium text-text disabled:cursor-not-allowed disabled:opacity-40 hover:bg-surface-muted"
                 >

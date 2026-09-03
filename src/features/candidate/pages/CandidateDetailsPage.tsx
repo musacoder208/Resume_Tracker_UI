@@ -23,6 +23,8 @@ import {
   ChevronDownIcon,
   ChevronUpIcon,
   DocumentTextIcon,
+  EyeIcon,
+  XMarkIcon,
 } from '@/icons';
 import { env } from '@/config/env';
 import {
@@ -34,7 +36,7 @@ import {
   useUpdateCandidateInfoMutation,
 } from '../api/candidate.api';
 import { toastService } from '@/components/ui/toast/toastService';
-import type { HRAnswerQuestion } from '../types/candidate.types';
+import type { HRAnswerQuestion, HRQuestionOption } from '../types/candidate.types';
 import { useGetMasterDataQuery } from '@/features/jd/api/jd.api';
 import { useGetModuleIdQuery } from '@/features/common/api/common.api';
 import type { MasterDataItem } from '@/features/jd/types/jd.types';
@@ -46,7 +48,14 @@ import type {
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
 
-type DetailTab = 'overview' | 'experience' | 'education' | 'skills' | 'resume' | 'score' | 'hrQuestions';
+type DetailTab =
+  | 'overview'
+  | 'experience'
+  | 'education'
+  | 'skills'
+  | 'resume'
+  | 'score'
+  | 'hrQuestions';
 
 const AVATAR_PALETTE = [
   'bg-primary/15 text-primary',
@@ -95,14 +104,29 @@ const fmt = (n: number | undefined | null): number => parseFloat((n ?? 0).toFixe
 
 // ── Profile Card ──────────────────────────────────────────────────────────────
 
-function ProfileCard({ detail, t }: { detail: CandidateDetail; t: (key: string) => string }): JSX.Element {
+function ProfileCard({
+  detail,
+  t,
+  isPreviewOpen,
+  onTogglePreview,
+}: {
+  detail: CandidateDetail;
+  t: (key: string) => string;
+  isPreviewOpen: boolean;
+  onTogglePreview: () => void;
+}): JSX.Element {
   const avatarClass = getAvatarClass(detail.personal.fullName);
   const initials = getInitials(detail.personal.fullName);
 
   return (
     <div className="rounded-xl border border-border bg-surface p-5">
       <div className="flex flex-col items-center gap-3 text-center">
-        <div className={clsx('flex h-16 w-16 items-center justify-center rounded-full text-xl font-bold', avatarClass)}>
+        <div
+          className={clsx(
+            'flex h-16 w-16 items-center justify-center rounded-full text-xl font-bold',
+            avatarClass
+          )}
+        >
           {initials}
         </div>
         <div>
@@ -126,7 +150,9 @@ function ProfileCard({ detail, t }: { detail: CandidateDetail; t: (key: string) 
         )}
         <div className="flex items-center gap-2 text-xs text-text-muted">
           <BriefcaseIcon className="h-4 w-4 shrink-0" />
-          <span>{detail.professional.totalExperience} {t('details.profile.yearsExp')}</span>
+          <span>
+            {detail.professional.totalExperience} {t('details.profile.yearsExp')}
+          </span>
         </div>
         {detail.personal.email !== '' && (
           <div className="flex items-center gap-2 text-xs text-text-muted">
@@ -162,6 +188,18 @@ function ProfileCard({ detail, t }: { detail: CandidateDetail; t: (key: string) 
             <span>{t('details.profile.github')}</span>
           </a>
         )}
+        {detail.resume.fileName !== '' && (
+          <Button
+            variant="unstyled"
+            className="!flex !p-0 items-center !justify-start gap-2 !text-xs !font-normal text-primary hover:underline"
+            onClick={onTogglePreview}
+          >
+            <EyeIcon className="h-4 w-4 shrink-0" />
+            <span>
+              {isPreviewOpen ? t('details.profile.hidePreview') : t('details.profile.previewResume')}
+            </span>
+          </Button>
+        )}
       </div>
     </div>
   );
@@ -177,7 +215,13 @@ interface AIMatchCardProps {
   t: (key: string) => string;
 }
 
-function AIMatchCard({ score, isCalculating, canCalculate, onCalculate, t }: AIMatchCardProps): JSX.Element {
+function AIMatchCard({
+  score,
+  isCalculating,
+  canCalculate,
+  onCalculate,
+  t,
+}: AIMatchCardProps): JSX.Element {
   if (score == null) {
     return (
       <div className="flex flex-col items-center gap-4 rounded-xl border border-dashed border-border bg-surface p-5 text-center">
@@ -218,7 +262,14 @@ function AIMatchCard({ score, isCalculating, canCalculate, onCalculate, t }: AIM
       <div className="flex flex-col items-center gap-3">
         <div className="relative h-20 w-20">
           <svg className="-rotate-90 h-full w-full" viewBox="0 0 36 36">
-            <circle cx="18" cy="18" r="15.9" fill="none" strokeWidth="2.5" className="stroke-border" />
+            <circle
+              cx="18"
+              cy="18"
+              r="15.9"
+              fill="none"
+              strokeWidth="2.5"
+              className="stroke-border"
+            />
             <circle
               cx="18"
               cy="18"
@@ -230,7 +281,12 @@ function AIMatchCard({ score, isCalculating, canCalculate, onCalculate, t }: AIM
               className={clsx('transition-all', strokeClass)}
             />
           </svg>
-          <span className={clsx('absolute inset-0 flex items-center justify-center text-base font-bold', colorClass)}>
+          <span
+            className={clsx(
+              'absolute inset-0 flex items-center justify-center text-base font-bold',
+              colorClass
+            )}
+          >
             {fmt(score.finalScore)}%
           </span>
         </div>
@@ -268,7 +324,14 @@ function InfoField({ label, value }: { label: string; value: string }): JSX.Elem
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_RE = /^[0-9+\-\s()]*$/;
 
-function EditableField({ label, value, onChange, error, type = 'text', placeholder }: {
+function EditableField({
+  label,
+  value,
+  onChange,
+  error,
+  type = 'text',
+  placeholder,
+}: {
   label: string;
   value: string;
   onChange: (v: string) => void;
@@ -282,21 +345,26 @@ function EditableField({ label, value, onChange, error, type = 'text', placehold
       <input
         type={type}
         value={value}
-        onChange={(e) => { onChange(e.target.value); }}
+        onChange={(e) => {
+          onChange(e.target.value);
+        }}
         placeholder={placeholder}
         className={clsx(
           'w-full rounded-md border bg-transparent px-3 py-1.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary',
-          error != null && error !== '' ? 'border-error' : 'border-border',
+          error != null && error !== '' ? 'border-error' : 'border-border'
         )}
       />
-      {error != null && error !== '' && (
-        <p className="mt-0.5 text-xs text-error">{error}</p>
-      )}
+      {error != null && error !== '' && <p className="mt-0.5 text-xs text-error">{error}</p>}
     </div>
   );
 }
 
-function OverviewTab({ detail, candidateId, onUpdated, t }: {
+function OverviewTab({
+  detail,
+  candidateId,
+  onUpdated,
+  t,
+}: {
   detail: CandidateDetail;
   candidateId: number;
   onUpdated: () => void;
@@ -375,17 +443,32 @@ function OverviewTab({ detail, candidateId, onUpdated, t }: {
                 setPhone(v);
                 setErrors((prev) => ({ ...prev, phone: undefined }));
               } else {
-                setErrors((prev) => ({ ...prev, phone: 'Phone number must contain only digits, spaces, +, -, or ().' }));
+                setErrors((prev) => ({
+                  ...prev,
+                  phone: 'Phone number must contain only digits, spaces, +, -, or ().',
+                }));
               }
             }}
             error={errors.phone}
             placeholder="Enter phone"
           />
-          <InfoField label={t('details.overview.location')} value={detail.personal.location !== '' ? detail.personal.location : noValue} />
-          <InfoField label={t('details.overview.linkedin')} value={detail.personal.linkedinUrl ?? noValue} />
-          <InfoField label={t('details.overview.github')} value={detail.personal.githubUrl ?? noValue} />
+          <InfoField
+            label={t('details.overview.location')}
+            value={detail.personal.location !== '' ? detail.personal.location : noValue}
+          />
+          <InfoField
+            label={t('details.overview.linkedin')}
+            value={detail.personal.linkedinUrl ?? noValue}
+          />
+          <InfoField
+            label={t('details.overview.github')}
+            value={detail.personal.githubUrl ?? noValue}
+          />
           {detail.personal.portfolioLinks.length > 0 && (
-            <InfoField label={t('details.overview.portfolio')} value={detail.personal.portfolioLinks.join(', ')} />
+            <InfoField
+              label={t('details.overview.portfolio')}
+              value={detail.personal.portfolioLinks.join(', ')}
+            />
           )}
         </div>
       </div>
@@ -396,8 +479,22 @@ function OverviewTab({ detail, candidateId, onUpdated, t }: {
           {t('details.overview.professionalInfo')}
         </h3>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <InfoField label={t('details.overview.currentRole')} value={detail.professional.currentJobTitle !== '' ? detail.professional.currentJobTitle : noValue} />
-          <InfoField label={t('details.overview.currentCompany')} value={detail.professional.currentCompany !== '' ? detail.professional.currentCompany : noValue} />
+          <InfoField
+            label={t('details.overview.currentRole')}
+            value={
+              detail.professional.currentJobTitle !== ''
+                ? detail.professional.currentJobTitle
+                : noValue
+            }
+          />
+          <InfoField
+            label={t('details.overview.currentCompany')}
+            value={
+              detail.professional.currentCompany !== ''
+                ? detail.professional.currentCompany
+                : noValue
+            }
+          />
           <EditableField
             label={t('details.overview.experience')}
             value={experience}
@@ -414,7 +511,9 @@ function OverviewTab({ detail, candidateId, onUpdated, t }: {
           variant="primary"
           size="sm"
           disabled={isUpdating}
-          onClick={() => { void handleUpdate(); }}
+          onClick={() => {
+            void handleUpdate();
+          }}
         >
           {isUpdating ? 'Updating…' : 'Update Details'}
         </Button>
@@ -425,7 +524,13 @@ function OverviewTab({ detail, candidateId, onUpdated, t }: {
 
 // ── Experience Tab ────────────────────────────────────────────────────────────
 
-function ExperienceTab({ detail, t }: { detail: CandidateDetail; t: (key: string) => string }): JSX.Element {
+function ExperienceTab({
+  detail,
+  t,
+}: {
+  detail: CandidateDetail;
+  t: (key: string) => string;
+}): JSX.Element {
   if (detail.experience.length === 0) {
     return <EmptyTabState message={t('details.experience.noExperience')} />;
   }
@@ -459,7 +564,9 @@ function ExperienceTab({ detail, t }: { detail: CandidateDetail; t: (key: string
 
           {exp.responsibilities.length > 0 && (
             <div className="mt-4 border-t border-border-muted pt-4">
-              <p className="mb-2 text-xs font-medium text-text-muted">{t('details.experience.responsibilities')}</p>
+              <p className="mb-2 text-xs font-medium text-text-muted">
+                {t('details.experience.responsibilities')}
+              </p>
               <ul className="flex flex-col gap-1.5">
                 {exp.responsibilities.map((resp, j) => (
                   <li key={j} className="flex items-start gap-2 text-xs text-text">
@@ -478,7 +585,13 @@ function ExperienceTab({ detail, t }: { detail: CandidateDetail; t: (key: string
 
 // ── Education Tab ─────────────────────────────────────────────────────────────
 
-function EducationTab({ detail, t }: { detail: CandidateDetail; t: (key: string) => string }): JSX.Element {
+function EducationTab({
+  detail,
+  t,
+}: {
+  detail: CandidateDetail;
+  t: (key: string) => string;
+}): JSX.Element {
   if (detail.education.length === 0) {
     return <EmptyTabState message={t('details.education.noEducation')} />;
   }
@@ -507,10 +620,20 @@ function EducationTab({ detail, t }: { detail: CandidateDetail; t: (key: string)
 
 // ── Skills Tab ────────────────────────────────────────────────────────────────
 
-function SkillGroup({ title, skills, t }: { title: string; skills: string[]; t: (key: string) => string }): JSX.Element {
+function SkillGroup({
+  title,
+  skills,
+  t,
+}: {
+  title: string;
+  skills: string[];
+  t: (key: string) => string;
+}): JSX.Element {
   return (
     <div className="rounded-xl border border-border bg-surface p-5">
-      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-muted">{title}</h3>
+      <h3 className="mb-3 text-xs font-semibold uppercase tracking-wide text-text-muted">
+        {title}
+      </h3>
       {skills.length === 0 ? (
         <p className="text-xs text-text-muted">{t('details.skills.noSkills')}</p>
       ) : (
@@ -529,7 +652,13 @@ function SkillGroup({ title, skills, t }: { title: string; skills: string[]; t: 
   );
 }
 
-function SkillsTab({ detail, t }: { detail: CandidateDetail; t: (key: string) => string }): JSX.Element {
+function SkillsTab({
+  detail,
+  t,
+}: {
+  detail: CandidateDetail;
+  t: (key: string) => string;
+}): JSX.Element {
   return (
     <div className="flex flex-col gap-5">
       <SkillGroup title={t('details.skills.technical')} skills={detail.skills.technical} t={t} />
@@ -553,7 +682,13 @@ async function downloadResume(candidateId: number, fileName: string): Promise<vo
   URL.revokeObjectURL(blobUrl);
 }
 
-function ResumeTab({ detail, t }: { detail: CandidateDetail; t: (key: string) => string }): JSX.Element {
+function ResumeTab({
+  detail,
+  t,
+}: {
+  detail: CandidateDetail;
+  t: (key: string) => string;
+}): JSX.Element {
   if (detail.resume.fileName === '') {
     return <EmptyTabState message={t('details.resume.noResume')} />;
   }
@@ -574,7 +709,9 @@ function ResumeTab({ detail, t }: { detail: CandidateDetail; t: (key: string) =>
           variant="primary"
           size="sm"
           leadingIcon={<ArrowDownTrayIcon className="h-4 w-4" />}
-          onClick={() => { void downloadResume(detail.candidateId, detail.resume.fileName); }}
+          onClick={() => {
+            void downloadResume(detail.candidateId, detail.resume.fileName);
+          }}
         >
           {t('details.resume.download')}
         </Button>
@@ -594,7 +731,11 @@ const CHIP_CLASS: Record<SkillChipVariant, string> = {
   muted: 'bg-surface-muted text-text-muted',
 };
 
-function SkillChipList({ title, skills, variant }: {
+function SkillChipList({
+  title,
+  skills,
+  variant,
+}: {
   title: string;
   skills: string[];
   variant: SkillChipVariant;
@@ -606,15 +747,23 @@ function SkillChipList({ title, skills, variant }: {
   return (
     <div>
       <div className="mb-2 flex items-center gap-1.5">
-        {isPresent
-          ? <CheckCircleIcon className={clsx('h-3.5 w-3.5', variant === 'success' ? 'text-success' : 'text-primary')} />
-          : <XCircleIcon className={clsx('h-3.5 w-3.5', variant === 'error' ? 'text-error' : 'text-text-muted')} />
-        }
+        {isPresent ? (
+          <CheckCircleIcon
+            className={clsx('h-3.5 w-3.5', variant === 'success' ? 'text-success' : 'text-primary')}
+          />
+        ) : (
+          <XCircleIcon
+            className={clsx('h-3.5 w-3.5', variant === 'error' ? 'text-error' : 'text-text-muted')}
+          />
+        )}
         <p className="text-xs font-medium text-text-muted">{title}</p>
       </div>
       <div className="flex flex-wrap gap-1.5">
         {skills.map((skill) => (
-          <span key={skill} className={clsx('rounded-md px-2 py-0.5 text-xs font-medium', CHIP_CLASS[variant])}>
+          <span
+            key={skill}
+            className={clsx('rounded-md px-2 py-0.5 text-xs font-medium', CHIP_CLASS[variant])}
+          >
             {skill}
           </span>
         ))}
@@ -623,7 +772,16 @@ function SkillChipList({ title, skills, variant }: {
   );
 }
 
-function ScoreGroupCard({ group, assessment, comment, error, feedbackStatuses, onAssessmentChange, onCommentChange, t }: {
+function ScoreGroupCard({
+  group,
+  assessment,
+  comment,
+  error,
+  feedbackStatuses,
+  onAssessmentChange,
+  onCommentChange,
+  t,
+}: {
   group: CandidateDetailScoreGroup;
   assessment: string;
   comment: string;
@@ -649,21 +807,27 @@ function ScoreGroupCard({ group, assessment, comment, error, feedbackStatuses, o
     <div className="overflow-hidden rounded-xl border border-border bg-surface">
       <div className="p-4">
         <div className="grid grid-cols-[minmax(0,1.5fr)_3.5rem_3.5rem_4.5rem_9rem_minmax(0,1fr)_1.5rem] items-start gap-x-2">
-          <p className="truncate pt-0.5 text-xs font-semibold text-text">
-            {group.groupName}
-          </p>
+          <p className="truncate pt-0.5 text-xs font-semibold text-text">{group.groupName}</p>
           <p className="pt-0.5 text-center text-xs font-medium text-text">{group.weight}%</p>
-          <p className={clsx('pt-0.5 text-center text-xs font-semibold', colorClass)}>{fmt(groupScorePct)}%</p>
-          <p className="pt-0.5 text-center text-xs font-medium text-text">{fmt(group.finalContribution)}</p>
+          <p className={clsx('pt-0.5 text-center text-xs font-semibold', colorClass)}>
+            {fmt(groupScorePct)}%
+          </p>
+          <p className="pt-0.5 text-center text-xs font-medium text-text">
+            {fmt(group.finalContribution)}
+          </p>
 
           <select
             value={assessment}
-            onChange={(e) => { onAssessmentChange(group.groupKey, e.target.value); }}
+            onChange={(e) => {
+              onAssessmentChange(group.groupKey, e.target.value);
+            }}
             className="w-full rounded-md border border-border bg-surface py-1 ps-2 pe-1 text-xs text-text focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="">{t('details.score.selectAssessment')}</option>
             {feedbackStatuses.map((s) => (
-              <option key={s.id} value={s.id.toString()}>{s.name}</option>
+              <option key={s.id} value={s.id.toString()}>
+                {s.name}
+              </option>
             ))}
           </select>
 
@@ -671,28 +835,31 @@ function ScoreGroupCard({ group, assessment, comment, error, feedbackStatuses, o
             <textarea
               value={comment}
               rows={2}
-              onChange={(e) => { onCommentChange(group.groupKey, e.target.value); }}
+              onChange={(e) => {
+                onCommentChange(group.groupKey, e.target.value);
+              }}
               placeholder={t('details.score.feedbackPlaceholder')}
               className={clsx(
                 'w-full resize-none rounded-md border bg-surface px-2 py-1 text-xs text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary',
-                error !== '' ? 'border-error' : 'border-border',
+                error !== '' ? 'border-error' : 'border-border'
               )}
             />
-            {error !== '' && (
-              <p className="mt-0.5 text-xs text-error">{error}</p>
-            )}
+            {error !== '' && <p className="mt-0.5 text-xs text-error">{error}</p>}
           </div>
 
           {hasSkills ? (
             <Button
               variant="unstyled"
               className="mt-0.5 flex items-center justify-center rounded p-0.5 text-text-muted hover:bg-surface-muted hover:text-text"
-              onClick={() => { setIsExpanded((v) => !v); }}
+              onClick={() => {
+                setIsExpanded((v) => !v);
+              }}
             >
-              {isExpanded
-                ? <ChevronUpIcon className="h-4 w-4" />
-                : <ChevronDownIcon className="h-4 w-4" />
-              }
+              {isExpanded ? (
+                <ChevronUpIcon className="h-4 w-4" />
+              ) : (
+                <ChevronDownIcon className="h-4 w-4" />
+              )}
             </Button>
           ) : (
             <div />
@@ -709,10 +876,26 @@ function ScoreGroupCard({ group, assessment, comment, error, feedbackStatuses, o
 
       {hasSkills && isExpanded && (
         <div className="flex flex-col gap-3 border-t border-border-muted px-4 pb-4 pt-3">
-          <SkillChipList title={t('details.score.requiredPresent')} skills={group.presentRequired} variant="success" />
-          <SkillChipList title={t('details.score.requiredMissing')} skills={group.missingRequired} variant="error" />
-          <SkillChipList title={t('details.score.optionalPresent')} skills={group.optionalPresent} variant="neutral" />
-          <SkillChipList title={t('details.score.optionalMissing')} skills={group.optionalMissing} variant="muted" />
+          <SkillChipList
+            title={t('details.score.requiredPresent')}
+            skills={group.presentRequired}
+            variant="success"
+          />
+          <SkillChipList
+            title={t('details.score.requiredMissing')}
+            skills={group.missingRequired}
+            variant="error"
+          />
+          <SkillChipList
+            title={t('details.score.optionalPresent')}
+            skills={group.optionalPresent}
+            variant="neutral"
+          />
+          <SkillChipList
+            title={t('details.score.optionalMissing')}
+            skills={group.optionalMissing}
+            variant="muted"
+          />
         </div>
       )}
     </div>
@@ -755,19 +938,28 @@ function ScoreBreakdownTab({
     setAssessments((prev) => ({ ...prev, [groupKey]: value }));
     const status = feedbackStatuses.find((s) => s.id.toString() === value);
     const name = status?.name.toLowerCase().trim() ?? '';
-    const needsComment = name === 'partial' || name === 'no' || name.startsWith('partial') || name.startsWith('no ');
+    const needsComment =
+      name === 'partial' || name === 'no' || name.startsWith('partial') || name.startsWith('no ');
     const currentComment = comments[groupKey] ?? '';
     if (needsComment && currentComment.trim() === '') {
       setErrors((prev) => ({ ...prev, [groupKey]: t('details.score.feedbackRequired') }));
     } else {
-      setErrors((prev) => { const next = { ...prev }; delete next[groupKey]; return next; });
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[groupKey];
+        return next;
+      });
     }
   }
 
   function handleCommentChange(groupKey: string, value: string): void {
     setComments((prev) => ({ ...prev, [groupKey]: value }));
     if (value.trim() !== '') {
-      setErrors((prev) => { const next = { ...prev }; delete next[groupKey]; return next; });
+      setErrors((prev) => {
+        const next = { ...prev };
+        delete next[groupKey];
+        return next;
+      });
     }
   }
 
@@ -775,7 +967,9 @@ function ScoreBreakdownTab({
     const status = feedbackStatuses.find((s) => s.id.toString() === assessmentId);
     if (status == null) return false;
     const name = status.name.toLowerCase().trim();
-    return name === 'partial' || name === 'no' || name.startsWith('partial') || name.startsWith('no ');
+    return (
+      name === 'partial' || name === 'no' || name.startsWith('partial') || name.startsWith('no ')
+    );
   }
 
   async function handleSave(): Promise<void> {
@@ -855,7 +1049,9 @@ function ScoreBreakdownTab({
           variant="primary"
           size="sm"
           disabled={isSaving}
-          onClick={() => { void handleSave(); }}
+          onClick={() => {
+            void handleSave();
+          }}
         >
           {isSaving ? t('actions.saving') : t('details.score.saveFeedback')}
         </Button>
@@ -866,16 +1062,131 @@ function ScoreBreakdownTab({
 
 // ── HR Questions Tab ──────────────────────────────────────────────────────────
 
-// key → string (textbox/textarea/single_select) or string[] (multi_select)
-type HRFormState = Record<string, string | string[]>;
+// Every input type (including the now-exclusive multi_select checkbox groups)
+// stores a single plain string value.
+type HRFormState = Record<string, string>;
 
-function QuestionRow({ question, formState, onChange }: {
+// Humanizes a status code like "no_show" or "post-call-rejected" into "No Show" / "Post Call Rejected".
+function humanizeStatusCode(code: string): string {
+  return code
+    .split(/[_-]+/)
+    .filter(Boolean)
+    .map((w) => w[0].toUpperCase() + w.slice(1).toLowerCase())
+    .join(' ');
+}
+
+function MultiSelectOption({
+  option,
+  checked,
+  onChange,
+}: {
+  option: HRQuestionOption;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}): JSX.Element {
+  return (
+    <label
+      className={clsx(
+        'flex items-center gap-2',
+        option.disabled ? 'cursor-not-allowed opacity-50' : 'cursor-pointer'
+      )}
+    >
+      <input
+        type="checkbox"
+        checked={checked}
+        disabled={option.disabled}
+        onChange={(e) => { onChange(e.target.checked); }}
+        className="h-4 w-4 cursor-pointer rounded accent-[var(--color-primary)]"
+      />
+      <span className="text-sm text-text">{option.optionLabel}</span>
+    </label>
+  );
+}
+
+// Groups a multi_select question's options by their parentStatusCode (e.g. "pending",
+// "selected", "rejected") instead of dumping every option into one flat wrapped row —
+// options with no parentStatusCode render ungrouped, after the labeled boxes. Boxes are
+// ordered Pending → Selected → Rejected first (the common statuses), then any other
+// codes in the order they first appear.
+const GROUP_ORDER = ['pending', 'selected', 'rejected'];
+
+function MultiSelectOptions({
+  question,
+  val,
+  onChange,
+}: {
+  question: HRAnswerQuestion;
+  val: string;
+  onChange: (key: string, value: string) => void;
+}): JSX.Element {
+  const groups = new Map<string, HRQuestionOption[]>();
+  const ungrouped: HRQuestionOption[] = [];
+  question.options.forEach((o) => {
+    if (o.parentStatusCode == null) { ungrouped.push(o); return; }
+    if (!groups.has(o.parentStatusCode)) groups.set(o.parentStatusCode, []);
+    groups.get(o.parentStatusCode)!.push(o);
+  });
+
+  const orderedGroups = Array.from(groups.entries()).sort(([a], [b]) => {
+    const ai = GROUP_ORDER.indexOf(a.toLowerCase());
+    const bi = GROUP_ORDER.indexOf(b.toLowerCase());
+    if (ai === -1 && bi === -1) return 0;
+    if (ai === -1) return 1;
+    if (bi === -1) return -1;
+    return ai - bi;
+  });
+
+  function handleOptionChange(optionValue: string, checked: boolean): void {
+    onChange(question.questionKey, checked ? optionValue : '');
+  }
+
+  return (
+    <div className="flex flex-col gap-3 pt-1">
+      {orderedGroups.map(([code, options]) => (
+        <div key={code} className="rounded-lg border border-border bg-surface-muted/30 p-3">
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+            {humanizeStatusCode(code)}
+          </p>
+          <div className="flex flex-col gap-2">
+            {options.map((o) => (
+              <MultiSelectOption
+                key={o.optionId}
+                option={o}
+                checked={val === o.optionValue}
+                onChange={(checked) => { handleOptionChange(o.optionValue, checked); }}
+              />
+            ))}
+          </div>
+        </div>
+      ))}
+      {ungrouped.length > 0 && (
+        <div className="flex flex-col gap-2">
+          {ungrouped.map((o) => (
+            <MultiSelectOption
+              key={o.optionId}
+              option={o}
+              checked={val === o.optionValue}
+              onChange={(checked) => { handleOptionChange(o.optionValue, checked); }}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function QuestionRow({
+  question,
+  formState,
+  onChange,
+}: {
   question: HRAnswerQuestion;
   formState: HRFormState;
-  onChange: (key: string, value: string | string[]) => void;
+  onChange: (key: string, value: string) => void;
 }): JSX.Element {
-  const inputCls = 'w-full rounded-md border border-border bg-transparent px-3 py-1.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary';
-  const val = formState[question.questionKey];
+  const inputCls =
+    'w-full rounded-md border border-border bg-transparent px-3 py-1.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary';
+  const val = formState[question.questionKey] ?? '';
 
   return (
     <div className="grid grid-cols-[minmax(160px,220px)_1fr] items-start gap-4">
@@ -888,8 +1199,10 @@ function QuestionRow({ question, formState, onChange }: {
         {question.inputType === 'textbox' && (
           <input
             type="text"
-            value={(val as string) ?? ''}
-            onChange={(e) => { onChange(question.questionKey, e.target.value); }}
+            value={val}
+            onChange={(e) => {
+              onChange(question.questionKey, e.target.value);
+            }}
             className={inputCls}
           />
         )}
@@ -897,8 +1210,10 @@ function QuestionRow({ question, formState, onChange }: {
         {question.inputType === 'textarea' && (
           <textarea
             rows={3}
-            value={(val as string) ?? ''}
-            onChange={(e) => { onChange(question.questionKey, e.target.value); }}
+            value={val}
+            onChange={(e) => {
+              onChange(question.questionKey, e.target.value);
+            }}
             placeholder="Enter your comments…"
             className={`${inputCls} resize-none`}
           />
@@ -906,40 +1221,23 @@ function QuestionRow({ question, formState, onChange }: {
 
         {question.inputType === 'single_select' && (
           <select
-            value={(val as string) ?? ''}
-            onChange={(e) => { onChange(question.questionKey, e.target.value); }}
+            value={val}
+            onChange={(e) => {
+              onChange(question.questionKey, e.target.value);
+            }}
             className="w-full rounded-md border border-border bg-surface py-1.5 ps-3 pe-8 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary"
           >
             <option value="">Select…</option>
             {question.options.map((o) => (
-              <option key={o.optionId} value={o.optionValue}>{o.optionLabel}</option>
+              <option key={o.optionId} value={o.optionValue}>
+                {o.optionLabel}
+              </option>
             ))}
           </select>
         )}
 
         {question.inputType === 'multi_select' && (
-          <div className="flex flex-wrap gap-3 pt-1">
-            {question.options.map((o) => {
-              const selected = (val as string[] | undefined) ?? [];
-              return (
-                <label key={o.optionId} className="flex cursor-pointer items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={selected.includes(o.optionValue)}
-                    onChange={(e) => {
-                      const current = (val as string[] | undefined) ?? [];
-                      const next = e.target.checked
-                        ? [...current, o.optionValue]
-                        : current.filter((v) => v !== o.optionValue);
-                      onChange(question.questionKey, next);
-                    }}
-                    className="h-4 w-4 cursor-pointer rounded accent-[var(--color-primary)]"
-                  />
-                  <span className="text-sm text-text">{o.optionLabel}</span>
-                </label>
-              );
-            })}
-          </div>
+          <MultiSelectOptions question={question} val={val} onChange={onChange} />
         )}
       </div>
     </div>
@@ -947,7 +1245,11 @@ function QuestionRow({ question, formState, onChange }: {
 }
 
 function HRQuestionsTab({ candidateId }: { candidateId: number }): JSX.Element {
-  const { data: questions = [], isLoading, refetch } = useGetHRAnswersQuery(candidateId, {
+  const {
+    data: questions = [],
+    isLoading,
+    refetch,
+  } = useGetHRAnswersQuery(candidateId, {
     refetchOnMountOrArgChange: true,
   });
   const [saveHRAnswers, { isLoading: isSaving }] = useSaveHRAnswersMutation();
@@ -959,35 +1261,19 @@ function HRQuestionsTab({ candidateId }: { candidateId: number }): JSX.Element {
     const initial: HRFormState = {};
     questions.forEach((q) => {
       if (q.answerText === null) return;
-      if (q.inputType === 'multi_select') {
-        try { initial[q.questionKey] = JSON.parse(q.answerText) as string[]; }
-        catch { initial[q.questionKey] = []; }
-      } else {
-        initial[q.questionKey] = q.answerText;
-      }
+      initial[q.questionKey] = q.answerText;
     });
     setFormState(initial);
   }, [questions]);
 
-  function handleChange(key: string, value: string | string[]): void {
+  function handleChange(key: string, value: string): void {
     setFormState((prev) => ({ ...prev, [key]: value }));
   }
 
   async function handleSave(): Promise<void> {
     const answers = questions
-      .filter((q) => {
-        const val = formState[q.questionKey];
-        if (val === undefined) return false;
-        if (Array.isArray(val)) return val.length > 0;
-        return (val as string).trim() !== '';
-      })
-      .map((q) => {
-        const val = formState[q.questionKey];
-        const answerText = Array.isArray(val)
-          ? JSON.stringify(val)
-          : (val as string);
-        return { question_key: q.questionKey, answer_text: answerText };
-      });
+      .filter((q) => (formState[q.questionKey] ?? '').trim() !== '')
+      .map((q) => ({ question_key: q.questionKey, answer_text: formState[q.questionKey] }));
 
     if (answers.length === 0) {
       toastService.info('Please answer at least one question before saving.');
@@ -1015,7 +1301,7 @@ function HRQuestionsTab({ candidateId }: { candidateId: number }): JSX.Element {
   const sorted = [...questions].sort((a, b) => a.displayOrder - b.displayOrder);
 
   // Separate the comment question (last by display_order) from the rest
-  const commentQuestion = sorted.findLast((q) => q.questionKey === 'comment');
+  const commentQuestion = [...sorted].reverse().find((q) => q.questionKey === 'comment');
   const mainQuestions = sorted.filter((q) => q.questionKey !== 'comment');
 
   const ungrouped = mainQuestions.filter((q) => q.groupId === null);
@@ -1032,7 +1318,6 @@ function HRQuestionsTab({ candidateId }: { candidateId: number }): JSX.Element {
     <div className="flex flex-col" style={{ maxHeight: 'calc(100vh - 160px)' }}>
       {/* Scrollable questions area */}
       <div className="flex flex-col gap-5 overflow-y-auto pe-1 pb-2">
-
         {/* Ungrouped questions */}
         {ungrouped.length > 0 && (
           <div className="rounded-xl border border-border bg-surface p-5">
@@ -1068,7 +1353,6 @@ function HRQuestionsTab({ candidateId }: { candidateId: number }): JSX.Element {
             <QuestionRow question={commentQuestion} formState={formState} onChange={handleChange} />
           </div>
         )}
-
       </div>
 
       {/* Save — pinned at bottom */}
@@ -1077,7 +1361,9 @@ function HRQuestionsTab({ candidateId }: { candidateId: number }): JSX.Element {
           variant="primary"
           size="sm"
           disabled={isSaving}
-          onClick={() => { void handleSave(); }}
+          onClick={() => {
+            void handleSave();
+          }}
         >
           {isSaving ? 'Saving…' : 'Save'}
         </Button>
@@ -1098,7 +1384,13 @@ function EmptyTabState({ message }: { message: string }): JSX.Element {
 
 // ── Score Summary Card ────────────────────────────────────────────────────────
 
-function ScoreSummaryCard({ score, t }: { score: CandidateDetailScore; t: (key: string) => string }): JSX.Element {
+function ScoreSummaryCard({
+  score,
+  t,
+}: {
+  score: CandidateDetailScore;
+  t: (key: string) => string;
+}): JSX.Element {
   const circumference = 2 * Math.PI * 15.9;
   const dash = (score.finalScore / 100) * circumference;
   const colorClass = getScoreColorClass(score.finalScore);
@@ -1117,7 +1409,14 @@ function ScoreSummaryCard({ score, t }: { score: CandidateDetailScore; t: (key: 
         <div className="flex shrink-0 flex-col items-center gap-1.5">
           <div className="relative h-20 w-20">
             <svg className="-rotate-90 h-full w-full" viewBox="0 0 36 36">
-              <circle cx="18" cy="18" r="15.9" fill="none" strokeWidth="2.5" className="stroke-border" />
+              <circle
+                cx="18"
+                cy="18"
+                r="15.9"
+                fill="none"
+                strokeWidth="2.5"
+                className="stroke-border"
+              />
               <circle
                 cx="18"
                 cy="18"
@@ -1129,9 +1428,14 @@ function ScoreSummaryCard({ score, t }: { score: CandidateDetailScore; t: (key: 
                 className={clsx('transition-all', strokeClass)}
               />
             </svg>
-            <span className={clsx('absolute inset-0 flex items-center justify-center text-base font-bold', colorClass)}>
+            <span
+              className={clsx(
+                'absolute inset-0 flex items-center justify-center text-base font-bold',
+                colorClass
+              )}
+            >
               {fmt(score.finalScore)}%
-</span>
+            </span>
           </div>
           <p className="text-xs text-text-muted">{t('details.score.overall')}</p>
         </div>
@@ -1143,10 +1447,11 @@ function ScoreSummaryCard({ score, t }: { score: CandidateDetailScore; t: (key: 
             const barClass = getScoreBarClass(pct);
             const scoreColor = getScoreColorClass(pct);
             return (
-              <div key={group.groupKey} className="grid grid-cols-[7rem_1fr_3rem] items-center gap-3">
-                <p className="truncate text-xs text-text-muted">
-                  {group.groupName}
-                </p>
+              <div
+                key={group.groupKey}
+                className="grid grid-cols-[7rem_1fr_3rem] items-center gap-3"
+              >
+                <p className="truncate text-xs text-text-muted">{group.groupName}</p>
                 <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-muted">
                   <div
                     className={clsx('h-full rounded-full transition-all duration-500', barClass)}
@@ -1183,8 +1488,15 @@ export function CandidateDetailsPage(): JSX.Element {
   const [activeTab, setActiveTab] = useState<DetailTab>('overview');
   const [updateCandidateScore, { isLoading: isCalculating }] = useUpdateCandidateScoreMutation();
 
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+
   const { data: _moduleId } = useGetModuleIdQuery('CAND_MGT');
-  const { data: detail, isLoading, isError, refetch } = useGetCandidateDetailsQuery(candidateId, {
+  const {
+    data: detail,
+    isLoading,
+    isError,
+    refetch,
+  } = useGetCandidateDetailsQuery(candidateId, {
     skip: isNaN(candidateId),
   });
 
@@ -1225,26 +1537,26 @@ export function CandidateDetailsPage(): JSX.Element {
   }
 
   const tabs: Array<{ key: DetailTab; label: string }> = [
-    { key: 'overview',     label: t('details.tabs.overview') },
-    { key: 'hrQuestions',  label: t('details.tabs.hrQuestions') },
-    { key: 'experience',   label: t('details.tabs.experience') },
-    { key: 'education',    label: t('details.tabs.education') },
-    { key: 'skills',       label: t('details.tabs.skills') },
-    { key: 'resume',       label: t('details.tabs.resume') },
-    { key: 'score',        label: t('details.tabs.aiScore') },
+    { key: 'overview', label: t('details.tabs.overview') },
+    { key: 'hrQuestions', label: t('details.tabs.hrQuestions') },
+    { key: 'experience', label: t('details.tabs.experience') },
+    { key: 'education', label: t('details.tabs.education') },
+    { key: 'skills', label: t('details.tabs.skills') },
+    { key: 'resume', label: t('details.tabs.resume') },
+    { key: 'score', label: t('details.tabs.aiScore') },
   ];
 
   return (
     <PageContainer>
       <div className="flex flex-col gap-4">
-
         {/* ── Header ──────────────────────────────────────────────────── */}
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="hidden min-w-0 sm:block">
             <p className="truncate text-sm font-bold text-text">{detail.personal.fullName}</p>
             <p className="text-xs text-text-muted">
               {detail.professional.currentJobTitle}
-              {detail.professional.currentCompany !== '' && ` · ${detail.professional.currentCompany}`}
+              {detail.professional.currentCompany !== '' &&
+                ` · ${detail.professional.currentCompany}`}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -1252,7 +1564,9 @@ export function CandidateDetailsPage(): JSX.Element {
               variant="secondary"
               size="xs"
               leadingIcon={<ArrowDownTrayIcon className="h-3.5 w-3.5" />}
-              onClick={() => { void downloadResume(detail.candidateId, detail.resume.fileName); }}
+              onClick={() => {
+                void downloadResume(detail.candidateId, detail.resume.fileName);
+              }}
             >
               {t('details.header.downloadResume')}
             </Button>
@@ -1260,7 +1574,9 @@ export function CandidateDetailsPage(): JSX.Element {
               variant="secondary"
               size="xs"
               leadingIcon={<ArrowLeftIcon className="h-3.5 w-3.5" />}
-              onClick={() => { void navigate('/candidate'); }}
+              onClick={() => {
+                navigate(-1);
+              }}
             >
               {t('details.header.backToCandidates')}
             </Button>
@@ -1269,15 +1585,21 @@ export function CandidateDetailsPage(): JSX.Element {
 
         {/* ── Two-column layout ────────────────────────────────────────── */}
         <div className="flex flex-col gap-5 lg:flex-row lg:items-start">
-
           {/* Left sidebar */}
           <div className="flex w-full flex-col gap-4 lg:w-72 lg:shrink-0">
-            <ProfileCard detail={detail} t={t} />
+            <ProfileCard
+              detail={detail}
+              t={t}
+              isPreviewOpen={isPreviewOpen}
+              onTogglePreview={() => { setIsPreviewOpen((v) => !v); }}
+            />
             <AIMatchCard
               score={detail.score}
               isCalculating={isCalculating}
               canCalculate={jdId != null}
-              onCalculate={() => { void handleCalculateScore(); }}
+              onCalculate={() => {
+                void handleCalculateScore();
+              }}
               t={t}
             />
           </div>
@@ -1298,7 +1620,9 @@ export function CandidateDetailsPage(): JSX.Element {
                       ? 'border border-primary bg-primary text-white'
                       : 'border border-transparent text-text-muted hover:bg-surface-muted hover:text-text'
                   )}
-                  onClick={() => { setActiveTab(tab.key); }}
+                  onClick={() => {
+                    setActiveTab(tab.key);
+                  }}
                 >
                   {tab.label}
                 </Button>
@@ -1306,7 +1630,9 @@ export function CandidateDetailsPage(): JSX.Element {
             </div>
 
             {/* Tab content */}
-            {activeTab === 'overview' && <OverviewTab detail={detail} candidateId={candidateId} onUpdated={refetch} t={t} />}
+            {activeTab === 'overview' && (
+              <OverviewTab detail={detail} candidateId={candidateId} onUpdated={refetch} t={t} />
+            )}
             {activeTab === 'experience' && <ExperienceTab detail={detail} t={t} />}
             {activeTab === 'education' && <EducationTab detail={detail} t={t} />}
             {activeTab === 'skills' && <SkillsTab detail={detail} t={t} />}
@@ -1316,6 +1642,62 @@ export function CandidateDetailsPage(): JSX.Element {
           </div>
         </div>
       </div>
+
+      {/* Resume preview — right-side drawer, same pattern as UploadStatusTabs */}
+      {isPreviewOpen && (
+        <>
+          {/* Backdrop — subtle blur so page context stays readable */}
+          <div
+            className="fixed inset-0 z-40 bg-black/25 backdrop-blur-[2px]"
+            onClick={() => { setIsPreviewOpen(false); }}
+          />
+
+          {/* Drawer — slides in from right */}
+          <div
+            className="fixed inset-y-0 end-0 z-50 flex flex-col"
+            style={{ width: 'min(680px, 95vw)' }}
+          >
+            {/* Accent top bar */}
+            <div className="h-1 w-full shrink-0 bg-primary rounded-ss-2xl" />
+
+            {/* Card wrapper */}
+            <div className="flex min-h-0 flex-1 flex-col bg-surface shadow-[-8px_0_40px_rgba(0,0,0,0.18)]">
+              {/* Header */}
+              <div className="flex shrink-0 items-center gap-4 border-b border-border bg-surface-muted/50 px-6 py-4">
+                {/* Initials avatar */}
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-primary/15 text-sm font-bold text-primary">
+                  {getInitials(detail.personal.fullName)}
+                </div>
+
+                {/* Name + label */}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-text leading-tight">
+                    {detail.personal.fullName}
+                  </p>
+                  <p className="mt-0.5 text-xs text-text-muted">{t('details.profile.previewResume')}</p>
+                </div>
+
+                {/* Close */}
+                <button
+                  type="button"
+                  onClick={() => { setIsPreviewOpen(false); }}
+                  className="shrink-0 rounded-lg p-2 text-text-muted transition-colors hover:bg-surface-muted hover:text-text"
+                  title="Close"
+                >
+                  <XMarkIcon className="h-5 w-5" />
+                </button>
+              </div>
+
+              {/* PDF viewer — fills remaining height */}
+              <iframe
+                src={`${env.API_BASE_URL}/candidate/previewResume/${detail.candidateId}`}
+                className="min-h-0 flex-1 w-full border-0 bg-[#525659]"
+                title={`Resume — ${detail.personal.fullName}`}
+              />
+            </div>
+          </div>
+        </>
+      )}
     </PageContainer>
   );
 }

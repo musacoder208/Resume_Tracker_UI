@@ -224,6 +224,8 @@ export const mapHRAnswersResponse = (raw: RawHRAnswersResponse): HRAnswerQuestio
       optionId: o.option_id,
       optionLabel: o.option_label,
       optionValue: o.option_value,
+      parentStatusCode: o.parent_status_code,
+      disabled: o.disabled,
     })),
     answerText: q.answer_text,
   }));
