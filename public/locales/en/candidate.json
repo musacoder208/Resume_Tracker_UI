@@ -39,7 +39,7 @@
     "sectionTitle": "Upload Resumes",
     "dropLink": "Click to upload",
     "dropText": "or drag and drop",
-    "hint": "PDF, DOC, DOCX — max 10 files",
+    "hint": "PDF, DOC, DOCX — max 50 files",
     "maxFilesError": "Maximum 10 files allowed",
     "supportedFormats": "Supported formats",
     "removeFile": "Remove file",

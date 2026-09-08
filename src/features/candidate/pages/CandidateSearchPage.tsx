@@ -388,7 +388,6 @@ export function CandidateSearchPage(): JSX.Element {
               className="rounded-md border border-border bg-surface py-1.5 ps-3 pe-8 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary"
             >
               <option value="">{t('filters.allVerdicts')}</option>
-              <option value="Excellent Match">{t('filters.verdictExcellent')}</option>
               <option value="Strong Match">{t('filters.verdictStrong')}</option>
               <option value="Good Match">{t('filters.verdictGood')}</option>
               <option value="Moderate Match">{t('filters.verdictModerate')}</option>

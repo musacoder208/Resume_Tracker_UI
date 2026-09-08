@@ -1,15 +1,23 @@
 import { useState, useEffect, type JSX } from 'react';
 import { useSelector } from 'react-redux';
 
+// updateCandidateScore already shows its own inline "Processing..." state on
+// the button that triggers it, so it's excluded here to avoid a redundant
+// global bar (affects both Start Scoring and Calculate Score, since both
+// call this same mutation).
+const EXCLUDED_ENDPOINTS = new Set(['updateCandidateScore']);
+
 function useIsApiLoading(): boolean {
   return useSelector((state: unknown) => {
-    const api = (state as Record<string, unknown>).api as Record<string, Record<string, { status?: string }>> | undefined;
+    const api = (state as Record<string, unknown>).api as
+      | Record<string, Record<string, { status?: string; endpointName?: string }>>
+      | undefined;
     if (api == null) return false;
     const queries = Object.values(api.queries ?? {});
     const mutations = Object.values(api.mutations ?? {});
     return (
       queries.some((q) => q?.status === 'pending') ||
-      mutations.some((m) => m?.status === 'pending')
+      mutations.some((m) => m?.status === 'pending' && !EXCLUDED_ENDPOINTS.has(m?.endpointName ?? ''))
     );
   });
 }

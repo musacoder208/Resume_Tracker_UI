@@ -39,7 +39,7 @@
     "sectionTitle": "رفع السير الذاتية",
     "dropLink": "انقر للرفع",
     "dropText": "أو اسحب وأفلت",
-    "hint": "PDF, DOC, DOCX — حتى 10 ملفات",
+    "hint": "PDF, DOC, DOCX — حتى 50 ملفاً",
     "maxFilesError": "الحد الأقصى 10 ملفات فقط",
     "supportedFormats": "الصيغ المدعومة",
     "removeFile": "حذف الملف",
