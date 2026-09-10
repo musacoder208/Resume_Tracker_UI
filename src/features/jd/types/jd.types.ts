@@ -19,6 +19,7 @@ export interface MasterData {
   feedbackStatuses: MasterDataItem[];
   statuses: Record<string, MasterDataItem[]>;
   hrStatuses: HrStatusItem[];
+  genders: string[];
 }
 
 export interface Question {
@@ -128,6 +129,7 @@ export interface RawMasterData {
   feedbackStatuses?: MasterDataItem[];
   statuses?: Record<string, MasterDataItem[]>;
   hrStatuses?: HrStatusItem[];
+  genders?: string[];
 }
 
 // ── Domain types (flat — what components consume) ─────────────────────────────

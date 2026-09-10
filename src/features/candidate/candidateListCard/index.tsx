@@ -11,6 +11,7 @@ import {
   BuildingOfficeIcon,
 } from '@/icons';
 import type { CandidateListItem } from '../types/candidate.types';
+import { HrStatusBadge } from '../hrStatusIcon';
 
 interface CandidateListCardProps {
   candidate: CandidateListItem;
@@ -138,6 +139,13 @@ export function CandidateListCard({ candidate, onClick }: CandidateListCardProps
       onKeyDown={handleKeyDown}
       className="group/card cursor-pointer rounded-xl border border-border bg-surface p-5 transition-all hover:border-primary/40 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary"
     >
+      {/* HR status indicator — Selected / Rejected / Pending — own row, left-aligned, above the name so it never overlaps the score/pending circle */}
+      {candidate.hrStatusCode != null && (
+        <div className="mb-2 flex justify-start">
+          <HrStatusBadge code={candidate.hrStatusCode} label={candidate.hrStatusLabel} />
+        </div>
+      )}
+
       {/* Top row: avatar + name + score/pending */}
       <div className="flex items-start justify-between gap-4">
         <div className="flex min-w-0 flex-1 items-center gap-3">

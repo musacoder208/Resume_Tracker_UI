@@ -21,7 +21,23 @@
     "startScoring": "Start Scoring",
     "saveSuccess": "Candidates saved successfully.",
     "saveError": "Failed to save candidates. Please try again.",
-    "scoreError": "Failed to start AI scoring. Please try again."
+    "scoreError": "Failed to start AI scoring. Please try again.",
+    "view": "View"
+  },
+  "viewToggle": {
+    "cardView": "Card view",
+    "gridView": "Grid view"
+  },
+  "grid": {
+    "srNo": "Sr No",
+    "status": "Status",
+    "name": "Name",
+    "jobTitle": "Job Title",
+    "email": "Email",
+    "mobile": "Mobile No",
+    "experience": "Experience",
+    "score": "Score",
+    "actions": "Actions"
   },
   "emptyState": {
     "title": "No candidates yet",
@@ -66,6 +82,7 @@
     "allExperience": "All Experience",
     "allStatuses": "All Statuses",
     "allHrStatuses": "All HR Status",
+    "allGenders": "All Genders",
     "clear": "Clear Filters",
     "verdictExcellent": "Excellent Match",
     "verdictStrong": "Strong Match",
@@ -187,6 +204,7 @@
       "email": "Email",
       "phone": "Phone",
       "location": "Location",
+      "gender": "Gender",
       "linkedin": "LinkedIn",
       "github": "GitHub",
       "portfolio": "Portfolio",

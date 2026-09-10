@@ -17,8 +17,11 @@ import {
   InboxArrowDownIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
+  Squares2X2Icon,
+  TableCellsIcon,
 } from '@/icons';
 import { CandidateListCard } from '../candidateListCard';
+import { CandidateGridView } from '../candidateGridView';
 import { useGetCandidateListQuery } from '../api/candidate.api';
 import { useGetMasterDataQuery, useGetJDDropdownQuery } from '@/features/jd/api/jd.api';
 import { useGetModuleIdQuery } from '@/features/common/api/common.api';
@@ -106,8 +109,38 @@ export function CandidateSearchPage(): JSX.Element {
   const selectedExperience = searchParams.get('experience') ?? '';
   const selectedStatus = searchParams.get('status') ?? '';
   const selectedHrStatus = searchParams.get('hrStatus') ?? '';
+  const selectedGender = searchParams.get('gender') ?? '';
   const debouncedSearch = searchParams.get('search') ?? '';
   const page = Number(searchParams.get('page') ?? '1');
+  const sortBy = searchParams.get('sortBy') ?? '';
+  const sortOrder = searchParams.get('sortOrder') === 'desc' ? 'desc' : 'asc';
+
+  // Display mode — table (grid) vs. card — kept in the URL (not the filters
+  // sync/restore mechanism above, since it's a view preference, not a search
+  // filter) so it survives navigating away and back like everything else here.
+  // Grid is the default; card is the explicit opt-in.
+  const viewMode = searchParams.get('view') === 'card' ? 'card' : 'grid';
+  function setViewMode(mode: 'card' | 'grid'): void {
+    const next = new URLSearchParams(searchParams);
+    if (mode === 'grid') next.delete('view'); else next.set('view', mode);
+    setSearchParams(next, { replace: true });
+  }
+
+  // Grid-view column sorting. NOTE: the backend's fn_get_candidate_list does
+  // not yet accept a sort_by/sort_order param — until it does, this updates
+  // the header's sort indicator but the result order won't actually change.
+  function handleSortChange(nextSortBy: string, nextSortOrder: 'asc' | 'desc'): void {
+    const next = new URLSearchParams(searchParams);
+    if (nextSortBy === '') {
+      next.delete('sortBy');
+      next.delete('sortOrder');
+    } else {
+      next.set('sortBy', nextSortBy);
+      next.set('sortOrder', nextSortOrder);
+    }
+    next.set('page', '1');
+    setSearchParams(next, { replace: true });
+  }
 
   // Search input's initial value: prefer the URL, else fall back to sessionStorage —
   // computed once up front so no setState call is needed once the restore effect runs.
@@ -158,10 +191,11 @@ export function CandidateSearchPage(): JSX.Element {
       experience: selectedExperience,
       status: selectedStatus,
       hrStatus: selectedHrStatus,
+      gender: selectedGender,
       search: debouncedSearch,
       page: String(page),
     }));
-  }, [selectedJd, selectedVerdict, selectedExperience, selectedStatus, selectedHrStatus, debouncedSearch, page]);
+  }, [selectedJd, selectedVerdict, selectedExperience, selectedStatus, selectedHrStatus, selectedGender, debouncedSearch, page]);
 
   // Updates one filter param in the URL (replacing history entry) and resets to page 1.
   function setFilterParam(key: string, value: string): void {
@@ -186,6 +220,9 @@ export function CandidateSearchPage(): JSX.Element {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchInput]);
 
+  // sortBy/sortOrder deliberately excluded from queryParams — sorting is
+  // applied client-side on the grid view's currently loaded page, not sent
+  // to the API.
   const queryParams = useMemo((): CandidateListParams => {
     const p: CandidateListParams = { page, page_size: PAGE_SIZE, jd_id: selectedJd };
     if (debouncedSearch !== '') p.search_text = debouncedSearch;
@@ -193,8 +230,9 @@ export function CandidateSearchPage(): JSX.Element {
     if (selectedExperience !== '') p.experience_range = selectedExperience;
     if (selectedStatus !== '') p.status_id = selectedStatus;
     if (selectedHrStatus !== '') p.hr_status_code = selectedHrStatus;
+    if (selectedGender !== '') p.gender = selectedGender;
     return p;
-  }, [selectedJd, debouncedSearch, selectedVerdict, selectedExperience, selectedStatus, selectedHrStatus, page]);
+  }, [selectedJd, debouncedSearch, selectedVerdict, selectedExperience, selectedStatus, selectedHrStatus, selectedGender, page]);
 
   const { data: moduleId } = useGetModuleIdQuery('CAND_MGT');
   const { data: masterData } = useGetMasterDataQuery();
@@ -202,6 +240,7 @@ export function CandidateSearchPage(): JSX.Element {
   const jdOptions = jdList.map((item) => ({ value: String(item.jdId), label: item.label }));
   const moduleStatuses = moduleId != null ? (masterData?.statuses?.[String(moduleId)] ?? []) : [];
   const hrStatuses = masterData?.hrStatuses ?? [];
+  const genders = masterData?.genders ?? [];
   const { data, isLoading, isFetching } = useGetCandidateListQuery(queryParams, {
     skip: selectedJd === '',
   });
@@ -239,7 +278,7 @@ export function CandidateSearchPage(): JSX.Element {
   }, [hrStatuses]);
 
   const hasActiveFilters =
-    searchInput !== '' || selectedVerdict !== '' || selectedExperience !== '' || selectedStatus !== '' || selectedHrStatus !== '';
+    searchInput !== '' || selectedVerdict !== '' || selectedExperience !== '' || selectedStatus !== '' || selectedHrStatus !== '' || selectedGender !== '';
 
   function clearFilters(): void {
     markHrStatusDecided();
@@ -249,6 +288,7 @@ export function CandidateSearchPage(): JSX.Element {
     next.delete('verdict');
     next.delete('experience');
     next.delete('status');
+    next.delete('gender');
 
     // Reset HR Status to its "Pending" default (same as a fresh page load)
     // rather than clearing it to "All".
@@ -265,6 +305,7 @@ export function CandidateSearchPage(): JSX.Element {
   function handleExperienceChange(value: string): void { setFilterParam('experience', value); }
   function handleStatusChange(value: string): void { setFilterParam('status', value); }
   function handleHrStatusChange(value: string): void { markHrStatusDecided(); setFilterParam('hrStatus', value); }
+  function handleGenderChange(value: string): void { setFilterParam('gender', value); }
 
   function handleUpload(): void {
     void navigate('/candidate/upload');
@@ -289,7 +330,8 @@ export function CandidateSearchPage(): JSX.Element {
   // Pagination — use backend response if available, else estimate from summary total
   const totalCount = data?.pagination?.totalCount ?? summary.totalCandidates;
   const totalPages = data?.pagination?.totalPages ?? Math.ceil(totalCount / PAGE_SIZE);
-  const showPagination = !isLoading && candidates.length > 0;
+  // Grid view renders its own pagination bar (via DataGrid) — this one is card-view only.
+  const showPagination = !isLoading && viewMode === 'card' && candidates.length > 0;
 
   return (
     <PageContainer>
@@ -425,6 +467,16 @@ export function CandidateSearchPage(): JSX.Element {
                 <option key={s.id} value={s.code}>{s.name}</option>
               ))}
             </select>
+            <select
+              value={selectedGender}
+              onChange={(e) => { handleGenderChange(e.target.value); }}
+              className="rounded-md border border-border bg-surface py-1.5 ps-3 pe-8 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="">{t('filters.allGenders')}</option>
+              {genders.map((g) => (
+                <option key={g} value={g}>{g.charAt(0).toUpperCase() + g.slice(1).toLowerCase()}</option>
+              ))}
+            </select>
             {hasActiveFilters && (
               <Button
                 variant="soft"
@@ -441,18 +493,49 @@ export function CandidateSearchPage(): JSX.Element {
 
         {/* ── Results section ───────────────────────────────────────────── */}
         <div className="flex flex-col gap-4">
-          {/* Results count */}
-          {!isLoading && data != null && (
-            <p className="text-xs text-text-muted">
-              {t('landing.showing', {
-                count: candidates.length,
-                total: totalCount,
-              })}
-            </p>
-          )}
+          {/* Results count + view toggle */}
+          <div className="flex items-center justify-between gap-3">
+            {!isLoading && data != null ? (
+              <p className="text-xs text-text-muted">
+                {t('landing.showing', {
+                  count: candidates.length,
+                  total: totalCount,
+                })}
+              </p>
+            ) : <span />}
 
-          {/* Skeleton — initial load */}
-          {isLoading && (
+            <div className="flex items-center gap-0.5 rounded-lg border border-border bg-surface p-0.5">
+              <button
+                type="button"
+                title={t('viewToggle.cardView')}
+                aria-label={t('viewToggle.cardView')}
+                aria-pressed={viewMode === 'card'}
+                onClick={() => { setViewMode('card'); }}
+                className={clsx(
+                  'flex h-7 w-7 items-center justify-center rounded-md transition-colors',
+                  viewMode === 'card' ? 'bg-primary text-white' : 'text-text-muted hover:bg-surface-muted hover:text-text',
+                )}
+              >
+                <Squares2X2Icon className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                title={t('viewToggle.gridView')}
+                aria-label={t('viewToggle.gridView')}
+                aria-pressed={viewMode === 'grid'}
+                onClick={() => { setViewMode('grid'); }}
+                className={clsx(
+                  'flex h-7 w-7 items-center justify-center rounded-md transition-colors',
+                  viewMode === 'grid' ? 'bg-primary text-white' : 'text-text-muted hover:bg-surface-muted hover:text-text',
+                )}
+              >
+                <TableCellsIcon className="h-4 w-4" />
+              </button>
+            </div>
+          </div>
+
+          {/* Skeleton — initial load (card view only; grid view uses DataGrid's own loading state) */}
+          {isLoading && viewMode === 'card' && (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
               {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
                 <CandidateListCardSkeleton key={i} />
@@ -461,7 +544,7 @@ export function CandidateSearchPage(): JSX.Element {
           )}
 
           {/* Cards — with subtle opacity while refetching */}
-          {!isLoading && candidates.length > 0 && (
+          {!isLoading && viewMode === 'card' && candidates.length > 0 && (
             <div className={clsx(
               'grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3 transition-opacity',
               isFetching && 'opacity-60 pointer-events-none',
@@ -474,6 +557,22 @@ export function CandidateSearchPage(): JSX.Element {
                 />
               ))}
             </div>
+          )}
+
+          {/* Grid/table view */}
+          {viewMode === 'grid' && (candidates.length > 0 || isLoading || isFetching) && (
+            <CandidateGridView
+              candidates={candidates}
+              totalRows={totalCount}
+              page={page}
+              pageSize={PAGE_SIZE}
+              sortBy={sortBy}
+              sortOrder={sortOrder}
+              isFetching={isLoading || isFetching}
+              onPageChange={setPageParam}
+              onSortChange={handleSortChange}
+              onView={(candidate) => { handleCardClick(candidate.candidateId, candidate.jdId); }}
+            />
           )}
 
           {/* Empty state — no candidates exist at all */}

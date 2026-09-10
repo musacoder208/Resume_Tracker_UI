@@ -457,6 +457,10 @@ function OverviewTab({
             value={detail.personal.location !== '' ? detail.personal.location : noValue}
           />
           <InfoField
+            label={t('details.overview.gender')}
+            value={detail.personal.gender ?? noValue}
+          />
+          <InfoField
             label={t('details.overview.linkedin')}
             value={detail.personal.linkedinUrl ?? noValue}
           />
@@ -600,17 +604,33 @@ function EducationTab({
     <div className="flex flex-col gap-4">
       {detail.education.map((edu, i) => (
         <div key={i} className="rounded-xl border border-border bg-surface p-5">
-          <div className="flex items-start gap-3">
-            <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-success/10">
-              <AcademicCapIcon className="h-4 w-4 text-success" />
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex items-start gap-3">
+              <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-success/10">
+                <AcademicCapIcon className="h-4 w-4 text-success" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-text">{edu.degree}</p>
+                {edu.fieldOfStudy !== '' && (
+                  <p className="mt-0.5 text-xs text-text-muted">{edu.fieldOfStudy}</p>
+                )}
+                <p className="mt-1 text-xs text-text-muted">{edu.institutionName}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-semibold text-text">{edu.degree}</p>
-              {edu.fieldOfStudy !== '' && (
-                <p className="mt-0.5 text-xs text-text-muted">{edu.fieldOfStudy}</p>
-              )}
-              <p className="mt-1 text-xs text-text-muted">{edu.institutionName}</p>
-            </div>
+            {(edu.startDate != null || edu.endDate != null) && (
+              <div className="flex items-center gap-1 text-xs text-text-muted">
+                <ClockIcon className="h-3.5 w-3.5 shrink-0" />
+                <span>
+                  {edu.startDate != null && (
+                    <>
+                      {edu.startDate}
+                      {' – '}
+                    </>
+                  )}
+                  {edu.endDate ?? t('details.experience.present')}
+                </span>
+              </div>
+            )}
           </div>
         </div>
       ))}
