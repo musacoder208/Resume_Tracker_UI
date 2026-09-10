@@ -44,6 +44,7 @@ export {
   DocumentTextIcon,
   ChartBarIcon,
   TableCellsIcon,
+  Squares2X2Icon,
   UserIcon,
   UsersIcon,
   UserCircleIcon,

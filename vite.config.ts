@@ -11,11 +11,11 @@ export default defineConfig(({ }) => ({
     },
   },
   server: {
-    port: 9858,
+    port: 9850,
     open: true,
   },
   build: {
-   sourcemap: true, // local dev — comment this and uncomment below for PROD
-    //sourcemap: false,
+    sourcemap: true, // local dev — comment this and uncomment below for PROD
+    // sourcemap: false,
   },
 }));

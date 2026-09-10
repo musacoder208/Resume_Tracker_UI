@@ -201,6 +201,8 @@ export interface RawCandidateListItem {
   final_score: number | null;
   verdict: string | null;
   technical_skills: string[];
+  hr_status_code: string | null;
+  hr_status_label: string | null;
 }
 
 export interface RawPagination {
@@ -249,6 +251,8 @@ export interface CandidateListItem {
   finalScore: number | null;
   verdict: string | null;
   technicalSkills: string[];
+  hrStatusCode: string | null;
+  hrStatusLabel: string | null;
 }
 
 export interface CandidateListResult {
@@ -263,6 +267,8 @@ export interface CandidateListParams {
   verdict?: string;
   experience_range?: string;
   status_id?: string;
+  hr_status_code?: string;
+  gender?: string;
   page?: number;
   page_size?: number;
 }
@@ -312,6 +318,7 @@ export interface RawCandidateDetailPersonal {
   email: string;
   phone: string;
   location: string;
+  gender: string | null;
   github_url: string | null;
   linkedin_url: string | null;
   portfolio_links: string[];
@@ -338,6 +345,8 @@ export interface RawCandidateDetailEducation {
   degree: string;
   field_of_study: string;
   institution_name: string;
+  start_date: string | null;
+  end_date: string | null;
 }
 
 export interface RawCandidateDetailExperience {
@@ -459,6 +468,8 @@ export interface CandidateDetailEducation {
   degree: string;
   fieldOfStudy: string;
   institutionName: string;
+  startDate: string | null;
+  endDate: string | null;
 }
 
 export interface CandidateDetailExperience {
@@ -476,6 +487,7 @@ export interface CandidateDetail {
     email: string;
     phone: string;
     location: string;
+    gender: string | null;
     githubUrl: string | null;
     linkedinUrl: string | null;
     portfolioLinks: string[];
@@ -507,6 +519,8 @@ export interface RawHRQuestionOption {
   option_id: number;
   option_label: string;
   option_value: string;
+  parent_status_code: string | null;
+  disabled: boolean;
 }
 
 export interface RawHRAnswerItem {
@@ -530,6 +544,8 @@ export interface HRQuestionOption {
   optionId: number;
   optionLabel: string;
   optionValue: string;
+  parentStatusCode: string | null;
+  disabled: boolean;
 }
 
 export type HRInputType = 'textbox' | 'textarea' | 'single_select' | 'multi_select';

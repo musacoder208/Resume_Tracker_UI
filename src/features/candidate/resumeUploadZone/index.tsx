@@ -18,9 +18,14 @@ const ACCEPTED_MIME_TYPES = [
 
 const ACCEPT_ATTR = '.pdf,.doc,.docx';
 const FORMAT_BADGES = ['PDF', 'DOC', 'DOCX'] as const;
-const MAX_FILES = 10;
+const MAX_FILES = 50;
 
-export function ResumeUploadZone({ files, onFilesChange, onLimitExceeded, disabled = false }: ResumeUploadZoneProps): JSX.Element {
+export function ResumeUploadZone({
+  files,
+  onFilesChange,
+  onLimitExceeded,
+  disabled = false,
+}: ResumeUploadZoneProps): JSX.Element {
   const { t } = useT('candidate');
   const [dragOver, setDragOver] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -36,14 +41,14 @@ export function ResumeUploadZone({ files, onFilesChange, onLimitExceeded, disabl
       }
       onFilesChange([...files, ...valid]);
     },
-    [disabled, files, onFilesChange, onLimitExceeded],
+    [disabled, files, onFilesChange, onLimitExceeded]
   );
 
   const removeFile = useCallback(
     (index: number): void => {
       onFilesChange(files.filter((_, i) => i !== index));
     },
-    [files, onFilesChange],
+    [files, onFilesChange]
   );
 
   const handleDrop = useCallback(
@@ -53,7 +58,7 @@ export function ResumeUploadZone({ files, onFilesChange, onLimitExceeded, disabl
       setDragOver(false);
       addFiles(e.dataTransfer.files);
     },
-    [disabled, addFiles],
+    [disabled, addFiles]
   );
 
   const handleInputChange = useCallback(
@@ -61,7 +66,7 @@ export function ResumeUploadZone({ files, onFilesChange, onLimitExceeded, disabl
       addFiles(e.target.files);
       if (inputRef.current != null) inputRef.current.value = '';
     },
-    [addFiles],
+    [addFiles]
   );
 
   const isAtLimit = files.length >= MAX_FILES;
@@ -71,11 +76,14 @@ export function ResumeUploadZone({ files, onFilesChange, onLimitExceeded, disabl
     if (!isZoneDisabled) inputRef.current?.click();
   }, [isZoneDisabled]);
 
-  const handleZoneKeyDown = useCallback((e: React.KeyboardEvent): void => {
-    if (!isZoneDisabled && (e.key === 'Enter' || e.key === ' ')) {
-      inputRef.current?.click();
-    }
-  }, [isZoneDisabled]);
+  const handleZoneKeyDown = useCallback(
+    (e: React.KeyboardEvent): void => {
+      if (!isZoneDisabled && (e.key === 'Enter' || e.key === ' ')) {
+        inputRef.current?.click();
+      }
+    },
+    [isZoneDisabled]
+  );
 
   return (
     <div className="flex flex-col gap-3">
@@ -93,9 +101,12 @@ export function ResumeUploadZone({ files, onFilesChange, onLimitExceeded, disabl
             ? 'cursor-not-allowed border-border-muted bg-surface-muted/40 opacity-60'
             : dragOver
               ? 'cursor-pointer border-primary bg-primary-subtle/20'
-              : 'cursor-pointer border-border hover:border-primary/50 hover:bg-surface-hover/30',
+              : 'cursor-pointer border-border hover:border-primary/50 hover:bg-surface-hover/30'
         )}
-        onDragOver={(e) => { e.preventDefault(); if (!isZoneDisabled) setDragOver(true); }}
+        onDragOver={(e) => {
+          e.preventDefault();
+          if (!isZoneDisabled) setDragOver(true);
+        }}
         onDragLeave={() => setDragOver(false)}
         onDrop={handleDrop}
         onClick={handleZoneClick}
@@ -113,21 +124,20 @@ export function ResumeUploadZone({ files, onFilesChange, onLimitExceeded, disabl
         <div
           className={clsx(
             'flex h-14 w-14 items-center justify-center rounded-full transition-colors',
-            dragOver && !disabled ? 'bg-primary-subtle' : 'bg-surface-muted',
+            dragOver && !disabled ? 'bg-primary-subtle' : 'bg-surface-muted'
           )}
         >
           <CloudArrowUpIcon
             className={clsx(
               'h-7 w-7 transition-colors',
-              dragOver && !disabled ? 'text-primary' : 'text-text-muted',
+              dragOver && !disabled ? 'text-primary' : 'text-text-muted'
             )}
           />
         </div>
         <p className="mt-3 text-xs text-text-muted">
           <span className={clsx('font-semibold', disabled ? 'text-text-muted' : 'text-primary')}>
             {t('upload.dropLink')}
-          </span>
-          {' '}
+          </span>{' '}
           {t('upload.dropText')}
         </p>
         <p className="mt-1 text-xs text-text-muted">{t('upload.hint')}</p>
@@ -168,7 +178,10 @@ export function ResumeUploadZone({ files, onFilesChange, onLimitExceeded, disabl
                 </span>
                 <button
                   type="button"
-                  onClick={(e) => { e.stopPropagation(); removeFile(index); }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    removeFile(index);
+                  }}
                   aria-label={t('upload.removeFile')}
                   className="shrink-0 rounded p-0.5 text-text-muted transition-colors hover:text-error"
                 >

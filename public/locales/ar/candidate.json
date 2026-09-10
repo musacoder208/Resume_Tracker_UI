@@ -21,7 +21,23 @@
     "startScoring": "بدء التقييم الذكي",
     "saveSuccess": "تم حفظ المرشحين بنجاح.",
     "saveError": "فشل في حفظ المرشحين. يرجى المحاولة مرة أخرى.",
-    "scoreError": "فشل في بدء التقييم الذكي. يرجى المحاولة مرة أخرى."
+    "scoreError": "فشل في بدء التقييم الذكي. يرجى المحاولة مرة أخرى.",
+    "view": "عرض"
+  },
+  "viewToggle": {
+    "cardView": "عرض البطاقات",
+    "gridView": "عرض الجدول"
+  },
+  "grid": {
+    "srNo": "الرقم التسلسلي",
+    "status": "الحالة",
+    "name": "الاسم",
+    "jobTitle": "المسمى الوظيفي",
+    "email": "البريد الإلكتروني",
+    "mobile": "رقم الجوال",
+    "experience": "الخبرة",
+    "score": "الدرجة",
+    "actions": "الإجراءات"
   },
   "emptyState": {
     "title": "لا يوجد مرشحون بعد",
@@ -39,7 +55,7 @@
     "sectionTitle": "رفع السير الذاتية",
     "dropLink": "انقر للرفع",
     "dropText": "أو اسحب وأفلت",
-    "hint": "PDF, DOC, DOCX — حتى 10 ملفات",
+    "hint": "PDF, DOC, DOCX — حتى 50 ملفاً",
     "maxFilesError": "الحد الأقصى 10 ملفات فقط",
     "supportedFormats": "الصيغ المدعومة",
     "removeFile": "حذف الملف",
@@ -65,6 +81,8 @@
     "allVerdicts": "جميع النتائج",
     "allExperience": "جميع الخبرات",
     "allStatuses": "جميع الحالات",
+    "allHrStatuses": "جميع حالات الموارد البشرية",
+    "allGenders": "جميع الأجناس",
     "clear": "مسح الفلاتر",
     "verdictExcellent": "تطابق ممتاز",
     "verdictStrong": "تطابق قوي",
@@ -165,7 +183,11 @@
     "profile": {
       "yearsExp": "سنوات خبرة",
       "linkedin": "ملف LinkedIn",
-      "github": "ملف GitHub"
+      "github": "ملف GitHub",
+      "previewResume": "معاينة السيرة الذاتية",
+      "hidePreview": "إخفاء المعاينة",
+      "previewLoading": "جارٍ تحميل المعاينة...",
+      "previewError": "فشل تحميل معاينة السيرة الذاتية."
     },
     "aiMatch": {
       "title": "نتيجة التطابق بالذكاء الاصطناعي",
@@ -182,6 +204,7 @@
       "email": "البريد الإلكتروني",
       "phone": "الهاتف",
       "location": "الموقع",
+      "gender": "الجنس",
       "linkedin": "لينكد إن",
       "github": "جيت هاب",
       "portfolio": "ملف الأعمال",

@@ -21,7 +21,23 @@
     "startScoring": "Start Scoring",
     "saveSuccess": "Candidates saved successfully.",
     "saveError": "Failed to save candidates. Please try again.",
-    "scoreError": "Failed to start AI scoring. Please try again."
+    "scoreError": "Failed to start AI scoring. Please try again.",
+    "view": "View"
+  },
+  "viewToggle": {
+    "cardView": "Card view",
+    "gridView": "Grid view"
+  },
+  "grid": {
+    "srNo": "Sr No",
+    "status": "Status",
+    "name": "Name",
+    "jobTitle": "Job Title",
+    "email": "Email",
+    "mobile": "Mobile No",
+    "experience": "Experience",
+    "score": "Score",
+    "actions": "Actions"
   },
   "emptyState": {
     "title": "No candidates yet",
@@ -39,7 +55,7 @@
     "sectionTitle": "Upload Resumes",
     "dropLink": "Click to upload",
     "dropText": "or drag and drop",
-    "hint": "PDF, DOC, DOCX — max 10 files",
+    "hint": "PDF, DOC, DOCX — max 50 files",
     "maxFilesError": "Maximum 10 files allowed",
     "supportedFormats": "Supported formats",
     "removeFile": "Remove file",
@@ -65,6 +81,8 @@
     "allVerdicts": "All Verdicts",
     "allExperience": "All Experience",
     "allStatuses": "All Statuses",
+    "allHrStatuses": "All HR Status",
+    "allGenders": "All Genders",
     "clear": "Clear Filters",
     "verdictExcellent": "Excellent Match",
     "verdictStrong": "Strong Match",
@@ -165,7 +183,11 @@
     "profile": {
       "yearsExp": "yrs experience",
       "linkedin": "LinkedIn Profile",
-      "github": "GitHub Profile"
+      "github": "GitHub Profile",
+      "previewResume": "Preview Resume",
+      "hidePreview": "Hide Preview",
+      "previewLoading": "Loading preview...",
+      "previewError": "Failed to load resume preview."
     },
     "aiMatch": {
       "title": "AI Match Score",
@@ -182,6 +204,7 @@
       "email": "Email",
       "phone": "Phone",
       "location": "Location",
+      "gender": "Gender",
       "linkedin": "LinkedIn",
       "github": "GitHub",
       "portfolio": "Portfolio",

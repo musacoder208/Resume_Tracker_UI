@@ -120,6 +120,8 @@ export const mapCandidateListResponse = (raw: RawCandidateListResponse): Candida
     finalScore: item.final_score,
     verdict: item.verdict,
     technicalSkills: (item.technical_skills ?? []).flat(),
+    hrStatusCode: item.hr_status_code,
+    hrStatusLabel: item.hr_status_label,
   })),
   pagination: raw.data.pagination != null ? {
     totalCount: raw.data.pagination.total_count,
@@ -155,6 +157,7 @@ export const mapCandidateDetailResponse = (raw: RawCandidateDetailResponse): Can
     email: raw.data.personal_info.email ?? '',
     phone: raw.data.personal_info.phone ?? '',
     location: raw.data.personal_info.location ?? '',
+    gender: raw.data.personal_info.gender,
     githubUrl: raw.data.personal_info.github_url,
     linkedinUrl: raw.data.personal_info.linkedin_url,
     portfolioLinks: raw.data.personal_info.portfolio_links ?? [],
@@ -177,6 +180,8 @@ export const mapCandidateDetailResponse = (raw: RawCandidateDetailResponse): Can
     degree: edu.degree ?? '',
     fieldOfStudy: edu.field_of_study ?? '',
     institutionName: edu.institution_name ?? '',
+    startDate: edu.start_date,
+    endDate: edu.end_date,
   })),
   experience: (raw.data.experience ?? []).map((exp) => ({
     jobTitle: exp.job_title ?? '',
@@ -224,6 +229,8 @@ export const mapHRAnswersResponse = (raw: RawHRAnswersResponse): HRAnswerQuestio
       optionId: o.option_id,
       optionLabel: o.option_label,
       optionValue: o.option_value,
+      parentStatusCode: o.parent_status_code,
+      disabled: o.disabled,
     })),
     answerText: q.answer_text,
   }));

@@ -74,6 +74,7 @@ export function AvatarMenu(): JSX.Element {
       await logout().unwrap();
     } finally {
       clearActiveSession();
+      sessionStorage.clear();
       dispatch(clearAuthContext());
       clearStoredTheme();
       applyTheme(getStoredTheme());

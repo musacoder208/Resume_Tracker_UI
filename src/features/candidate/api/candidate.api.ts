@@ -101,6 +101,7 @@ export const candidateApi = baseApi.injectEndpoints({
         method: 'POST',
         body,
       }),
+      invalidatesTags: ['CandidateList'],
     }),
 
     getHRAnswers: builder.query<HRAnswerQuestion[], number>({
@@ -117,6 +118,7 @@ export const candidateApi = baseApi.injectEndpoints({
         method: 'PUT',
         body,
       }),
+      invalidatesTags: ['CandidateList'],
     }),
 
     saveHRAnswers: builder.mutation<{ success: boolean }, SaveHRAnswersRequest>({
@@ -125,6 +127,7 @@ export const candidateApi = baseApi.injectEndpoints({
         method: 'POST',
         body,
       }),
+      invalidatesTags: ['CandidateList'],
     }),
   }),
 });
