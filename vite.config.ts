@@ -16,6 +16,6 @@ export default defineConfig(({ }) => ({
   },
   build: {
    sourcemap: true, // local dev — comment this and uncomment below for PROD
-   // sourcemap: false,
+    //sourcemap: false,
   },
 }));

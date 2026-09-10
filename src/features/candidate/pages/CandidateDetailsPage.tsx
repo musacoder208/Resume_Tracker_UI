@@ -1015,7 +1015,7 @@ function HRQuestionsTab({ candidateId }: { candidateId: number }): JSX.Element {
   const sorted = [...questions].sort((a, b) => a.displayOrder - b.displayOrder);
 
   // Separate the comment question (last by display_order) from the rest
-  const commentQuestion = sorted.findLast((q) => q.questionKey === 'comment');
+  const commentQuestion = sorted.find((q) => q.questionKey === 'comment') ?? null;
   const mainQuestions = sorted.filter((q) => q.questionKey !== 'comment');
 
   const ungrouped = mainQuestions.filter((q) => q.groupId === null);
