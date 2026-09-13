@@ -20,6 +20,7 @@ import type {
   UpdateConstraintsBody,
   UpdateConstraintsData,
   JdDropdownItem,
+  ConstraintDetail,
 } from '../types/jd.types';
 import {
   mapStartJdResponse,
@@ -34,6 +35,7 @@ import {
   mapUpdateWeightageResponse,
   mapUpdateConstraintsResponse,
   mapJdDropdownResponse,
+  mapConstraintDetailsResponse,
 } from './jd.mappers';
 
 export const jdApi = baseApi.injectEndpoints({
@@ -138,8 +140,8 @@ export const jdApi = baseApi.injectEndpoints({
 
     updateWeightageConstraints: builder.mutation<UpdateConstraintsData, UpdateConstraintsBody>({
       query: (body) => ({
-        url: 'jd/updateWeightageConstraints',
-        method: 'PUT',
+        url: 'jd/updateConstraints',
+        method: 'POST',
         body,
       }),
       transformResponse: mapUpdateConstraintsResponse,
@@ -151,6 +153,14 @@ export const jdApi = baseApi.injectEndpoints({
         method: 'GET',
       }),
       transformResponse: mapJdDropdownResponse,
+    }),
+
+    getConstraintDetails: builder.query<ConstraintDetail[], void>({
+      query: () => ({
+        url: 'jd/getConstraintDetails',
+        method: 'GET',
+      }),
+      transformResponse: mapConstraintDetailsResponse,
     }),
   }),
 });
@@ -169,4 +179,5 @@ export const {
   useUpdateWeightageMutation,
   useUpdateWeightageConstraintsMutation,
   useGetJDDropdownQuery,
+  useGetConstraintDetailsQuery,
 } = jdApi;

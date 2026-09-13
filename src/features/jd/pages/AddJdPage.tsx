@@ -29,6 +29,7 @@ import type {
   WeightageJson,
   EditStep,
   EditNextQuestion,
+  AdditionalNoteInstruction,
 } from '../types/jd.types';
 
 // ── JD Detail View (when status is Completed) ────────────────────────────────
@@ -56,11 +57,13 @@ function JdDetailView({
   onWeightageGenerated,
   t,
 }: JdDetailViewProps): JSX.Element {
-  const [additionalNotes, setAdditionalNotes] = useState('');
+  // Additional-notes input is disabled — replaced by the constraint-driven
+  // "Start weight Generation" flow. Kept for reference in case it returns.
+  // const [additionalNotes, setAdditionalNotes] = useState('');
   const [isWeightageOpen, setIsWeightageOpen] = useState(false);
   const [generateWeightage, { isLoading: isGenerating }] = useGenerateWeightageMutation();
 
-  async function handleGenerateWeightage(): Promise<void> {
+  async function handleGenerateWeightage(additionalNotes: AdditionalNoteInstruction[] = []): Promise<void> {
     try {
       const data = await generateWeightage({
         jd_id: jdId,
@@ -158,6 +161,8 @@ function JdDetailView({
         <div className="flex flex-col gap-6 lg:flex-row">
           <div className="flex-1 rounded-xl border border-border bg-surface p-6">
             {!isWeightage ? (
+              /* Pre-generation: additional-notes box is disabled — constraints are now
+                 configured inside WeightageModal, opened via "Start weight Generation".
               <div className="flex flex-col gap-3">
                 <p className="text-xs text-error">{t('weightage.note')}</p>
                 <div className="flex items-end gap-3">
@@ -178,6 +183,19 @@ function JdDetailView({
                   </Button>
                 </div>
               </div>
+              */
+              <div className="flex flex-col gap-3">
+                <p className="text-xs text-error">{t('weightage.note')}</p>
+                <div className="flex justify-end">
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => { setIsWeightageOpen(true); }}
+                  >
+                    {t('weightage.startGeneration')}
+                  </Button>
+                </div>
+              </div>
             ) : (
               <div className="flex justify-end">
                 <Button
@@ -194,17 +212,17 @@ function JdDetailView({
         </div>
       )}
 
-      {weightageJson != null && (
-        <WeightageModal
-          open={isWeightageOpen}
-          weightageJson={weightageJson}
-          jdId={jdId}
-          fieldValues={fieldValues}
-          orgDnaSnapshot={orgDnaSnapshot}
-          onClose={() => { setIsWeightageOpen(false); }}
-          onWeightageUpdated={onWeightageGenerated}
-        />
-      )}
+      <WeightageModal
+        open={isWeightageOpen}
+        weightageJson={weightageJson}
+        jdId={jdId}
+        fieldValues={fieldValues}
+        orgDnaSnapshot={orgDnaSnapshot}
+        onClose={() => { setIsWeightageOpen(false); }}
+        onWeightageUpdated={onWeightageGenerated}
+        onGenerateWeight={handleGenerateWeightage}
+        isGenerating={isGenerating}
+      />
     </div>
   );
 }

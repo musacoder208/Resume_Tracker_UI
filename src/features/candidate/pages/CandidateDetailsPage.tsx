@@ -1,10 +1,18 @@
-import { useState, useEffect, type JSX } from 'react';
+import { useState, useEffect, useRef, useCallback, type JSX } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import clsx from 'clsx';
 import { PageContainer } from '@/components/containers/PageContainer';
 import { Button } from '@/components/ui/button';
+import { NumberInput } from '@/components/ui/numberInput';
 import { CandidateDetailSkeleton } from '@/components/ui/loader';
 import { useT } from '@/i18n/useT';
+import {
+  formatDuration,
+  parseDuration,
+  validateDurationHours,
+  validateDurationMinutes,
+  type DurationFieldError,
+} from '@/utils/formatters';
 import {
   ArrowLeftIcon,
   ArrowDownTrayIcon,
@@ -36,7 +44,7 @@ import {
   useUpdateCandidateInfoMutation,
 } from '../api/candidate.api';
 import { toastService } from '@/components/ui/toast/toastService';
-import type { HRAnswerQuestion, HRQuestionOption } from '../types/candidate.types';
+import type { HRAnswerQuestion, HRQuestionOption, SaveHRAnswerItem } from '../types/candidate.types';
 import { useGetMasterDataQuery } from '@/features/jd/api/jd.api';
 import { useGetModuleIdQuery } from '@/features/common/api/common.api';
 import type { MasterDataItem } from '@/features/jd/types/jd.types';
@@ -1086,6 +1094,106 @@ function ScoreBreakdownTab({
 // stores a single plain string value.
 type HRFormState = Record<string, string>;
 
+// Special-cased by question_key (same pattern as the 'comment' question below) — this
+// question is rendered as separate Hours/Minutes inputs instead of the generic switch,
+// and its committed value is always "HH:MM" (or '' meaning no answer / NULL).
+const TOTAL_TIME_TAKEN_KEY = 'Total_Time_Taken';
+
+function durationErrorMessage(
+  error: DurationFieldError,
+  field: 'hours' | 'minutes',
+  t: (key: string) => string
+): string | null {
+  if (error === null) return null;
+  if (error === 'negative') return t(`details.hrQuestions.errors.${field}Negative`);
+  if (error === 'outOfRange') return t('details.hrQuestions.errors.minutesRange');
+  return t(`details.hrQuestions.errors.${field}NotInteger`);
+}
+
+function TotalTimeTakenField({
+  rawValue,
+  onChange,
+  onValidityChange,
+  t,
+}: {
+  rawValue: string;
+  onChange: (value: string) => void;
+  onValidityChange: (hasError: boolean) => void;
+  t: (key: string) => string;
+}): JSX.Element {
+  const initial = parseDuration(rawValue);
+  const [hoursStr, setHoursStr] = useState(initial.hours);
+  const [minutesStr, setMinutesStr] = useState(initial.minutes);
+  const lastCommitted = useRef(rawValue);
+
+  // Re-sync from an external change (initial load, or a refetch after save) — but not
+  // from our own onChange echo, so the user's in-progress typing is never clobbered.
+  useEffect(() => {
+    if (rawValue !== lastCommitted.current) {
+      const parsed = parseDuration(rawValue);
+      setHoursStr(parsed.hours);
+      setMinutesStr(parsed.minutes);
+      lastCommitted.current = rawValue;
+    }
+  }, [rawValue]);
+
+  const hoursError = validateDurationHours(hoursStr);
+  const minutesError = validateDurationMinutes(minutesStr);
+  const hasError = hoursError !== null || minutesError !== null;
+
+  useEffect(() => {
+    onValidityChange(hasError);
+  }, [hasError, onValidityChange]);
+
+  function commit(nextHours: string, nextMinutes: string): void {
+    if (validateDurationHours(nextHours) !== null || validateDurationMinutes(nextMinutes) !== null) {
+      return;
+    }
+    const formatted = formatDuration(nextHours, nextMinutes) ?? '';
+    lastCommitted.current = formatted;
+    onChange(formatted);
+  }
+
+  return (
+    <div className="flex items-start gap-4">
+      <div className="flex w-20 flex-col gap-1">
+        <span className="text-xs text-text-muted">{t('details.hrQuestions.hours')}</span>
+        <NumberInput
+          value={hoursStr}
+          onChange={(v) => {
+            setHoursStr(v);
+            commit(v, minutesStr);
+          }}
+          hasError={hoursError !== null}
+          placeholder="0"
+        />
+        {hoursError !== null && (
+          <p className="text-xs text-error">{durationErrorMessage(hoursError, 'hours', t)}</p>
+        )}
+      </div>
+
+      <span className="pt-6 text-sm text-text-muted">:</span>
+
+      <div className="flex w-20 flex-col gap-1">
+        <span className="text-xs text-text-muted">{t('details.hrQuestions.minutes')}</span>
+        <NumberInput
+          value={minutesStr}
+          onChange={(v) => {
+            setMinutesStr(v);
+            commit(hoursStr, v);
+          }}
+          hasError={minutesError !== null}
+          maxLength={2}
+          placeholder="0"
+        />
+        {minutesError !== null && (
+          <p className="text-xs text-error">{durationErrorMessage(minutesError, 'minutes', t)}</p>
+        )}
+      </div>
+    </div>
+  );
+}
+
 // Humanizes a status code like "no_show" or "post-call-rejected" into "No Show" / "Post Call Rejected".
 function humanizeStatusCode(code: string): string {
   return code
@@ -1199,14 +1307,19 @@ function QuestionRow({
   question,
   formState,
   onChange,
+  onDurationValidityChange,
+  t,
 }: {
   question: HRAnswerQuestion;
   formState: HRFormState;
   onChange: (key: string, value: string) => void;
+  onDurationValidityChange: (hasError: boolean) => void;
+  t: (key: string) => string;
 }): JSX.Element {
   const inputCls =
     'w-full rounded-md border border-border bg-transparent px-3 py-1.5 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary';
   const val = formState[question.questionKey] ?? '';
+  const isTotalTimeTaken = question.questionKey === TOTAL_TIME_TAKEN_KEY;
 
   return (
     <div className="grid grid-cols-[minmax(160px,220px)_1fr] items-start gap-4">
@@ -1216,7 +1329,18 @@ function QuestionRow({
       </label>
 
       <div>
-        {question.inputType === 'textbox' && (
+        {isTotalTimeTaken && (
+          <TotalTimeTakenField
+            rawValue={val}
+            onChange={(v) => {
+              onChange(question.questionKey, v);
+            }}
+            onValidityChange={onDurationValidityChange}
+            t={t}
+          />
+        )}
+
+        {!isTotalTimeTaken && question.inputType === 'textbox' && (
           <input
             type="text"
             value={val}
@@ -1264,7 +1388,13 @@ function QuestionRow({
   );
 }
 
-function HRQuestionsTab({ candidateId }: { candidateId: number }): JSX.Element {
+function HRQuestionsTab({
+  candidateId,
+  t,
+}: {
+  candidateId: number;
+  t: (key: string) => string;
+}): JSX.Element {
   const {
     data: questions = [],
     isLoading,
@@ -1274,6 +1404,7 @@ function HRQuestionsTab({ candidateId }: { candidateId: number }): JSX.Element {
   });
   const [saveHRAnswers, { isLoading: isSaving }] = useSaveHRAnswersMutation();
   const [formState, setFormState] = useState<HRFormState>({});
+  const [durationHasError, setDurationHasError] = useState(false);
 
   // Pre-fill from API answers whenever data loads
   useEffect(() => {
@@ -1290,10 +1421,30 @@ function HRQuestionsTab({ candidateId }: { candidateId: number }): JSX.Element {
     setFormState((prev) => ({ ...prev, [key]: value }));
   }
 
+  const handleDurationValidityChange = useCallback((hasError: boolean) => {
+    setDurationHasError(hasError);
+  }, []);
+
   async function handleSave(): Promise<void> {
-    const answers = questions
-      .filter((q) => (formState[q.questionKey] ?? '').trim() !== '')
+    if (durationHasError) {
+      toastService.info('Please fix the Total Time Taken errors before saving.');
+      return;
+    }
+
+    const totalTimeTakenQuestion = questions.find((q) => q.questionKey === TOTAL_TIME_TAKEN_KEY);
+
+    const answers: SaveHRAnswerItem[] = questions
+      .filter(
+        (q) => q.questionKey !== TOTAL_TIME_TAKEN_KEY && (formState[q.questionKey] ?? '').trim() !== ''
+      )
       .map((q) => ({ question_key: q.questionKey, answer_text: formState[q.questionKey] }));
+
+    if (totalTimeTakenQuestion != null) {
+      // Always included (unlike the generic skip-if-empty filter above) so clearing both
+      // fields actually overwrites a previously saved value instead of leaving it untouched.
+      const raw = (formState[TOTAL_TIME_TAKEN_KEY] ?? '').trim();
+      answers.push({ question_key: TOTAL_TIME_TAKEN_KEY, answer_text: raw });
+    }
 
     if (answers.length === 0) {
       toastService.info('Please answer at least one question before saving.');
@@ -1344,7 +1495,13 @@ function HRQuestionsTab({ candidateId }: { candidateId: number }): JSX.Element {
             <div className="flex flex-col gap-5 divide-y divide-border-muted">
               {ungrouped.map((q, i) => (
                 <div key={q.questionId} className={i > 0 ? 'pt-5' : ''}>
-                  <QuestionRow question={q} formState={formState} onChange={handleChange} />
+                  <QuestionRow
+                    question={q}
+                    formState={formState}
+                    onChange={handleChange}
+                    onDurationValidityChange={handleDurationValidityChange}
+                    t={t}
+                  />
                 </div>
               ))}
             </div>
@@ -1360,7 +1517,13 @@ function HRQuestionsTab({ candidateId }: { candidateId: number }): JSX.Element {
             <div className="flex flex-col gap-5 divide-y divide-border-muted">
               {group.questions.map((q, i) => (
                 <div key={q.questionId} className={i > 0 ? 'pt-5' : ''}>
-                  <QuestionRow question={q} formState={formState} onChange={handleChange} />
+                  <QuestionRow
+                    question={q}
+                    formState={formState}
+                    onChange={handleChange}
+                    onDurationValidityChange={handleDurationValidityChange}
+                    t={t}
+                  />
                 </div>
               ))}
             </div>
@@ -1370,7 +1533,13 @@ function HRQuestionsTab({ candidateId }: { candidateId: number }): JSX.Element {
         {/* Comment — always last */}
         {commentQuestion != null && (
           <div className="rounded-xl border border-border bg-surface p-5">
-            <QuestionRow question={commentQuestion} formState={formState} onChange={handleChange} />
+            <QuestionRow
+              question={commentQuestion}
+              formState={formState}
+              onChange={handleChange}
+              onDurationValidityChange={handleDurationValidityChange}
+              t={t}
+            />
           </div>
         )}
       </div>
@@ -1380,7 +1549,7 @@ function HRQuestionsTab({ candidateId }: { candidateId: number }): JSX.Element {
         <Button
           variant="primary"
           size="sm"
-          disabled={isSaving}
+          disabled={isSaving || durationHasError}
           onClick={() => {
             void handleSave();
           }}
@@ -1658,7 +1827,7 @@ export function CandidateDetailsPage(): JSX.Element {
             {activeTab === 'skills' && <SkillsTab detail={detail} t={t} />}
             {activeTab === 'resume' && <ResumeTab detail={detail} t={t} />}
             {activeTab === 'score' && <ScoreBreakdownTab detail={detail} t={t} onSaved={refetch} />}
-            {activeTab === 'hrQuestions' && <HRQuestionsTab candidateId={candidateId} />}
+            {activeTab === 'hrQuestions' && <HRQuestionsTab candidateId={candidateId} t={t} />}
           </div>
         </div>
       </div>

@@ -343,9 +343,15 @@ export interface UpdateWeightageData {
 
 // ── Generate Weightage ────────────────────────────────────────────────────────
 
+export interface AdditionalNoteInstruction {
+  id: string;
+  instruction: string;
+  isSelected: boolean;
+}
+
 export interface GenerateWeightageBody {
   jd_id: number;
-  additional_notes: string;
+  additional_notes: AdditionalNoteInstruction[];
   field_values: FieldValues;
   field_progress: Record<string, unknown>;
   company_info: Record<string, unknown>;
@@ -358,12 +364,32 @@ export interface GenerateWeightageData {
 // ── Update Weightage Constraints ──────────────────────────────────────────────
 
 export interface UpdateConstraintsBody {
-  jd_id: number;
-  constraints: WeightageConstraint[];
+  jd_id: string;
+  current_weights: WeightageJson;
+  current_constraints: WeightageConstraint[];
+  add_requests: AdditionalNoteInstruction[];
+  org_id: string;
+  user_id: string;
+  ip_address: string;
 }
 
 export interface UpdateConstraintsData {
   message: string;
+}
+
+// ── Get Constraint Details ────────────────────────────────────────────────────
+
+export type ConstraintControlType = 'TEXTAREA' | 'TEXTBOX' | 'CHECKBOX';
+
+export interface ConstraintDetail {
+  id: number;
+  categoryId: number;
+  categoryName: string;
+  name: string;
+  controls: ConstraintControlType | null;
+  values: string[] | null;
+  type: string | null;
+  isSelected: boolean;
 }
 
 // ── JD Dropdown ───────────────────────────────────────────────────────────────

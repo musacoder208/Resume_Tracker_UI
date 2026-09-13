@@ -19,6 +19,7 @@ import type {
   UpdateConstraintsData,
   RawJdDropdownItem,
   JdDropdownItem,
+  ConstraintDetail,
 } from '../types/jd.types';
 
 export const mapStartJdResponse = (raw: ApiResponse<RawStartJdData>): StartJdData => ({
@@ -139,3 +140,6 @@ export const mapUpdateConstraintsResponse = (raw: ApiResponse<unknown>): UpdateC
 
 export const mapJdDropdownResponse = (raw: ApiResponse<RawJdDropdownItem[]>): JdDropdownItem[] =>
   (raw.data ?? []).map((item) => ({ jdId: item.jd_id, label: item.label }));
+
+export const mapConstraintDetailsResponse = (raw: ApiResponse<ConstraintDetail[]>): ConstraintDetail[] =>
+  raw.data ?? [];

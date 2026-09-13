@@ -11,7 +11,7 @@ export default defineConfig(({ }) => ({
     },
   },
   server: {
-    port: 9850,
+    port: 9858,
     open: true,
   },
   build: {

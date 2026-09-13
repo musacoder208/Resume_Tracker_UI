@@ -98,9 +98,15 @@
     "theoryInputPlaceholder": "Please enter your text here"
   },
   "weightage": {
-    "note": "Weightage not generated yet against that JD. Please click on Generate Weightage button.",
+    "note": "Weightage not generated yet against that JD. Please click on Start weight Generation button.",
     "additionalNotesPlaceholder": "Additional notes (optional)",
     "generate": "Generate Weightage",
+    "startGeneration": "Start weight Generation",
+    "generateWeight": "Generate Weight",
+    "loadingConstraints": "Loading constraints…",
+    "noConstraints": "No constraints configured.",
+    "constraintTab": "Constraint",
+    "weightageTab": "Weightage",
     "view": "View Weightage",
     "modalTitle": "JD Weightage",
     "capability": "Capability",

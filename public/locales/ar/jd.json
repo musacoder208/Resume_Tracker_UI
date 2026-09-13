@@ -98,9 +98,15 @@
     "theoryInputPlaceholder": "يرجى إدخال النص هنا"
   },
   "weightage": {
-    "note": "لم يتم إنشاء الأوزان لهذا الوصف الوظيفي بعد. يرجى النقر على زر إنشاء الأوزان.",
+    "note": "لم يتم إنشاء الأوزان لهذا الوصف الوظيفي بعد. يرجى النقر على زر بدء إنشاء الأوزان.",
     "additionalNotesPlaceholder": "ملاحظات إضافية (اختياري)",
     "generate": "إنشاء الأوزان",
+    "startGeneration": "بدء إنشاء الأوزان",
+    "generateWeight": "إنشاء الأوزان",
+    "loadingConstraints": "جارٍ تحميل القيود…",
+    "noConstraints": "لا توجد قيود مُعدة.",
+    "constraintTab": "القيود",
+    "weightageTab": "الأوزان",
     "view": "عرض الأوزان",
     "modalTitle": "أوزان الوصف الوظيفي",
     "capability": "الكفاءة",

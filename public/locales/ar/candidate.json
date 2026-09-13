@@ -176,6 +176,18 @@
       "aiScore": "تقييم الذكاء الاصطناعي",
       "hrQuestions": "تقييم الموارد البشرية"
     },
+    "hrQuestions": {
+      "optionalSuffix": "(اختياري)",
+      "hours": "ساعات",
+      "minutes": "دقائق",
+      "errors": {
+        "hoursNegative": "لا يمكن أن تكون الساعات سالبة.",
+        "hoursNotInteger": "يجب أن تكون الساعات رقمًا صحيحًا.",
+        "minutesNegative": "لا يمكن أن تكون الدقائق سالبة.",
+        "minutesNotInteger": "يجب أن تكون الدقائق رقمًا صحيحًا.",
+        "minutesRange": "يجب أن تكون الدقائق بين 0 و 59."
+      }
+    },
     "header": {
       "backToCandidates": "رجوع",
       "downloadResume": "تحميل السيرة الذاتية"
