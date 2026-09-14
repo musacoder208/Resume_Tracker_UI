@@ -210,6 +210,10 @@ export const mapCandidateDetailResponse = (raw: RawCandidateDetailResponse): Can
         ? { feedbackTypeId: g.hr_feedback.feedback_type_id, userFeedback: g.hr_feedback.user_feedback }
         : null,
     })),
+    constraintEffects: (raw.data.score.constraint_effects ?? []).map((c) => ({
+      reason: c.reason,
+      applied: c.applied,
+    })),
   } : null,
   jdId: raw.data.meta?.jd_id ?? null,
   jdTitle: null,

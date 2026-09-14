@@ -371,12 +371,18 @@ export interface RawScoreGroupBreakdown {
   hr_feedback: { feedback_type_id: number; user_feedback: string } | null;
 }
 
+export interface RawConstraintEffect {
+  reason: string;
+  applied: boolean;
+}
+
 export interface RawCandidateDetailScore {
   score_id: number;
   base_score: number;
   final_score: number;
   verdict: string;
   group_breakdown: RawScoreGroupBreakdown[];
+  constraint_effects: RawConstraintEffect[];
 }
 
 export interface RawCandidateDetailResponse {
@@ -456,12 +462,18 @@ export interface CandidateDetailScoreGroup {
   hrFeedback: { feedbackTypeId: number; userFeedback: string } | null;
 }
 
+export interface ConstraintEffect {
+  reason: string;
+  applied: boolean;
+}
+
 export interface CandidateDetailScore {
   scoreId: number;
   baseScore: number;
   finalScore: number;
   verdict: string;
   groupBreakdown: CandidateDetailScoreGroup[];
+  constraintEffects: ConstraintEffect[];
 }
 
 export interface CandidateDetailEducation {

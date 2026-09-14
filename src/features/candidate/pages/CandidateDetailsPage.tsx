@@ -52,6 +52,7 @@ import type {
   CandidateDetail,
   CandidateDetailScore,
   CandidateDetailScoreGroup,
+  ConstraintEffect,
 } from '../types/candidate.types';
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
@@ -930,6 +931,42 @@ function ScoreGroupCard({
   );
 }
 
+function ConstraintEffectsSection({
+  constraintEffects,
+  t,
+}: {
+  constraintEffects: ConstraintEffect[];
+  t: (key: string) => string;
+}): JSX.Element | null {
+  if (constraintEffects.length === 0) return null;
+
+  return (
+    <div className="rounded-xl border border-border bg-surface p-4">
+      <p className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-text-muted">
+        {t('details.score.constraintEffectsTitle')}
+      </p>
+      <div className="flex flex-col gap-2">
+        {constraintEffects.map((effect, i) => (
+          <div
+            key={i}
+            className="flex items-start justify-between gap-3 rounded-lg bg-surface-muted/30 px-3 py-2"
+          >
+            <p className="text-xs text-text">{effect.reason}</p>
+            <span
+              className={clsx(
+                'shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium',
+                effect.applied ? CHIP_CLASS.success : CHIP_CLASS.muted
+              )}
+            >
+              {effect.applied ? t('details.score.applied') : t('details.score.notApplied')}
+            </span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function ScoreBreakdownTab({
   detail,
   t,
@@ -1084,6 +1121,8 @@ function ScoreBreakdownTab({
           {isSaving ? t('actions.saving') : t('details.score.saveFeedback')}
         </Button>
       </div>
+
+      <ConstraintEffectsSection constraintEffects={detail.score.constraintEffects} t={t} />
     </div>
   );
 }
@@ -1687,6 +1726,7 @@ export function CandidateDetailsPage(): JSX.Element {
     refetch,
   } = useGetCandidateDetailsQuery(candidateId, {
     skip: isNaN(candidateId),
+    refetchOnMountOrArgChange: true,
   });
 
   const jdId = detail?.jdId ?? stateJdId;

@@ -263,6 +263,9 @@
       "requiredMissing": "Required Skills Missing",
       "optionalPresent": "Optional Present",
       "optionalMissing": "Optional Missing",
+      "constraintEffectsTitle": "Constraint Effects",
+      "applied": "Applied",
+      "notApplied": "Not Applied",
       "groups": {
         "technical_execution": "Technical Execution",
         "experience_requirement": "Experience Requirement",

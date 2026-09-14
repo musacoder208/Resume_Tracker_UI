@@ -105,6 +105,7 @@
     "generateWeight": "Generate Weight",
     "loadingConstraints": "Loading constraints…",
     "noConstraints": "No constraints configured.",
+    "constraintValueRequired": "Please enter a value when this constraint is selected.",
     "constraintTab": "Constraint",
     "weightageTab": "Weightage",
     "view": "View Weightage",

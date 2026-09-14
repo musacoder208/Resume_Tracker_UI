@@ -263,6 +263,9 @@
       "requiredMissing": "المهارات المطلوبة المفقودة",
       "optionalPresent": "الاختيارية المتوفرة",
       "optionalMissing": "الاختيارية المفقودة",
+      "constraintEffectsTitle": "تأثيرات القيود",
+      "applied": "مُطبَّق",
+      "notApplied": "غير مُطبَّق",
       "groups": {
         "technical_execution": "التنفيذ التقني",
         "experience_requirement": "متطلبات الخبرة",

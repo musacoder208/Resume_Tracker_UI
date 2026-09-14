@@ -105,6 +105,7 @@
     "generateWeight": "إنشاء الأوزان",
     "loadingConstraints": "جارٍ تحميل القيود…",
     "noConstraints": "لا توجد قيود مُعدة.",
+    "constraintValueRequired": "يرجى إدخال قيمة عند تحديد هذا القيد.",
     "constraintTab": "القيود",
     "weightageTab": "الأوزان",
     "view": "عرض الأوزان",

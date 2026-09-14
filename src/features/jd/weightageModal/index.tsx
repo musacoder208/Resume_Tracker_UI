@@ -154,6 +154,7 @@ function ConstraintDetailRow({
   onOptionSelect,
   selected,
   onSelectedChange,
+  error,
 }: {
   detail: ConstraintDetail;
   textValue: string;
@@ -162,6 +163,7 @@ function ConstraintDetailRow({
   onOptionSelect: (option: string) => void;
   selected: boolean;
   onSelectedChange: (checked: boolean) => void;
+  error?: string;
 }): JSX.Element {
   const template = splitTemplate(detail.name);
   const isInt = detail.type?.toUpperCase() === 'INT';
@@ -224,15 +226,18 @@ function ConstraintDetailRow({
   }
 
   return (
-    <div className="flex items-start gap-2">
-      <input
-        type="checkbox"
-        checked={selected}
-        onChange={(e) => { onSelectedChange(e.target.checked); }}
-        className="mt-1 h-3.5 w-3.5 shrink-0 cursor-pointer accent-primary"
-      />
-      <span className="mt-0.5 shrink-0 text-xs font-semibold text-text-muted">{detail.id}.</span>
-      <div className="flex-1">{content}</div>
+    <div className="flex flex-col gap-1">
+      <div className="flex items-start gap-2">
+        <input
+          type="checkbox"
+          checked={selected}
+          onChange={(e) => { onSelectedChange(e.target.checked); }}
+          className="mt-1 h-3.5 w-3.5 shrink-0 cursor-pointer accent-primary"
+        />
+        <span className="mt-0.5 shrink-0 text-xs font-semibold text-text-muted">{detail.id}.</span>
+        <div className="flex-1">{content}</div>
+      </div>
+      {error != null && <p className="ms-8 text-xs font-medium text-error">{error}</p>}
     </div>
   );
 }
@@ -274,6 +279,8 @@ function ConstraintGroupsList({
   setCheckboxAnswers,
   selectedDetailIds,
   setSelectedDetailIds,
+  errors,
+  setErrors,
 }: {
   t: (key: string) => string;
   isLoading: boolean;
@@ -285,12 +292,23 @@ function ConstraintGroupsList({
   setCheckboxAnswers: Dispatch<SetStateAction<Record<number, string[]>>>;
   selectedDetailIds: Record<number, boolean>;
   setSelectedDetailIds: Dispatch<SetStateAction<Record<number, boolean>>>;
+  errors: Record<number, string>;
+  setErrors: Dispatch<SetStateAction<Record<number, string>>>;
 }): JSX.Element {
   if (isLoading) {
     return <p className="text-xs text-text-muted">{t('weightage.loadingConstraints')}</p>;
   }
   if (groups.length === 0) {
     return <p className="text-xs italic text-text-muted">{t('weightage.noConstraints')}</p>;
+  }
+
+  function clearError(id: number): void {
+    setErrors((prev) => {
+      if (!(id in prev)) return prev;
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
   }
 
   return (
@@ -308,15 +326,24 @@ function ConstraintGroupsList({
                   textValue={textareaAnswers[item.id] ?? extractReasonValue(item, saved?.reason)}
                   onTextChange={(value) => {
                     setTextareaAnswers((prev) => ({ ...prev, [item.id]: value }));
+                    // Case 2: entering a value auto-checks the constraint's own selection checkbox.
+                    if (value.trim() !== '') {
+                      setSelectedDetailIds((prev) => ({ ...prev, [item.id]: true }));
+                    }
+                    clearError(item.id);
                   }}
                   checkedValues={checkboxAnswers[item.id] ?? matchReasonOptions(item, saved?.reason)}
                   onOptionSelect={(option) => {
                     setCheckboxAnswers((prev) => ({ ...prev, [item.id]: [option] }));
+                    setSelectedDetailIds((prev) => ({ ...prev, [item.id]: true }));
+                    clearError(item.id);
                   }}
                   selected={selectedDetailIds[item.id] ?? (item.isSelected || saved != null)}
                   onSelectedChange={(checked) => {
                     setSelectedDetailIds((prev) => ({ ...prev, [item.id]: checked }));
+                    clearError(item.id);
                   }}
+                  error={errors[item.id]}
                 />
               );
             })}
@@ -398,6 +425,38 @@ function buildConstraintRequests(
   });
 }
 
+// Shared validation for both "Generate Weight" and "Update Constraint": a selected constraint
+// row (TEXTAREA/TEXTBOX/CHECKBOX) must have an answer. Rows with no control at all (plain-text
+// constraints) have nothing to validate. Returns a map of detail.id -> inline error message.
+function validateConstraintSelections(
+  details: ConstraintDetail[],
+  selectedIds: Record<number, boolean>,
+  textAnswers: Record<number, string>,
+  checkboxSelections: Record<number, string[]>,
+  savedConstraintsById: Map<string, WeightageConstraint>,
+  requiredMessage: string
+): Record<number, string> {
+  const errors: Record<number, string> = {};
+
+  for (const detail of details) {
+    if (detail.controls == null) continue;
+
+    const saved = savedConstraintsById.get(String(detail.id));
+    const isSelected = selectedIds[detail.id] ?? (detail.isSelected || saved != null);
+    if (!isSelected) continue;
+
+    if (detail.controls === 'TEXTAREA' || detail.controls === 'TEXTBOX') {
+      const value = textAnswers[detail.id] ?? extractReasonValue(detail, saved?.reason);
+      if (value.trim() === '') errors[detail.id] = requiredMessage;
+    } else if (detail.controls === 'CHECKBOX') {
+      const values = checkboxSelections[detail.id] ?? matchReasonOptions(detail, saved?.reason);
+      if (values.length === 0) errors[detail.id] = requiredMessage;
+    }
+  }
+
+  return errors;
+}
+
 export function WeightageModal({
   open,
   weightageJson,
@@ -432,6 +491,8 @@ export function WeightageModal({
   // Explicit per-row overrides for the leading select checkbox. Falls back to
   // "has a control" (detail.controls != null) as the default when no override exists.
   const [selectedDetailIds, setSelectedDetailIds] = useState<Record<number, boolean>>({});
+  // Inline "value required" errors for selected-but-empty constraint rows, keyed by detail id.
+  const [constraintErrors, setConstraintErrors] = useState<Record<number, string>>({});
 
   // Post-generation view is split into a Constraint tab and a Weightage tab.
   const [activeTab, setActiveTab] = useState<'constraint' | 'weightage'>('constraint');
@@ -441,6 +502,7 @@ export function WeightageModal({
       setTextareaAnswers({});
       setCheckboxAnswers({});
       setSelectedDetailIds({});
+      setConstraintErrors({});
       setActiveTab('constraint');
     }
   }, [open]);
@@ -569,6 +631,22 @@ export function WeightageModal({
     }
   }
 
+  // Shared by both "Generate Weight" and "Update Constraint" — a selected constraint row must
+  // have an answer. Populates constraintErrors (rendered inline per row) and returns whether the
+  // form is currently valid, so callers can bail out before building/sending their payload.
+  function runConstraintValidation(): boolean {
+    const errors = validateConstraintSelections(
+      constraintDetails ?? [],
+      selectedDetailIds,
+      textareaAnswers,
+      checkboxAnswers,
+      savedConstraintsById,
+      t('weightage.constraintValueRequired')
+    );
+    setConstraintErrors(errors);
+    return Object.keys(errors).length === 0;
+  }
+
   function toggle(key: string): void {
     setExpanded((prev) => {
       const next = new Set(prev);
@@ -601,6 +679,8 @@ export function WeightageModal({
             setCheckboxAnswers={setCheckboxAnswers}
             selectedDetailIds={selectedDetailIds}
             setSelectedDetailIds={setSelectedDetailIds}
+            errors={constraintErrors}
+            setErrors={setConstraintErrors}
           />
         </div>
         <div className="flex justify-end border-t border-border pt-3">
@@ -608,6 +688,7 @@ export function WeightageModal({
             type="button"
             disabled={isGenerating}
             onClick={() => {
+              if (!runConstraintValidation()) return;
               const notes = buildAdditionalNotes(
                 constraintDetails ?? [],
                 selectedDetailIds,
@@ -666,6 +747,8 @@ export function WeightageModal({
                 setCheckboxAnswers={setCheckboxAnswers}
                 selectedDetailIds={selectedDetailIds}
                 setSelectedDetailIds={setSelectedDetailIds}
+                errors={constraintErrors}
+                setErrors={setConstraintErrors}
               />
             </div>
 
@@ -675,7 +758,10 @@ export function WeightageModal({
                 <button
                   type="button"
                   disabled={isUpdatingConstraints || isLoadingConstraints}
-                  onClick={() => { void handleUpdateConstraints(); }}
+                  onClick={() => {
+                    if (!runConstraintValidation()) return;
+                    void handleUpdateConstraints();
+                  }}
                   className="rounded-md border border-primary px-4 py-2 text-sm font-semibold text-primary transition-colors hover:bg-primary/5 disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   {isUpdatingConstraints ? t('loading.submitting') : 'Update Constraint'}
