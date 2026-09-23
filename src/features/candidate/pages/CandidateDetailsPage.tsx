@@ -44,6 +44,9 @@ import {
   useUpdateCandidateInfoMutation,
 } from '../api/candidate.api';
 import { toastService } from '@/components/ui/toast/toastService';
+import { InterviewProcessTab } from '../interviewProcess';
+import { InterviewUpdateSummary } from '../interviewProcess/hrTabSummary';
+import { useGetCandidateRequisitionQuery } from '../interviewProcess/api/interviewProcess.api';
 import type { HRAnswerQuestion, HRQuestionOption, SaveHRAnswerItem } from '../types/candidate.types';
 import { useGetMasterDataQuery } from '@/features/jd/api/jd.api';
 import { useGetModuleIdQuery } from '@/features/common/api/common.api';
@@ -64,7 +67,8 @@ type DetailTab =
   | 'skills'
   | 'resume'
   | 'score'
-  | 'hrQuestions';
+  | 'hrQuestions'
+  | 'interviewProcess';
 
 const AVATAR_PALETTE = [
   'bg-primary/15 text-primary',
@@ -1581,6 +1585,9 @@ function HRQuestionsTab({
             />
           </div>
         )}
+
+        {/* Interview Update — read-only round history, mirrors the Interview Process tab */}
+        <InterviewUpdateSummary candidateId={candidateId} t={t} />
       </div>
 
       {/* Save — pinned at bottom */}
@@ -1731,6 +1738,13 @@ export function CandidateDetailsPage(): JSX.Element {
 
   const jdId = detail?.jdId ?? stateJdId;
 
+  // Fired alongside getCandidateDetails: the interview-process history endpoint doesn't carry
+  // seniorityId, so Interview Process resolves it (and the jobTitleId GET /questions expects
+  // as its jdId param) from this dedicated requisition endpoint instead.
+  const { data: requisition } = useGetCandidateRequisitionQuery(candidateId, { skip: isNaN(candidateId) });
+  const interviewProcessJdId = requisition?.jobTitleId ?? null;
+  const interviewProcessSeniorityId = requisition?.seniorityId ?? null;
+
   async function handleCalculateScore(): Promise<void> {
     if (jdId == null) return;
     try {
@@ -1773,6 +1787,7 @@ export function CandidateDetailsPage(): JSX.Element {
     { key: 'skills', label: t('details.tabs.skills') },
     { key: 'resume', label: t('details.tabs.resume') },
     { key: 'score', label: t('details.tabs.aiScore') },
+    { key: 'interviewProcess', label: t('details.tabs.interviewProcess') },
   ];
 
   return (
@@ -1868,6 +1883,14 @@ export function CandidateDetailsPage(): JSX.Element {
             {activeTab === 'resume' && <ResumeTab detail={detail} t={t} />}
             {activeTab === 'score' && <ScoreBreakdownTab detail={detail} t={t} onSaved={refetch} />}
             {activeTab === 'hrQuestions' && <HRQuestionsTab candidateId={candidateId} t={t} />}
+            {activeTab === 'interviewProcess' && (
+              <InterviewProcessTab
+                candidateId={candidateId}
+                jdId={interviewProcessJdId}
+                seniorityId={interviewProcessSeniorityId}
+                t={t}
+              />
+            )}
           </div>
         </div>
       </div>

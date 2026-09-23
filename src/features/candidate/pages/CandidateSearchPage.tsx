@@ -25,12 +25,16 @@ import { CandidateGridView } from '../candidateGridView';
 import { useGetCandidateListQuery } from '../api/candidate.api';
 import { useGetMasterDataQuery, useGetJDDropdownQuery } from '@/features/jd/api/jd.api';
 import { useGetModuleIdQuery } from '@/features/common/api/common.api';
+import { useGetRoundsQuery, useGetRoundActionsQuery } from '../interviewProcess/api/interviewProcess.api';
 import type { CandidateListParams, CandidateListSummary } from '../types/candidate.types';
 
 const SKELETON_COUNT = 6;
 const PAGE_SIZE = 10;
 const FILTERS_STORAGE_KEY = 'candidateSearchFilters';
-const HR_STATUS_DEFAULTED_KEY = 'candidateSearchHrStatusDefaulted';
+// HR Status filter is disabled (see all `HR status disabled` markers below) — kept commented
+// out rather than deleted in case it's reinstated later.
+// const HR_STATUS_DEFAULTED_KEY = 'candidateSearchHrStatusDefaulted';
+const STATUS_DEFAULTED_KEY = 'candidateSearchStatusDefaulted';
 
 // ── Inline sub-components ─────────────────────────────────────────────────────
 
@@ -95,6 +99,186 @@ function EmptyState({ title, hint, onUpload, uploadLabel, onClear, clearLabel }:
   );
 }
 
+interface FilterBarValues {
+  jd: string;
+  verdict: string;
+  experience: string;
+  status: string;
+  gender: string;
+  round: string;
+  action: string;
+  search: string;
+}
+
+interface FilterBarProps {
+  initial: FilterBarValues;
+  jdOptions: Array<{ value: string; label: string }>;
+  moduleStatuses: Array<{ id: number; name: string }>;
+  genders: string[];
+  roundOptions: Array<{ id: number; label: string }>;
+  actionOptions: Array<{ id: number; label: string }>;
+  hasActiveFilters: boolean;
+  onSearch: (values: FilterBarValues) => void;
+  onClear: () => void;
+  t: (key: string) => string;
+}
+
+// Owns all filter inputs as local draft state — nothing here touches the URL or fires the API
+// until Search is clicked. The parent remounts this component (via a `key` built from the
+// committed filter values) whenever those committed values change from elsewhere — a fresh
+// Search/Clear, the "default to Ready" effect, a sessionStorage restore, or browser back/forward
+// — so the draft fields re-sync to match without needing a sync effect here.
+function FilterBar({
+  initial,
+  jdOptions,
+  moduleStatuses,
+  genders,
+  roundOptions,
+  actionOptions,
+  hasActiveFilters,
+  onSearch,
+  onClear,
+  t,
+}: FilterBarProps): JSX.Element {
+  const [search, setSearch] = useState(initial.search);
+  const [jd, setJd] = useState(initial.jd);
+  const [verdict, setVerdict] = useState(initial.verdict);
+  const [experience, setExperience] = useState(initial.experience);
+  const [status, setStatus] = useState(initial.status);
+  const [gender, setGender] = useState(initial.gender);
+  const [round, setRound] = useState(initial.round);
+  const [action, setAction] = useState(initial.action);
+
+  function submit(): void {
+    onSearch({ jd, verdict, experience, status, gender, round, action, search });
+  }
+
+  return (
+    <div className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4">
+
+      {/* Row 1 — search + JD */}
+      <div className="flex items-start gap-3">
+        <div className="relative min-w-0 flex-1">
+          <MagnifyingGlassIcon className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+          <input
+            type="text"
+            value={search}
+            onChange={(e) => { setSearch(e.target.value); }}
+            onKeyDown={(e) => { if (e.key === 'Enter') submit(); }}
+            placeholder={t('filters.search')}
+            className="w-full rounded-md border border-border bg-transparent py-1.5 ps-9 pe-3 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary"
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <select
+            value={jd}
+            onChange={(e) => { setJd(e.target.value); }}
+            className={clsx(
+              'w-56 rounded-md border bg-surface py-1.5 ps-3 pe-8 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary',
+              jd === '' ? 'border-error' : 'border-border',
+            )}
+          >
+            <option value="">{t('jdSelection.placeholder')}</option>
+            {jdOptions.map((opt) => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
+            ))}
+          </select>
+          {jd === '' && (
+            <p className="text-xs text-error">{t('jdSelection.required')}</p>
+          )}
+        </div>
+      </div>
+
+      {/* Row 2 — refinement filters */}
+      <div className="flex flex-wrap items-center gap-3">
+        <select
+          value={verdict}
+          onChange={(e) => { setVerdict(e.target.value); }}
+          className="rounded-md border border-border bg-surface py-1.5 ps-3 pe-8 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary"
+        >
+          <option value="">{t('filters.allVerdicts')}</option>
+          <option value="Strong Match">{t('filters.verdictStrong')}</option>
+          <option value="Good Match">{t('filters.verdictGood')}</option>
+          <option value="Moderate Match">{t('filters.verdictModerate')}</option>
+          <option value="Weak Match">{t('filters.verdictWeak')}</option>
+        </select>
+        <select
+          value={experience}
+          onChange={(e) => { setExperience(e.target.value); }}
+          className="rounded-md border border-border bg-surface py-1.5 ps-3 pe-8 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary"
+        >
+          <option value="">{t('filters.allExperience')}</option>
+          <option value="0-1">{t('filters.expFresher')}</option>
+          <option value="1-3">{t('filters.expJunior')}</option>
+          <option value="3-5">{t('filters.expMid')}</option>
+          <option value="5-8">{t('filters.expSenior')}</option>
+          <option value="8+">{t('filters.expExpert')}</option>
+        </select>
+        <select
+          value={status}
+          onChange={(e) => { setStatus(e.target.value); }}
+          className="rounded-md border border-border bg-surface py-1.5 ps-3 pe-8 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary"
+        >
+          <option value="">{t('filters.allStatuses')}</option>
+          {moduleStatuses.map((s) => (
+            <option key={s.id} value={String(s.id)}>{s.name}</option>
+          ))}
+        </select>
+        <select
+          value={gender}
+          onChange={(e) => { setGender(e.target.value); }}
+          className="rounded-md border border-border bg-surface py-1.5 ps-3 pe-8 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary"
+        >
+          <option value="">{t('filters.allGenders')}</option>
+          {genders.map((g) => (
+            <option key={g} value={g}>{g.charAt(0).toUpperCase() + g.slice(1).toLowerCase()}</option>
+          ))}
+        </select>
+        <select
+          value={round}
+          onChange={(e) => { setRound(e.target.value); }}
+          className="rounded-md border border-border bg-surface py-1.5 ps-3 pe-8 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary"
+        >
+          <option value="">{t('filters.allRounds')}</option>
+          {roundOptions.map((r) => (
+            <option key={r.id} value={String(r.id)}>{r.label}</option>
+          ))}
+        </select>
+        <select
+          value={action}
+          onChange={(e) => { setAction(e.target.value); }}
+          className="rounded-md border border-border bg-surface py-1.5 ps-3 pe-8 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary"
+        >
+          <option value="">{t('filters.allRoundActions')}</option>
+          {actionOptions.map((a) => (
+            <option key={a.id} value={String(a.id)}>{a.label}</option>
+          ))}
+        </select>
+        <Button
+          variant="primary"
+          size="sm"
+          leadingIcon={<MagnifyingGlassIcon className="h-4 w-4" />}
+          onClick={submit}
+          disabled={jd === ''}
+        >
+          {t('filters.searchButton')}
+        </Button>
+        {hasActiveFilters && (
+          <Button
+            variant="soft"
+            size="sm"
+            leadingIcon={<XMarkIcon className="h-4 w-4" />}
+            onClick={onClear}
+          >
+            {t('filters.clear')}
+          </Button>
+        )}
+      </div>
+
+    </div>
+  );
+}
+
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export function CandidateSearchPage(): JSX.Element {
@@ -108,9 +292,11 @@ export function CandidateSearchPage(): JSX.Element {
   const selectedVerdict = searchParams.get('verdict') ?? '';
   const selectedExperience = searchParams.get('experience') ?? '';
   const selectedStatus = searchParams.get('status') ?? '';
-  const selectedHrStatus = searchParams.get('hrStatus') ?? '';
+  // HR status disabled — const selectedHrStatus = searchParams.get('hrStatus') ?? '';
   const selectedGender = searchParams.get('gender') ?? '';
-  const debouncedSearch = searchParams.get('search') ?? '';
+  const selectedRound = searchParams.get('round') ?? '';
+  const selectedAction = searchParams.get('action') ?? '';
+  const selectedSearch = searchParams.get('search') ?? '';
   const page = Number(searchParams.get('page') ?? '1');
   const sortBy = searchParams.get('sortBy') ?? '';
   const sortOrder = searchParams.get('sortOrder') === 'desc' ? 'desc' : 'asc';
@@ -141,20 +327,6 @@ export function CandidateSearchPage(): JSX.Element {
     next.set('page', '1');
     setSearchParams(next, { replace: true });
   }
-
-  // Search input's initial value: prefer the URL, else fall back to sessionStorage —
-  // computed once up front so no setState call is needed once the restore effect runs.
-  const [searchInput, setSearchInput] = useState<string>(() => {
-    if (debouncedSearch !== '') return debouncedSearch;
-    const saved = sessionStorage.getItem(FILTERS_STORAGE_KEY);
-    if (saved == null) return '';
-    try {
-      const parsed = JSON.parse(saved) as Record<string, string>;
-      return parsed.search ?? '';
-    } catch {
-      return '';
-    }
-  });
 
   // Restore filters from sessionStorage when arriving with a clean URL (e.g. via a
   // sidebar link to another page and back) — the URL alone doesn't survive that.
@@ -190,12 +362,14 @@ export function CandidateSearchPage(): JSX.Element {
       verdict: selectedVerdict,
       experience: selectedExperience,
       status: selectedStatus,
-      hrStatus: selectedHrStatus,
+      // hrStatus: selectedHrStatus, // HR status disabled
       gender: selectedGender,
-      search: debouncedSearch,
+      round: selectedRound,
+      action: selectedAction,
+      search: selectedSearch,
       page: String(page),
     }));
-  }, [selectedJd, selectedVerdict, selectedExperience, selectedStatus, selectedHrStatus, selectedGender, debouncedSearch, page]);
+  }, [selectedJd, selectedVerdict, selectedExperience, selectedStatus, /* selectedHrStatus, */ selectedGender, selectedRound, selectedAction, selectedSearch, page]);
 
   // Updates one filter param in the URL (replacing history entry) and resets to page 1.
   function setFilterParam(key: string, value: string): void {
@@ -211,101 +385,122 @@ export function CandidateSearchPage(): JSX.Element {
     setSearchParams(next, { replace: true });
   }
 
-  // Debounce search input (400ms) before writing it to the URL — also resets page
-  useEffect(() => {
-    const id = setTimeout(() => {
-      if (searchInput !== debouncedSearch) setFilterParam('search', searchInput);
-    }, 400);
-    return () => { clearTimeout(id); };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchInput]);
-
   // sortBy/sortOrder deliberately excluded from queryParams — sorting is
   // applied client-side on the grid view's currently loaded page, not sent
   // to the API.
   const queryParams = useMemo((): CandidateListParams => {
     const p: CandidateListParams = { page, page_size: PAGE_SIZE, jd_id: selectedJd };
-    if (debouncedSearch !== '') p.search_text = debouncedSearch;
+    if (selectedSearch !== '') p.search_text = selectedSearch;
     if (selectedVerdict !== '') p.verdict = selectedVerdict;
     if (selectedExperience !== '') p.experience_range = selectedExperience;
     if (selectedStatus !== '') p.status_id = selectedStatus;
-    if (selectedHrStatus !== '') p.hr_status_code = selectedHrStatus;
+    // if (selectedHrStatus !== '') p.hr_status_code = selectedHrStatus; // HR status disabled
     if (selectedGender !== '') p.gender = selectedGender;
+    if (selectedRound !== '') p.round_id = selectedRound;
+    if (selectedAction !== '') p.action_id = selectedAction;
     return p;
-  }, [selectedJd, debouncedSearch, selectedVerdict, selectedExperience, selectedStatus, selectedHrStatus, selectedGender, page]);
+  }, [selectedJd, selectedSearch, selectedVerdict, selectedExperience, selectedStatus, /* selectedHrStatus, */ selectedGender, selectedRound, selectedAction, page]);
 
   const { data: moduleId } = useGetModuleIdQuery('CAND_MGT');
   const { data: masterData } = useGetMasterDataQuery();
   const { data: jdList = [] } = useGetJDDropdownQuery();
   const jdOptions = jdList.map((item) => ({ value: String(item.jdId), label: item.label }));
   const moduleStatuses = moduleId != null ? (masterData?.statuses?.[String(moduleId)] ?? []) : [];
-  const hrStatuses = masterData?.hrStatuses ?? [];
+  // HR status disabled — const hrStatuses = masterData?.hrStatuses ?? [];
   const genders = masterData?.genders ?? [];
+  const { data: roundOptions = [] } = useGetRoundsQuery();
+  const { data: actionOptions = [] } = useGetRoundActionsQuery();
   const { data, isLoading, isFetching } = useGetCandidateListQuery(queryParams, {
     skip: selectedJd === '',
   });
 
-  // Default the HR Status filter to "Pending" once per session (fresh login —
-  // sessionStorage is cleared on logout), the first time the master data with
-  // HR statuses becomes available. Uses its own dedicated storage flag (set at
-  // the exact moment the decision is made) rather than "is anything stored
-  // under the filters key yet" — an unrelated filter change (e.g. picking a
-  // JD, which is required before results load) can write to the filters key
-  // first if it happens before this master data finishes loading, which would
-  // otherwise be mistaken for "the default was already decided".
-  const hasAppliedHrStatusDefaultRef = useRef(false);
-  // Marks the HR Status default as decided immediately, so an explicit user
-  // action (clearing filters, or picking "All" from the HR Status dropdown)
-  // can't be overridden later if the master data query hasn't resolved yet —
-  // the effect below can't otherwise tell "never touched" apart from
-  // "user just chose All", since both read as an empty selectedHrStatus.
-  function markHrStatusDecided(): void {
-    hasAppliedHrStatusDefaultRef.current = true;
-    sessionStorage.setItem(HR_STATUS_DEFAULTED_KEY, 'true');
+  // HR status disabled — the whole "default HR Status to Pending" mechanism is kept here,
+  // commented out, in case it's reinstated later.
+  // const hasAppliedHrStatusDefaultRef = useRef(false);
+  // function markHrStatusDecided(): void {
+  //   hasAppliedHrStatusDefaultRef.current = true;
+  //   sessionStorage.setItem(HR_STATUS_DEFAULTED_KEY, 'true');
+  // }
+  // useEffect(() => {
+  //   if (hasAppliedHrStatusDefaultRef.current) return;
+  //   if (hrStatuses.length === 0) return;
+  //   if (selectedHrStatus !== '') { markHrStatusDecided(); return; }
+  //   if (sessionStorage.getItem(HR_STATUS_DEFAULTED_KEY) === 'true') { hasAppliedHrStatusDefaultRef.current = true; return; }
+  //
+  //   const pending = hrStatuses.find((s) => s.name.toLowerCase() === 'pending')
+  //     ?? hrStatuses.find((s) => s.code.toLowerCase() === 'pending');
+  //
+  //   markHrStatusDecided();
+  //   if (pending != null) setFilterParam('hrStatus', pending.code);
+  // // eslint-disable-next-line react-hooks/exhaustive-deps
+  // }, [hrStatuses]);
+
+  // Default the (All) Status filter to "Ready" once per session (fresh login — sessionStorage
+  // is cleared on logout), the first time the module's status master data becomes available.
+  // Mirrors the previous HR-Status-defaults-to-Pending mechanism above, now applied to this
+  // filter instead. Matched by name, not code — the statuses master-data endpoint only exposes
+  // {id, name} (see MasterDataItem), not a status_code field.
+  const hasAppliedStatusDefaultRef = useRef(false);
+  function markStatusDecided(): void {
+    hasAppliedStatusDefaultRef.current = true;
+    sessionStorage.setItem(STATUS_DEFAULTED_KEY, 'true');
   }
   useEffect(() => {
-    if (hasAppliedHrStatusDefaultRef.current) return;
-    if (hrStatuses.length === 0) return;
-    if (selectedHrStatus !== '') { markHrStatusDecided(); return; }
-    if (sessionStorage.getItem(HR_STATUS_DEFAULTED_KEY) === 'true') { hasAppliedHrStatusDefaultRef.current = true; return; }
+    if (hasAppliedStatusDefaultRef.current) return;
+    if (moduleStatuses.length === 0) return;
+    if (selectedStatus !== '') { markStatusDecided(); return; }
+    if (sessionStorage.getItem(STATUS_DEFAULTED_KEY) === 'true') { hasAppliedStatusDefaultRef.current = true; return; }
 
-    const pending = hrStatuses.find((s) => s.name.toLowerCase() === 'pending')
-      ?? hrStatuses.find((s) => s.code.toLowerCase() === 'pending');
+    const ready = moduleStatuses.find((s) => s.name.toLowerCase() === 'ready');
 
-    markHrStatusDecided();
-    if (pending != null) setFilterParam('hrStatus', pending.code);
+    markStatusDecided();
+    if (ready != null) setFilterParam('status', String(ready.id));
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hrStatuses]);
+  }, [moduleStatuses]);
 
   const hasActiveFilters =
-    searchInput !== '' || selectedVerdict !== '' || selectedExperience !== '' || selectedStatus !== '' || selectedHrStatus !== '' || selectedGender !== '';
+    selectedSearch !== '' || selectedVerdict !== '' || selectedExperience !== '' || selectedStatus !== '' || /* selectedHrStatus !== '' || */ selectedGender !== '' || selectedRound !== '' || selectedAction !== '';
 
   function clearFilters(): void {
-    markHrStatusDecided();
-    setSearchInput('');
+    markStatusDecided();
     const next = new URLSearchParams(searchParams);
     next.delete('search');
     next.delete('verdict');
     next.delete('experience');
-    next.delete('status');
     next.delete('gender');
+    next.delete('round');
+    next.delete('action');
 
-    // Reset HR Status to its "Pending" default (same as a fresh page load)
-    // rather than clearing it to "All".
-    const pending = hrStatuses.find((s) => s.name.toLowerCase() === 'pending')
-      ?? hrStatuses.find((s) => s.code.toLowerCase() === 'pending');
-    if (pending != null) next.set('hrStatus', pending.code); else next.delete('hrStatus');
+    // Reset Status to its "Ready" default (same as a fresh page load) rather than clearing it
+    // to "All" — mirrors the previous HR Status behavior above.
+    const ready = moduleStatuses.find((s) => s.name.toLowerCase() === 'ready');
+    if (ready != null) next.set('status', String(ready.id)); else next.delete('status');
 
     next.set('page', '1');
     setSearchParams(next, { replace: true });
   }
 
-  function handleJdChange(value: string): void { setFilterParam('jd', value); }
-  function handleVerdictChange(value: string): void { setFilterParam('verdict', value); }
-  function handleExperienceChange(value: string): void { setFilterParam('experience', value); }
-  function handleStatusChange(value: string): void { setFilterParam('status', value); }
-  function handleHrStatusChange(value: string): void { markHrStatusDecided(); setFilterParam('hrStatus', value); }
-  function handleGenderChange(value: string): void { setFilterParam('gender', value); }
+  // Commits the FilterBar's draft values in one shot — the only place that actually triggers a
+  // new fetch from a filter change (via the resulting queryParams update), per the "only call
+  // the API when Search is clicked" requirement. Mount/refresh/navigating back still fetch
+  // immediately as usual, since useGetCandidateListQuery below always fetches on mount.
+  function applyFilters(values: FilterBarValues): void {
+    markStatusDecided();
+    const next = new URLSearchParams(searchParams);
+    const setOrDelete = (key: string, value: string): void => {
+      if (value === '') next.delete(key); else next.set(key, value);
+    };
+    setOrDelete('jd', values.jd);
+    setOrDelete('verdict', values.verdict);
+    setOrDelete('experience', values.experience);
+    setOrDelete('status', values.status);
+    setOrDelete('gender', values.gender);
+    setOrDelete('round', values.round);
+    setOrDelete('action', values.action);
+    setOrDelete('search', values.search);
+    next.set('page', '1');
+    setSearchParams(next, { replace: true });
+  }
 
   function handleUpload(): void {
     void navigate('/candidate/upload');
@@ -326,6 +521,10 @@ export function CandidateSearchPage(): JSX.Element {
   };
 
   const candidates = data?.candidates ?? [];
+
+  // Remounts FilterBar (resetting its drafts to match) whenever the committed filters change
+  // from outside the FilterBar itself — see the FilterBar component's own comment above.
+  const filterKey = [selectedJd, selectedVerdict, selectedExperience, selectedStatus, selectedGender, selectedRound, selectedAction, selectedSearch].join('|');
 
   // Pagination — use backend response if available, else estimate from summary total
   const totalCount = data?.pagination?.totalCount ?? summary.totalCandidates;
@@ -388,108 +587,28 @@ export function CandidateSearchPage(): JSX.Element {
         </div>
 
         {/* ── Filter toolbar ────────────────────────────────────────────── */}
-        <div className="flex flex-col gap-2 rounded-xl border border-border bg-surface p-4">
-
-          {/* Row 1 — search + JD */}
-          <div className="flex items-start gap-3">
-            <div className="relative min-w-0 flex-1">
-              <MagnifyingGlassIcon className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
-              <input
-                type="text"
-                value={searchInput}
-                onChange={(e) => { setSearchInput(e.target.value); }}
-                placeholder={t('filters.search')}
-                className="w-full rounded-md border border-border bg-transparent py-1.5 ps-9 pe-3 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary"
-              />
-            </div>
-            <div className="flex flex-col gap-1">
-              <select
-                value={selectedJd}
-                onChange={(e) => { handleJdChange(e.target.value); }}
-                className={clsx(
-                  'w-56 rounded-md border bg-surface py-1.5 ps-3 pe-8 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary',
-                  selectedJd === '' ? 'border-error' : 'border-border',
-                )}
-              >
-                <option value="">{t('jdSelection.placeholder')}</option>
-                {jdOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-              {selectedJd === '' && (
-                <p className="text-xs text-error">{t('jdSelection.required')}</p>
-              )}
-            </div>
-          </div>
-
-          {/* Row 2 — refinement filters */}
-          <div className="flex flex-wrap items-center gap-3">
-            <select
-              value={selectedVerdict}
-              onChange={(e) => { handleVerdictChange(e.target.value); }}
-              className="rounded-md border border-border bg-surface py-1.5 ps-3 pe-8 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              <option value="">{t('filters.allVerdicts')}</option>
-              <option value="Strong Match">{t('filters.verdictStrong')}</option>
-              <option value="Good Match">{t('filters.verdictGood')}</option>
-              <option value="Moderate Match">{t('filters.verdictModerate')}</option>
-              <option value="Weak Match">{t('filters.verdictWeak')}</option>
-            </select>
-            <select
-              value={selectedExperience}
-              onChange={(e) => { handleExperienceChange(e.target.value); }}
-              className="rounded-md border border-border bg-surface py-1.5 ps-3 pe-8 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              <option value="">{t('filters.allExperience')}</option>
-              <option value="0-1">{t('filters.expFresher')}</option>
-              <option value="1-3">{t('filters.expJunior')}</option>
-              <option value="3-5">{t('filters.expMid')}</option>
-              <option value="5-8">{t('filters.expSenior')}</option>
-              <option value="8+">{t('filters.expExpert')}</option>
-            </select>
-            <select
-              value={selectedStatus}
-              onChange={(e) => { handleStatusChange(e.target.value); }}
-              className="rounded-md border border-border bg-surface py-1.5 ps-3 pe-8 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              <option value="">{t('filters.allStatuses')}</option>
-              {moduleStatuses.map((s) => (
-                <option key={s.id} value={String(s.id)}>{s.name}</option>
-              ))}
-            </select>
-            <select
-              value={selectedHrStatus}
-              onChange={(e) => { handleHrStatusChange(e.target.value); }}
-              className="rounded-md border border-border bg-surface py-1.5 ps-3 pe-8 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              <option value="">{t('filters.allHrStatuses')}</option>
-              {hrStatuses.map((s) => (
-                <option key={s.id} value={s.code}>{s.name}</option>
-              ))}
-            </select>
-            <select
-              value={selectedGender}
-              onChange={(e) => { handleGenderChange(e.target.value); }}
-              className="rounded-md border border-border bg-surface py-1.5 ps-3 pe-8 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary"
-            >
-              <option value="">{t('filters.allGenders')}</option>
-              {genders.map((g) => (
-                <option key={g} value={g}>{g.charAt(0).toUpperCase() + g.slice(1).toLowerCase()}</option>
-              ))}
-            </select>
-            {hasActiveFilters && (
-              <Button
-                variant="soft"
-                size="sm"
-                leadingIcon={<XMarkIcon className="h-4 w-4" />}
-                onClick={clearFilters}
-              >
-                {t('filters.clear')}
-              </Button>
-            )}
-          </div>
-
-        </div>
+        <FilterBar
+          key={filterKey}
+          initial={{
+            jd: selectedJd,
+            verdict: selectedVerdict,
+            experience: selectedExperience,
+            status: selectedStatus,
+            gender: selectedGender,
+            round: selectedRound,
+            action: selectedAction,
+            search: selectedSearch,
+          }}
+          jdOptions={jdOptions}
+          moduleStatuses={moduleStatuses}
+          genders={genders}
+          roundOptions={roundOptions}
+          actionOptions={actionOptions}
+          hasActiveFilters={hasActiveFilters}
+          onSearch={applyFilters}
+          onClear={clearFilters}
+          t={t}
+        />
 
         {/* ── Results section ───────────────────────────────────────────── */}
         <div className="flex flex-col gap-4">

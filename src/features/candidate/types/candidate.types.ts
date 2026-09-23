@@ -203,6 +203,8 @@ export interface RawCandidateListItem {
   technical_skills: string[];
   hr_status_code: string | null;
   hr_status_label: string | null;
+  status_code: string | null;
+  status_name: string | null;
 }
 
 export interface RawPagination {
@@ -253,6 +255,8 @@ export interface CandidateListItem {
   technicalSkills: string[];
   hrStatusCode: string | null;
   hrStatusLabel: string | null;
+  statusCode: string | null;
+  statusName: string | null;
 }
 
 export interface CandidateListResult {
@@ -269,6 +273,8 @@ export interface CandidateListParams {
   status_id?: string;
   hr_status_code?: string;
   gender?: string;
+  round_id?: string;
+  action_id?: string;
   page?: number;
   page_size?: number;
 }
