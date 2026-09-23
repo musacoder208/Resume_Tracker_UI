@@ -1724,6 +1724,7 @@ export function CandidateDetailsPage(): JSX.Element {
   const [updateCandidateScore, { isLoading: isCalculating }] = useUpdateCandidateScoreMutation();
 
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isPreviewFrameLoading, setIsPreviewFrameLoading] = useState(false);
 
   const { data: _moduleId } = useGetModuleIdQuery('CAND_MGT');
   const {
@@ -1835,7 +1836,13 @@ export function CandidateDetailsPage(): JSX.Element {
               detail={detail}
               t={t}
               isPreviewOpen={isPreviewOpen}
-              onTogglePreview={() => { setIsPreviewOpen((v) => !v); }}
+              onTogglePreview={() => {
+                setIsPreviewOpen((v) => {
+                  const opening = !v;
+                  if (opening) setIsPreviewFrameLoading(true);
+                  return opening;
+                });
+              }}
             />
             <AIMatchCard
               score={detail.score}
@@ -1941,11 +1948,22 @@ export function CandidateDetailsPage(): JSX.Element {
               </div>
 
               {/* PDF viewer — fills remaining height */}
-              <iframe
-                src={`${env.API_BASE_URL}/candidate/previewResume/${detail.candidateId}`}
-                className="min-h-0 flex-1 w-full border-0 bg-[#525659]"
-                title={`Resume — ${detail.personal.fullName}`}
-              />
+              <div className="relative min-h-0 flex-1">
+                {isPreviewFrameLoading && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-[#525659]">
+                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                    <p className="text-xs text-white/80">Loading preview…</p>
+                  </div>
+                )}
+                <iframe
+                  src={`${env.API_BASE_URL}/candidate/previewResume/${detail.candidateId}`}
+                  className="h-full w-full border-0 bg-[#525659]"
+                  title={`Resume — ${detail.personal.fullName}`}
+                  onLoad={() => {
+                    setIsPreviewFrameLoading(false);
+                  }}
+                />
+              </div>
             </div>
           </div>
         </>
