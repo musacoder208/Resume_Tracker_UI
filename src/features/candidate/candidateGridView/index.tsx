@@ -4,12 +4,28 @@ import { createInitialGridState } from '@/components/datagrid/types/grid.state';
 import type { GridState } from '@/components/datagrid/types/grid.state';
 import type { GridColumnDef } from '@/components/datagrid/types/grid.types';
 import { Button } from '@/components/ui/button';
+import { StatusBadge } from '@/components/ui/statusBadge';
+import type { StatusBadgeVariant } from '@/components/ui/statusBadge';
 import { EyeIcon } from '@/icons';
 import { useT } from '@/i18n/useT';
 import type { CandidateListItem } from '../types/candidate.types';
-import { HrStatusIcon } from '../hrStatusIcon';
 
 const fmt = (n: number): number => parseFloat(n.toFixed(2));
+
+// Candidate master status (mst_status, CAND_MGT module) — code is lowercase snake_case
+// (e.g. "in_interview_process"), unlike the round-action codes used elsewhere in this app.
+const STATUS_VARIANT: Record<string, StatusBadgeVariant> = {
+  draft: 'neutral',
+  score_pending: 'neutral',
+  ready: 'info',
+  shortlisted: 'info',
+  in_interview_process: 'info',
+  selected: 'success',
+  rejected: 'error',
+};
+function statusVariant(code: string | null): StatusBadgeVariant {
+  return code != null ? (STATUS_VARIANT[code.toLowerCase()] ?? 'neutral') : 'neutral';
+}
 
 // DataGrid's shared table hook always runs with manualSorting: true (same as
 // the JD grid) — it never sorts data itself, it trusts whatever order it's
@@ -116,16 +132,13 @@ export function CandidateGridView({
       ),
     },
     {
-      id: 'hrStatus',
-      header: t('grid.status'),
-      enableSorting: false,
-      size: 56,
-      minSize: 56,
-      meta: { align: 'center' },
+      id: 'finalScore',
+      accessorKey: 'finalScore',
+      header: t('grid.score'),
       cell: ({ row }) => (
-        <div className="flex items-center justify-center">
-          <HrStatusIcon code={row.original.hrStatusCode} label={row.original.hrStatusLabel} />
-        </div>
+        <span className="text-xs font-semibold text-text">
+          {row.original.finalScore != null ? `${fmt(row.original.finalScore)}%` : '-'}
+        </span>
       ),
     },
     {
@@ -155,21 +168,23 @@ export function CandidateGridView({
       cell: ({ row }) => <span className="text-xs text-text">{row.original.phone !== '' ? row.original.phone : '—'}</span>,
     },
     {
+      id: 'status',
+      header: t('grid.status'),
+      enableSorting: false,
+      size: 140,
+      minSize: 120,
+      cell: ({ row }) => (
+        row.original.statusName != null
+          ? <StatusBadge label={row.original.statusName} variant={statusVariant(row.original.statusCode)} />
+          : <span className="text-xs text-text-subtle">—</span>
+      ),
+    },
+    {
       id: 'totalExperience',
       accessorKey: 'totalExperience',
       header: t('grid.experience'),
       cell: ({ row }) => (
         <span className="text-xs text-text">{row.original.totalExperience} {t('listCard.exp')}</span>
-      ),
-    },
-    {
-      id: 'finalScore',
-      accessorKey: 'finalScore',
-      header: t('grid.score'),
-      cell: ({ row }) => (
-        <span className="text-xs font-semibold text-text">
-          {row.original.finalScore != null ? `${fmt(row.original.finalScore)}%` : '-'}
-        </span>
       ),
     },
     {

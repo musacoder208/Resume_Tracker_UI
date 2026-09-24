@@ -83,7 +83,10 @@
     "allStatuses": "جميع الحالات",
     "allHrStatuses": "جميع حالات الموارد البشرية",
     "allGenders": "جميع الأجناس",
-    "clear": "مسح الفلاتر",
+    "allRounds": "جميع الجولات",
+    "allRoundActions": "جميع حالات الجولة",
+    "searchButton": "بحث",
+    "clear": "مسح",
     "verdictExcellent": "تطابق ممتاز",
     "verdictStrong": "تطابق قوي",
     "verdictGood": "تطابق جيد",
@@ -174,7 +177,96 @@
       "skills": "المهارات",
       "resume": "السيرة الذاتية",
       "aiScore": "تقييم الذكاء الاصطناعي",
-      "hrQuestions": "تقييم الموارد البشرية"
+      "hrQuestions": "تقييم الموارد البشرية",
+      "interviewProcess": "عملية المقابلة"
+    },
+    "interviewProcess": {
+      "status": "حالة المرشح",
+      "emptyHistory": "لم يتم تسجيل أي جولات مقابلات حتى الآن.",
+      "roundDetails": "تفاصيل الجولة",
+      "hrTab": {
+        "title": "تحديث المقابلة",
+        "notStarted": "لم تبدأ عملية المقابلة بعد."
+      },
+      "stepper": {
+        "inProgress": "قيد التنفيذ"
+      },
+      "fields": {
+        "round": "الجولة",
+        "roundPlaceholder": "اختر جولة…",
+        "interviewers": "القائم(ون) بالمقابلة",
+        "interviewersPlaceholder": "انقر لاختيار القائم(ين) بالمقابلة…",
+        "noInterviewers": "لم يتم إعداد قائمة القائمين بالمقابلة بعد.",
+        "dateTime": "التاريخ والوقت",
+        "datePlaceholder": "اختر التاريخ",
+        "timePlaceholder": "اختر الوقت",
+        "interviewType": "نوع المقابلة",
+        "contactStatus": "حالة التواصل",
+        "contactStatusPlaceholder": "المتابعة بشكل طبيعي",
+        "decisionPlaceholder": "اختر القرار…"
+      },
+      "contactStatusNote": "إذا تعذر الوصول إلى المرشح، سجّل ذلك هنا — لا حاجة للتقييم بعد.",
+      "actions": {
+        "saveContactStatus": "حفظ",
+        "saveRound": "حفظ الجولة",
+        "saving": "جارٍ الحفظ…",
+        "contactStatusSaved": "تم حفظ حالة التواصل.",
+        "roundSaved": "تم حفظ الجولة."
+      },
+      "questions": {
+        "title": "أسئلة المقابلة",
+        "required": "مطلوب",
+        "optional": "اختياري",
+        "requiredError": "هذه الإجابة مطلوبة قبل الحفظ.",
+        "unavailable": "الأسئلة غير متاحة حتى تتوفر بيانات المستوى الوظيفي لهذا الوصف الوظيفي.",
+        "none": "لا توجد أسئلة معدة لهذه الجولة والقرار.",
+        "chooseDecision": "اختر قرارًا أعلاه لإظهار الأسئلة.",
+        "textPlaceholder": "أدخل القيمة…",
+        "textareaPlaceholder": "ملاحظات القائم بالمقابلة…"
+      },
+      "nextRound": {
+        "title": "جدولة الجولة التالية",
+        "round": "الجولة التالية",
+        "interviewers": "القائم(ون) بمقابلة الجولة التالية"
+      },
+      "decisionLabels": {
+        "SHORTLISTED": "إدراج في القائمة المختصرة",
+        "MOVE_TO_NEXT_ROUND": "الانتقال إلى الجولة التالية",
+        "FINAL_SELECT": "اختيار نهائي",
+        "HOLD": "تعليق",
+        "REJECTED": "رفض"
+      },
+      "statusLabels": {
+        "Pending": "قيد الانتظار",
+        "Shortlisted": "في القائمة المختصرة",
+        "In Interview Process": "قيد عملية المقابلة",
+        "Selected": "تم القبول",
+        "Rejected": "مرفوض",
+        "Hold": "معلّق"
+      },
+      "terminal": {
+        "selectedTitle": "تم قبول المرشح",
+        "selectedDesc": "اكتملت عملية المقابلة لهذا المرشح.",
+        "rejectedTitle": "تم رفض المرشح",
+        "rejectedDesc": "انتهت عملية المقابلة لهذا المرشح."
+      },
+      "history": {
+        "title": "سجل الجولات",
+        "interviewers": "القائم(ون) بالمقابلة",
+        "contactStatus": "حالة التواصل",
+        "noAnswers": "لا توجد إجابة مسجلة"
+      },
+      "errors": {
+        "roundRequired": "اختر جولة.",
+        "interviewersRequired": "أضف قائمًا واحدًا على الأقل بالمقابلة.",
+        "dateTimeRequired": "حدد تاريخ ووقت المقابلة.",
+        "interviewTypeRequired": "اختر عبر الإنترنت أو حضوريًا.",
+        "decisionRequired": "اختر قرارًا.",
+        "answerRequired": "الإجابة مطلوبة لسؤال \"{{text}}\"",
+        "nextRoundRequired": "أكمل حقول الجولة التالية أو أوقف الجدولة.",
+        "fixHighlighted": "يرجى تصحيح الحقول المميزة أعلاه قبل الحفظ.",
+        "fetchFailed": "فشل تحميل عملية المقابلة. يرجى المحاولة مرة أخرى."
+      }
     },
     "hrQuestions": {
       "optionalSuffix": "(اختياري)",

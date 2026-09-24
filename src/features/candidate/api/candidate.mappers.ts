@@ -122,6 +122,8 @@ export const mapCandidateListResponse = (raw: RawCandidateListResponse): Candida
     technicalSkills: (item.technical_skills ?? []).flat(),
     hrStatusCode: item.hr_status_code,
     hrStatusLabel: item.hr_status_label,
+    statusCode: item.status_code,
+    statusName: item.status_name,
   })),
   pagination: raw.data.pagination != null ? {
     totalCount: raw.data.pagination.total_count,

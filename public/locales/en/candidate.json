@@ -83,7 +83,10 @@
     "allStatuses": "All Statuses",
     "allHrStatuses": "All HR Status",
     "allGenders": "All Genders",
-    "clear": "Clear Filters",
+    "allRounds": "All Rounds",
+    "allRoundActions": "All Round Status",
+    "searchButton": "Search",
+    "clear": "Clear",
     "verdictExcellent": "Excellent Match",
     "verdictStrong": "Strong Match",
     "verdictGood": "Good Match",
@@ -174,7 +177,96 @@
       "skills": "Skills",
       "resume": "Resume",
       "aiScore": "AI Score",
-      "hrQuestions": "HR Evaluation"
+      "hrQuestions": "HR Evaluation",
+      "interviewProcess": "Interview Process"
+    },
+    "interviewProcess": {
+      "status": "Candidate Status",
+      "emptyHistory": "No interview rounds recorded yet.",
+      "roundDetails": "Round Details",
+      "hrTab": {
+        "title": "Interview Update",
+        "notStarted": "Interview process not started yet."
+      },
+      "stepper": {
+        "inProgress": "In Progress"
+      },
+      "fields": {
+        "round": "Round",
+        "roundPlaceholder": "Select a round…",
+        "interviewers": "Interviewer(s)",
+        "interviewersPlaceholder": "Click to select interviewer(s)…",
+        "noInterviewers": "No interviewers configured yet.",
+        "dateTime": "Date & Time",
+        "datePlaceholder": "Select date",
+        "timePlaceholder": "Select time",
+        "interviewType": "Interview Type",
+        "contactStatus": "Contact Status",
+        "contactStatusPlaceholder": "Proceeding normally",
+        "decisionPlaceholder": "Select decision…"
+      },
+      "contactStatusNote": "If the candidate couldn't be reached, record that here — no evaluation is needed yet.",
+      "actions": {
+        "saveContactStatus": "Save",
+        "saveRound": "Save Round",
+        "saving": "Saving…",
+        "contactStatusSaved": "Contact status saved.",
+        "roundSaved": "Round saved."
+      },
+      "questions": {
+        "title": "Interview Questions",
+        "required": "Required",
+        "optional": "Optional",
+        "requiredError": "This answer is required before saving.",
+        "unavailable": "Questions unavailable until seniority data is available for this job description.",
+        "none": "No questions configured for this round and decision.",
+        "chooseDecision": "Choose a decision above to reveal the questions.",
+        "textPlaceholder": "Enter value…",
+        "textareaPlaceholder": "Interviewer notes…"
+      },
+      "nextRound": {
+        "title": "Schedule Next Round",
+        "round": "Next Round",
+        "interviewers": "Next Round Interviewer(s)"
+      },
+      "decisionLabels": {
+        "SHORTLISTED": "Shortlist",
+        "MOVE_TO_NEXT_ROUND": "Move to Next Round",
+        "FINAL_SELECT": "Final Select",
+        "HOLD": "Hold",
+        "REJECTED": "Reject"
+      },
+      "statusLabels": {
+        "Pending": "Pending",
+        "Shortlisted": "Shortlisted",
+        "In Interview Process": "In Interview Process",
+        "Selected": "Selected",
+        "Rejected": "Rejected",
+        "Hold": "Hold"
+      },
+      "terminal": {
+        "selectedTitle": "Candidate Selected",
+        "selectedDesc": "The interview process is complete for this candidate.",
+        "rejectedTitle": "Candidate Rejected",
+        "rejectedDesc": "The interview process has ended for this candidate."
+      },
+      "history": {
+        "title": "Round History",
+        "interviewers": "Interviewer(s)",
+        "contactStatus": "Contact Status",
+        "noAnswers": "No answer recorded"
+      },
+      "errors": {
+        "roundRequired": "Select a round.",
+        "interviewersRequired": "Add at least one interviewer.",
+        "dateTimeRequired": "Set the interview date & time.",
+        "interviewTypeRequired": "Choose Online or Offline.",
+        "decisionRequired": "Choose a decision.",
+        "answerRequired": "Answer required for \"{{text}}\"",
+        "nextRoundRequired": "Complete the next round fields or turn off scheduling.",
+        "fixHighlighted": "Fix the highlighted fields above before saving.",
+        "fetchFailed": "Failed to load the interview process. Please try again."
+      }
     },
     "hrQuestions": {
       "optionalSuffix": "(Optional)",
