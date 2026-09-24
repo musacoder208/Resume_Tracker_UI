@@ -3,7 +3,6 @@ import type { JSX, ReactNode } from 'react';
 import type { TFunction } from 'i18next';
 import { Button } from '@/components/ui/button';
 import { AutocompleteSelect } from '@/components/ui/autocompleteSelect';
-import { Checkbox } from '@/components/ui/checkbox';
 import { toastService } from '@/components/ui/toast/toastService';
 import { InterviewerPicker } from '../interviewerPicker';
 import { CalendarPicker } from '../calendarPicker';
@@ -14,10 +13,10 @@ import {
   useGetRoundsQuery,
   useGetInterviewersQuery,
   useGetInterviewModesQuery,
-  useGetContactStatusesQuery,
+  // useGetContactStatusesQuery, // Contact Status disabled — kept for reference
   useGetRoundActionsQuery,
   useLazyGetQuestionsQuery,
-  useSaveContactStatusMutation,
+  // useSaveContactStatusMutation, // Contact Status disabled — kept for reference
   useSaveRoundMutation,
 } from '../../api/interviewProcess.api';
 import { combineToISODateTime, splitISODateTime } from '../../utils/dateTime';
@@ -65,10 +64,11 @@ export function RoundForm({ candidateId, jdId, seniorityId: seniorityIdFallback,
   const { data: roundOptions = [] } = useGetRoundsQuery();
   const { data: interviewerDirectory = [] } = useGetInterviewersQuery();
   const { data: modeOptions = [] } = useGetInterviewModesQuery();
-  const { data: contactStatusOptions = [] } = useGetContactStatusesQuery();
+  // Contact Status disabled — kept for reference:
+  // const { data: contactStatusOptions = [] } = useGetContactStatusesQuery();
   const { data: actionOptions = [] } = useGetRoundActionsQuery();
   const [fetchQuestions, { data: questions = [], isFetching: isFetchingQuestions }] = useLazyGetQuestionsQuery();
-  const [saveContactStatus, { isLoading: isSavingContactStatus }] = useSaveContactStatusMutation();
+  // const [saveContactStatus, { isLoading: isSavingContactStatus }] = useSaveContactStatusMutation();
   const [saveRound, { isLoading: isSavingRound }] = useSaveRoundMutation();
 
   const interviewerOptions = useMemo(
@@ -91,12 +91,12 @@ export function RoundForm({ candidateId, jdId, seniorityId: seniorityIdFallback,
   const [date, setDate] = useState(() => initialDateTime.date);
   const [time, setTime] = useState(() => initialDateTime.time);
   const [interviewType, setInterviewType] = useState<InterviewModeCode | null>(() => pendingRound?.interviewType ?? null);
-  const [contactStatusId, setContactStatusId] = useState(() =>
-    snapshot.currentContactStatusId != null ? String(snapshot.currentContactStatusId) : ''
-  );
+  // Contact Status disabled — kept for reference:
+  // const [contactStatusId, setContactStatusId] = useState(() =>
+  //   snapshot.currentContactStatusId != null ? String(snapshot.currentContactStatusId) : ''
+  // );
   const [actionId, setActionId] = useState('');
   const [answers, setAnswers] = useState<Record<number, string>>({});
-  const [nextEnabled, setNextEnabled] = useState(false);
   const [nextRoundId, setNextRoundId] = useState('');
   const [nextInterviewerIds, setNextInterviewerIds] = useState<number[]>([]);
   const [nextDate, setNextDate] = useState('');
@@ -121,9 +121,10 @@ export function RoundForm({ candidateId, jdId, seniorityId: seniorityIdFallback,
   const selectedAction = actionOptions.find((a) => a.value === actionId);
   const actionCode = (selectedAction?.code as RoundActionCode | undefined) ?? null;
 
-  const selectedContactStatus = contactStatusOptions.find((c) => c.value === contactStatusId);
-  const contactStatusCode = selectedContactStatus?.code ?? null;
-  const canSaveContactStatus = !isPreScreening && contactStatusId !== '' && contactStatusCode !== 'CONNECTED' && roundId !== '';
+  // Contact Status disabled — kept for reference:
+  // const selectedContactStatus = contactStatusOptions.find((c) => c.value === contactStatusId);
+  // const contactStatusCode = selectedContactStatus?.code ?? null;
+  // const canSaveContactStatus = !isPreScreening && contactStatusId !== '' && contactStatusCode !== 'CONNECTED' && roundId !== '';
 
   const seniorityId = snapshot.seniorityId ?? seniorityIdFallback;
   const questionsAvailable = jdId != null && seniorityId != null;
@@ -142,19 +143,20 @@ export function RoundForm({ candidateId, jdId, seniorityId: seniorityIdFallback,
     }
   }
 
-  async function handleSaveContactStatus(): Promise<void> {
-    if (!canSaveContactStatus) return;
-    try {
-      await saveContactStatus({
-        candidateId,
-        roundId: Number(roundId),
-        contactStatusId: Number(contactStatusId),
-      }).unwrap();
-      toastService.success(tp('actions.contactStatusSaved'));
-    } catch {
-      // errors handled by apiToastMiddleware
-    }
-  }
+  // Contact Status disabled — kept for reference:
+  // async function handleSaveContactStatus(): Promise<void> {
+  //   if (!canSaveContactStatus) return;
+  //   try {
+  //     await saveContactStatus({
+  //       candidateId,
+  //       roundId: Number(roundId),
+  //       contactStatusId: Number(contactStatusId),
+  //     }).unwrap();
+  //     toastService.success(tp('actions.contactStatusSaved'));
+  //   } catch {
+  //     // errors handled by apiToastMiddleware
+  //   }
+  // }
 
   function validate(): string[] {
     const errors: string[] = [];
@@ -170,7 +172,7 @@ export function RoundForm({ candidateId, jdId, seniorityId: seniorityIdFallback,
         errors.push(tp('errors.answerRequired', { text: q.text.slice(0, 40) }));
       }
     });
-    if (actionCode === NEXT_ROUND_ACTION && nextEnabled) {
+    if (actionCode === NEXT_ROUND_ACTION) {
       if (nextRoundId === '' || nextInterviewerIds.length === 0 || combineToISODateTime(nextDate, nextTime) == null || nextInterviewType == null) {
         errors.push(tp('errors.nextRoundRequired'));
       }
@@ -192,7 +194,7 @@ export function RoundForm({ candidateId, jdId, seniorityId: seniorityIdFallback,
       answerText: (answers[q.mappingId] ?? '').trim(),
     }));
 
-    const includeNextRound = actionCode === NEXT_ROUND_ACTION && nextEnabled;
+    const includeNextRound = actionCode === NEXT_ROUND_ACTION;
 
     try {
       await saveRound({
@@ -264,6 +266,7 @@ export function RoundForm({ candidateId, jdId, seniorityId: seniorityIdFallback,
                   <span className="text-[10px] font-semibold text-error">{tp('errors.interviewTypeRequired')}</span>
                 )}
               </Field>
+              {/* Contact Status disabled — kept for reference:
               <Field label={tp('fields.contactStatus')}>
                 <div className="flex items-center gap-2">
                   <div className="flex-1">
@@ -282,6 +285,7 @@ export function RoundForm({ candidateId, jdId, seniorityId: seniorityIdFallback,
                 </div>
                 <span className="text-[10px] text-text-subtle">{tp('contactStatusNote')}</span>
               </Field>
+              */}
             </>
           )}
         </div>
@@ -338,46 +342,44 @@ export function RoundForm({ candidateId, jdId, seniorityId: seniorityIdFallback,
         )}
       </div>
 
-      {/* Optional next-round scheduling */}
+      {/* Next-round scheduling — mandatory once "Move to Next Round" is the decision, always
+          visible (not an optional toggle) since saving this decision requires it. */}
       {actionCode === NEXT_ROUND_ACTION && (
         <div className="flex flex-col gap-4 rounded-xl border border-primary bg-primary-subtle/40 p-5">
-          <label className="flex cursor-pointer items-center gap-2.5">
-            <Checkbox checked={nextEnabled} onChange={(e) => { setNextEnabled(e.target.checked); }} />
-            <span className="text-xs font-semibold text-text">{tp('nextRound.toggle')}</span>
-          </label>
-
-          {nextEnabled && (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <Field label={tp('nextRound.round')}>
-                <AutocompleteSelect
-                  value={nextRoundId}
-                  onChange={setNextRoundId}
-                  options={nextRoundOptions}
-                  placeholder={tp('fields.roundPlaceholder')}
-                  hasError={showErrors && nextRoundId === ''}
-                />
-              </Field>
-              <Field label={tp('nextRound.interviewers')}>
-                <InterviewerPicker
-                  options={interviewerOptions}
-                  selectedIds={nextInterviewerIds}
-                  onChange={setNextInterviewerIds}
-                  placeholder={tp('fields.interviewersPlaceholder')}
-                  emptyOptionsText={tp('fields.noInterviewers')}
-                  hasError={showErrors && nextInterviewerIds.length === 0}
-                />
-              </Field>
-              <Field label={tp('fields.dateTime')}>
-                <div className="flex items-center gap-2">
-                  <CalendarPicker value={nextDate} onChange={setNextDate} placeholder={tp('fields.datePlaceholder')} hasError={showErrors && nextDate === ''} />
-                  <TimePicker value={nextTime} onChange={setNextTime} placeholder={tp('fields.timePlaceholder')} hasError={showErrors && nextTime === ''} />
-                </div>
-              </Field>
-              <Field label={tp('fields.interviewType')}>
-                <InterviewTypeToggle options={modeOptions} value={nextInterviewType} onChange={setNextInterviewType} />
-              </Field>
-            </div>
-          )}
+          <span className="text-[11px] font-bold uppercase tracking-wide text-text-muted">{tp('nextRound.title')}</span>
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+            <Field label={tp('nextRound.round')}>
+              <AutocompleteSelect
+                value={nextRoundId}
+                onChange={setNextRoundId}
+                options={nextRoundOptions}
+                placeholder={tp('fields.roundPlaceholder')}
+                hasError={showErrors && nextRoundId === ''}
+              />
+            </Field>
+            <Field label={tp('nextRound.interviewers')}>
+              <InterviewerPicker
+                options={interviewerOptions}
+                selectedIds={nextInterviewerIds}
+                onChange={setNextInterviewerIds}
+                placeholder={tp('fields.interviewersPlaceholder')}
+                emptyOptionsText={tp('fields.noInterviewers')}
+                hasError={showErrors && nextInterviewerIds.length === 0}
+              />
+            </Field>
+            <Field label={tp('fields.dateTime')}>
+              <div className="flex items-center gap-2">
+                <CalendarPicker value={nextDate} onChange={setNextDate} placeholder={tp('fields.datePlaceholder')} hasError={showErrors && nextDate === ''} />
+                <TimePicker value={nextTime} onChange={setNextTime} placeholder={tp('fields.timePlaceholder')} hasError={showErrors && nextTime === ''} />
+              </div>
+            </Field>
+            <Field label={tp('fields.interviewType')}>
+              <InterviewTypeToggle options={modeOptions} value={nextInterviewType} onChange={setNextInterviewType} />
+              {showErrors && nextInterviewType == null && (
+                <span className="text-[10px] font-semibold text-error">{tp('errors.interviewTypeRequired')}</span>
+              )}
+            </Field>
+          </div>
         </div>
       )}
 

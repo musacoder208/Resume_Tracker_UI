@@ -225,7 +225,7 @@
         "textareaPlaceholder": "Interviewer notes…"
       },
       "nextRound": {
-        "toggle": "Schedule next round now",
+        "title": "Schedule Next Round",
         "round": "Next Round",
         "interviewers": "Next Round Interviewer(s)"
       },

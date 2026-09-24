@@ -410,9 +410,21 @@ export function CandidateSearchPage(): JSX.Element {
   const genders = masterData?.genders ?? [];
   const { data: roundOptions = [] } = useGetRoundsQuery();
   const { data: actionOptions = [] } = useGetRoundActionsQuery();
-  const { data, isLoading, isFetching } = useGetCandidateListQuery(queryParams, {
+  const { data, isLoading, isFetching, refetch } = useGetCandidateListQuery(queryParams, {
     skip: selectedJd === '',
   });
+
+  // Forces a fresh fetch every time Search (or Clear) is clicked, even when the resulting
+  // filter values happen to be identical to what's already applied — RTK Query only auto-fetches
+  // when the query args actually change, which "click Search again with nothing edited" wouldn't
+  // trigger on its own. Skipped on mount (trigger starts at 0) since useGetCandidateListQuery
+  // already fetches on mount by itself.
+  const [searchTrigger, setSearchTrigger] = useState(0);
+  useEffect(() => {
+    if (searchTrigger === 0 || selectedJd === '') return;
+    void refetch();
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- only the trigger bump itself should cause a refetch
+  }, [searchTrigger]);
 
   // HR status disabled — the whole "default HR Status to Pending" mechanism is kept here,
   // commented out, in case it's reinstated later.
@@ -478,6 +490,7 @@ export function CandidateSearchPage(): JSX.Element {
 
     next.set('page', '1');
     setSearchParams(next, { replace: true });
+    setSearchTrigger((n) => n + 1);
   }
 
   // Commits the FilterBar's draft values in one shot — the only place that actually triggers a
@@ -500,6 +513,7 @@ export function CandidateSearchPage(): JSX.Element {
     setOrDelete('search', values.search);
     next.set('page', '1');
     setSearchParams(next, { replace: true });
+    setSearchTrigger((n) => n + 1);
   }
 
   function handleUpload(): void {
