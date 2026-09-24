@@ -11,6 +11,7 @@ import { AddJdPage } from '@/features/jd/pages/AddJdPage';
 import { CandidateSearchPage } from '@/features/candidate/pages/CandidateSearchPage';
 import { AddCandidatePage } from '@/features/candidate/pages/AddCandidatePage';
 import { CandidateDetailsPage } from '@/features/candidate/pages/CandidateDetailsPage';
+import { CandidateActivityTestPage } from '@/features/candidateActivity/pages/CandidateActivityTestPage';
 //import { env } from '@/config/env';
 
 export const router = createBrowserRouter(
@@ -60,6 +61,10 @@ export const router = createBrowserRouter(
         {
           path: '/candidate/:candidateId',
           element: <CandidateDetailsPage />,
+        },
+        {
+          path: '/candidate-activity-test',
+          element: <CandidateActivityTestPage />,
         },
         {
           path: '*',

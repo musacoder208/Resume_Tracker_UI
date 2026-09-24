@@ -18,6 +18,7 @@ export const DataGridBody = (): JSX.Element => {
     enableRowExpansion,
     loading,
     renderExpandedRow,
+    getRowClassName,
   } = useDataGridContext<unknown>();
 
   const rows = table.getRowModel().rows;
@@ -51,6 +52,7 @@ export const DataGridBody = (): JSX.Element => {
           className={clsx(
             gridTheme.tr,
             isSelected && gridTheme.trSelected,
+            !isSelected && getRowClassName?.(row.original),
             enableRowSelection && 'cursor-pointer',
           )}
           onClick={enableRowSelection ? () => row.toggleSelected() : undefined}

@@ -56,7 +56,9 @@
   },
   "serverCodes": {
     "HR_ANSWERS_SAVED": "تم حفظ الإجابات بنجاح.",
-    "CANDIDATE_DETAILS_UPDATED": "تم تحديث بيانات المرشح بنجاح."
+    "CANDIDATE_DETAILS_UPDATED": "تم تحديث بيانات المرشح بنجاح.",
+    "CANDIDATE_ACTIVITY_HIGHLIGHT_UPDATED": "تم تحديث التمييز بنجاح.",
+    "CANDIDATE_ACTIVITY_SAVED": "تم حفظ النشاط بنجاح."
   },
   "errors": {
     "sessionExpired": "انتهت الجلسة",

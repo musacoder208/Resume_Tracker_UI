@@ -45,6 +45,7 @@ export const DataGrid = <TData,>({
   onExportExcel,
   onExportPdf,
   renderExpandedRow,
+  getRowClassName,
 }: DataGridProps<TData>): JSX.Element => {
   const { widthClass } = getGridLayoutClasses(layout);
 
@@ -180,6 +181,7 @@ export const DataGrid = <TData,>({
     firstRightPinnedColumnId,
     pinnedRightOffsets,
     renderExpandedRow,
+    getRowClassName,
   };
 
   return (

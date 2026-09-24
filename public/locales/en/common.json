@@ -36,7 +36,9 @@
   },
   "serverCodes": {
     "HR_ANSWERS_SAVED": "Answers saved successfully.",
-    "CANDIDATE_DETAILS_UPDATED": "Candidate details updated successfully."
+    "CANDIDATE_DETAILS_UPDATED": "Candidate details updated successfully.",
+    "CANDIDATE_ACTIVITY_HIGHLIGHT_UPDATED": "Highlight updated successfully.",
+    "CANDIDATE_ACTIVITY_SAVED": "Activity saved successfully."
   },
   "errors": {
     "sessionExpired": "Session Expired",

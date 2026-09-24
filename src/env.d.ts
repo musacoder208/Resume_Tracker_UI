@@ -6,6 +6,7 @@ interface ImportMetaEnv {
   readonly VITE_ORGANIZATION_SERVICE_BASE_URL: string;
   readonly VITE_DEMO_API_BASE_URL: string;
   readonly VITE_DEPARTMENT_API_BASE_URL: string;
+  readonly VITE_CALL_TOMORROW_TIME?: string;
 }
 
 interface ImportMeta {

@@ -89,6 +89,9 @@ export interface DataGridProps<TData> {
 
   /** Render the expanded detail panel for a row. Requires enableRowExpansion. */
   renderExpandedRow?: (row: Row<TData>) => ReactNode;
+
+  /** Extra className applied to a row's <tr> based on its data (e.g. a highlighted flag). */
+  getRowClassName?: (row: TData) => string | undefined;
 }
 
 /**
@@ -112,6 +115,7 @@ export interface DataGridContextValue<TData> {
   /** Sticky right offsets (px) for each right-pinned column, keyed by column id */
   pinnedRightOffsets: Record<string, number>;
   renderExpandedRow?: (row: Row<TData>) => ReactNode;
+  getRowClassName?: (row: TData) => string | undefined;
 }
 
 export interface GridCellRendererProps<TData> {
