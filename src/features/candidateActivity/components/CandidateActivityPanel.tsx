@@ -1,17 +1,18 @@
-import { useMemo, useState, type JSX } from 'react';
+import { useMemo, useState, type JSX, type ReactNode } from 'react';
 import { addDays, format, setHours, setMinutes, startOfDay } from 'date-fns';
 import clsx from 'clsx';
 import { env } from '@/config/env';
-import { PageContainer } from '@/components/containers/PageContainer';
-import { Textarea } from '@/components/ui/textarea/Textarea';
-import { DateTimePicker } from '@/components/ui/dateTimePicker/DateTimePicker';
 import { Button } from '@/components/ui/button';
+import { AutocompleteSelect } from '@/components/ui/autocompleteSelect';
+import { toastService } from '@/components/ui/toast/toastService';
+import { CalendarPicker } from '@/features/candidate/interviewProcess/components/calendarPicker';
+import { TimePicker } from '@/features/candidate/interviewProcess/components/timePicker';
 import { StatusBadge, type StatusBadgeVariant } from '@/components/ui/statusBadge';
 import { DataGrid } from '@/components/datagrid/DataGrid';
 import { createInitialGridState } from '@/components/datagrid/types/grid.state';
 import type { GridState } from '@/components/datagrid/types/grid.state';
 import type { GridColumnDef } from '@/components/datagrid/types/grid.types';
-import { InboxArrowDownIcon, SparklesIcon, PencilIcon, StarIcon } from '@/icons';
+import { InboxArrowDownIcon, PencilIcon, StarIcon } from '@/icons';
 import { useAppDispatch } from '@/hooks/reduxHooks';
 import {
   candidateActivityApi,
@@ -22,17 +23,16 @@ import {
   useSaveCandidateActivityHighlightMutation,
   useGetCandidateActivityQuery,
 } from '../api/candidateActivity.api';
-import type { Activity, CandidateActivityItem } from '../types/candidateActivity.types';
+import type {
+  Activity,
+  CandidateActivityItem,
+  GetCandidateActivityParams,
+} from '../types/candidateActivity.types';
 
-// Hardcoded because this is a standalone test page with no real candidate
-// context. When this flow moves into the candidate details page, the id
-// will come from the route instead.
-const TEST_CANDIDATE_ID = 1;
-
-// The API paginates server-side (max page_size 100) but this page still
+// The API paginates server-side (max page_size 100) but this panel still
 // sorts/filters/paginates on the client — so fetch the largest single page
 // and treat it as "the dataset". Activities beyond the first 100 won't show.
-const HISTORY_QUERY_PARAMS = { candidate_id: TEST_CANDIDATE_ID, page: 1, page_size: 100 };
+const HISTORY_PAGE_SIZE = 100;
 
 // start_date is stored as `timestamp without time zone` — the backend keeps
 // whatever clock value it's given, with no timezone conversion. Date.toISOString()
@@ -63,10 +63,12 @@ function getCallTomorrowDate(time: string): Date {
   );
 }
 
-// Same native <select> classes as the candidate list page's filter
-// dropdowns, so dropdowns look identical across pages.
-const FIELD_SELECT_CLASSES =
-  'w-full rounded-md border border-border bg-surface py-1.5 ps-3 pe-8 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary';
+// The Interview Process pickers work on separate "YYYY-MM-DD" / "HH:mm" strings —
+// joined here into the same naive (no timezone) value toNaiveDateTimeString produces.
+function combineToNaiveDateTime(date: string, time: string): string | undefined {
+  if (date === '' || time === '') return undefined;
+  return `${date}T${time}:00`;
+}
 
 // Purely cosmetic — maps a sub-activity's wording to a status color.
 function getStatusVariant(label: string): StatusBadgeVariant {
@@ -94,7 +96,7 @@ function getTypeTagClasses(activityType: string): string {
     : 'bg-primary/10 text-primary';
 }
 
-// The grid is manually sorted/paginated (this page's data is a small,
+// The grid is manually sorted/paginated (this panel's data is a small,
 // already-fetched array, not a server-driven page) — sort by the clicked
 // column ourselves before slicing to the current page.
 function getSortValue(item: CandidateActivityItem, columnId: string): string | number {
@@ -134,15 +136,22 @@ function sortItems(
   return rule.desc ? sorted.reverse() : sorted;
 }
 
-export function CandidateActivityTestPage(): JSX.Element {
+export function CandidateActivityPanel({ candidateId }: { candidateId: number }): JSX.Element {
   const dispatch = useAppDispatch();
+
+  const historyQueryParams = useMemo<GetCandidateActivityParams>(
+    () => ({ candidate_id: candidateId, page: 1, page_size: HISTORY_PAGE_SIZE }),
+    [candidateId]
+  );
 
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [selectedSubActivityId, setSelectedSubActivityId] = useState<number | null>(null);
   const [notes, setNotes] = useState('');
-  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [scheduleDate, setScheduleDate] = useState('');
+  const [scheduleTime, setScheduleTime] = useState('');
   const [selectedAlertId, setSelectedAlertId] = useState<number | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
+  const [showErrors, setShowErrors] = useState(false);
 
   const { data: activities = [], isLoading: isLoadingActivities } = useGetActivityListQuery();
   const { data: alerts = [], isLoading: isLoadingAlerts } = useGetAlertListQuery();
@@ -160,11 +169,25 @@ export function CandidateActivityTestPage(): JSX.Element {
     subActivities.find((s) => s.subActivityId === selectedSubActivityId) ?? null;
 
   const { data: history, isLoading: isLoadingHistory } =
-    useGetCandidateActivityQuery(HISTORY_QUERY_PARAMS);
+    useGetCandidateActivityQuery(historyQueryParams);
 
   const [saveCandidateActivity, { isLoading: isSaving }] = useSaveCandidateActivityMutation();
   const [saveCandidateActivityHighlight] = useSaveCandidateActivityHighlightMutation();
   const [togglingId, setTogglingId] = useState<number | null>(null);
+
+  // AutocompleteSelect works on string values/labels.
+  const activityOptions = useMemo(
+    () => activities.map((a) => ({ value: String(a.activityId), label: a.activityName })),
+    [activities]
+  );
+  const subActivityOptions = useMemo(
+    () => subActivities.map((s) => ({ value: String(s.subActivityId), label: s.subActivityName })),
+    [subActivities]
+  );
+  const alertOptions = useMemo(
+    () => alerts.map((a) => ({ value: String(a.alertId), label: a.alertName })),
+    [alerts]
+  );
 
   function handleActivityChange(activity: Activity | null): void {
     setSelectedActivity(activity);
@@ -176,8 +199,10 @@ export function CandidateActivityTestPage(): JSX.Element {
     setSelectedActivity(null);
     setSelectedSubActivityId(null);
     setNotes('');
-    setStartDate(undefined);
+    setScheduleDate('');
+    setScheduleTime('');
     setSelectedAlertId(null);
+    setShowErrors(false);
   }
 
   function handleEditClick(item: CandidateActivityItem): void {
@@ -186,29 +211,42 @@ export function CandidateActivityTestPage(): JSX.Element {
     setSelectedActivity(activity);
     setSelectedSubActivityId(item.subActivityId);
     setNotes(item.notes ?? '');
-    setStartDate(item.startDate != null ? parseNaiveDateTime(item.startDate) : undefined);
+    const scheduled = item.startDate != null ? parseNaiveDateTime(item.startDate) : null;
+    setScheduleDate(scheduled != null ? format(scheduled, 'yyyy-MM-dd') : '');
+    setScheduleTime(scheduled != null ? format(scheduled, 'HH:mm') : '');
     setSelectedAlertId(item.alertId);
+    setShowErrors(false);
   }
 
   const canSave = selectedActivity != null;
   const isEditing = editingId != null;
+  // A schedule needs both halves — a date with no time (or vice versa) can't be saved.
+  const isScheduleIncomplete = (scheduleDate === '') !== (scheduleTime === '');
 
   // Shared by the Save/Update button and the "Call Tomorrow" shortcut — the
   // shortcut just overrides the start date with tomorrow at the configured time.
   async function saveActivity(startDateOverride?: Date): Promise<void> {
     if (selectedActivity == null) return;
 
-    const effectiveStartDate = startDateOverride ?? startDate;
+    if (startDateOverride == null && isScheduleIncomplete) {
+      setShowErrors(true);
+      toastService.info('Please select both a date and a time for the schedule.');
+      return;
+    }
+
+    const effectiveStartDate =
+      startDateOverride != null
+        ? toNaiveDateTimeString(startDateOverride)
+        : combineToNaiveDateTime(scheduleDate, scheduleTime);
 
     try {
       await saveCandidateActivity({
         candidate_activity_id: editingId ?? undefined,
-        candidate_id: TEST_CANDIDATE_ID,
+        candidate_id: candidateId,
         activity_id: selectedActivity.activityId,
         sub_activity_id: selectedSubActivity?.subActivityId,
         notes: notes.trim() === '' ? undefined : notes.trim(),
-        start_date:
-          effectiveStartDate != null ? toNaiveDateTimeString(effectiveStartDate) : undefined,
+        start_date: effectiveStartDate,
         alert_id: selectedAlert?.alertId,
       }).unwrap();
 
@@ -231,7 +269,7 @@ export function CandidateActivityTestPage(): JSX.Element {
       dispatch(
         candidateActivityApi.util.updateQueryData(
           'getCandidateActivity',
-          HISTORY_QUERY_PARAMS,
+          historyQueryParams,
           (draft) => {
             const target = draft.activities.find(
               (a) => a.candidateActivityId === item.candidateActivityId
@@ -406,184 +444,175 @@ export function CandidateActivityTestPage(): JSX.Element {
   ];
 
   return (
-    <PageContainer>
-      <div className="mx-auto flex max-w-5xl flex-col gap-6 pt-4">
-        <div className="flex items-center gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <SparklesIcon className="h-5 w-5" />
-          </div>
-          <div>
-            <h1 className="text-lg font-semibold text-text">Candidate Activity (Test)</h1>
-            <p className="text-sm text-text-muted">
-              Standalone test page for candidate activity tracking. Candidate ID is hardcoded to{' '}
-              {TEST_CANDIDATE_ID}.
-            </p>
-          </div>
+    <div className="flex flex-col gap-5">
+      <div className="flex flex-col gap-5 rounded-xl border border-border bg-surface p-5">
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-bold uppercase tracking-wide text-text-muted">
+            {isEditing ? 'Edit Activity' : 'Log Activity'}
+          </span>
+          {isEditing && (
+            <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
+              Editing entry #{editingId}
+            </span>
+          )}
         </div>
 
-        <div className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-6 shadow-sm">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-text">
-              {isEditing ? 'Edit Activity' : 'Log Activity'}
-            </h2>
-            {isEditing && (
-              <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
-                Editing entry #{editingId}
-              </span>
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+          <Field label="Activity">
+            <AutocompleteSelect
+              value={selectedActivity != null ? String(selectedActivity.activityId) : ''}
+              onChange={(value) => {
+                handleActivityChange(activities.find((a) => String(a.activityId) === value) ?? null);
+              }}
+              options={activityOptions}
+              placeholder="Select activity…"
+              disabled={isLoadingActivities}
+            />
+          </Field>
+
+          <Field label="Sub-Activity">
+            <AutocompleteSelect
+              value={selectedSubActivity != null ? String(selectedSubActivity.subActivityId) : ''}
+              onChange={(value) => {
+                setSelectedSubActivityId(value === '' ? null : Number(value));
+              }}
+              options={subActivityOptions}
+              placeholder="Select sub-activity…"
+              disabled={selectedActivity == null || isLoadingSubActivities}
+            />
+          </Field>
+
+          <Field label="Schedular">
+            <div className="flex items-center gap-2">
+              <CalendarPicker
+                value={scheduleDate}
+                onChange={setScheduleDate}
+                placeholder="Select date"
+                hasError={showErrors && isScheduleIncomplete && scheduleDate === ''}
+              />
+              <TimePicker
+                value={scheduleTime}
+                onChange={setScheduleTime}
+                placeholder="Select time"
+                hasError={showErrors && isScheduleIncomplete && scheduleTime === ''}
+              />
+            </div>
+            {(scheduleDate !== '' || scheduleTime !== '') && (
+              <button
+                type="button"
+                onClick={() => {
+                  setScheduleDate('');
+                  setScheduleTime('');
+                }}
+                className="self-start text-[11px] font-medium text-text-muted hover:text-text"
+              >
+                Clear schedule
+              </button>
             )}
-          </div>
+          </Field>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-text">Activity</label>
-              <select
-                value={selectedActivity?.activityId ?? ''}
-                onChange={(e) => {
-                  const id = Number(e.target.value);
-                  handleActivityChange(activities.find((a) => a.activityId === id) ?? null);
-                }}
-                disabled={isLoadingActivities}
-                className={FIELD_SELECT_CLASSES}
-              >
-                <option value="">Select activity…</option>
-                {activities.map((a) => (
-                  <option key={a.activityId} value={a.activityId}>
-                    {a.activityName}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <Field label="Alert">
+            <AutocompleteSelect
+              value={selectedAlert != null ? String(selectedAlert.alertId) : ''}
+              onChange={(value) => {
+                setSelectedAlertId(value === '' ? null : Number(value));
+              }}
+              options={alertOptions}
+              placeholder="Select alert…"
+              disabled={isLoadingAlerts}
+            />
+          </Field>
+        </div>
 
-            <div>
-              <label className="mb-1 block text-sm font-medium text-text">Sub-Activity</label>
-              <select
-                value={selectedSubActivity?.subActivityId ?? ''}
-                onChange={(e) => {
-                  setSelectedSubActivityId(e.target.value === '' ? null : Number(e.target.value));
-                }}
-                disabled={selectedActivity == null || isLoadingSubActivities}
-                className={FIELD_SELECT_CLASSES}
-              >
-                <option value="">Select sub-activity…</option>
-                {subActivities.map((s) => (
-                  <option key={s.subActivityId} value={s.subActivityId}>
-                    {s.subActivityName}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <Textarea
-            label="Notes"
+        <Field label="Notes">
+          <textarea
             value={notes}
             onChange={(e) => {
               setNotes(e.target.value);
             }}
-            rows={3}
             placeholder="Add any context about this activity…"
+            className="min-h-[64px] w-full resize-y rounded-lg border border-border-muted bg-surface-muted/40 p-3 text-xs text-text placeholder:text-text-muted"
           />
+        </Field>
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <label className="mb-1 block text-sm font-medium text-text">Schedular</label>
-              <DateTimePicker
-                mode="datetime"
-                value={startDate}
-                onChange={setStartDate}
-                placeholder="Select date & time…"
-                showClearButton
-              />
-            </div>
-
-            <div>
-              <label className="mb-1 block text-sm font-medium text-text">Alert</label>
-              <select
-                value={selectedAlert?.alertId ?? ''}
-                onChange={(e) => {
-                  setSelectedAlertId(e.target.value === '' ? null : Number(e.target.value));
-                }}
-                disabled={isLoadingAlerts}
-                className={FIELD_SELECT_CLASSES}
-              >
-                <option value="">Select alert…</option>
-                {alerts.map((a) => (
-                  <option key={a.alertId} value={a.alertId}>
-                    {a.alertName}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between border-t border-border pt-4">
-            <p className="text-xs text-text-muted">
-              {canSave ? 'Ready to save.' : 'Select an activity to enable save.'}
-            </p>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  void saveActivity(getCallTomorrowDate(env.CALL_TOMORROW_TIME));
-                }}
-                disabled={!canSave || isSaving}
-                title={`Save with start date tomorrow at ${env.CALL_TOMORROW_TIME}`}
-                className="mr-2 text-sm font-medium text-primary underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:no-underline disabled:opacity-40"
-              >
-                Call Tomorrow
-              </button>
-              {isEditing && (
-                <Button variant="secondary" onClick={resetForm} disabled={isSaving}>
-                  Cancel
-                </Button>
-              )}
-              <Button
-                variant="primary"
-                onClick={() => {
-                  void saveActivity();
-                }}
-                disabled={!canSave || isSaving}
-              >
-                {isSaving ? 'Saving…' : isEditing ? 'Update Activity' : 'Save Activity'}
-              </Button>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-4 rounded-2xl border border-border bg-surface p-6 shadow-sm">
+        <div className="flex items-center justify-between border-t border-border pt-4">
+          <p className="text-xs text-text-muted">
+            {canSave ? 'Ready to save.' : 'Select an activity to enable save.'}
+          </p>
           <div className="flex items-center gap-2">
-            <h2 className="text-sm font-semibold text-text">Activity History</h2>
-            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-              {historyItems.length}
-            </span>
+            <button
+              type="button"
+              onClick={() => {
+                void saveActivity(getCallTomorrowDate(env.CALL_TOMORROW_TIME));
+              }}
+              disabled={!canSave || isSaving}
+              title={`Save with start date tomorrow at ${env.CALL_TOMORROW_TIME}`}
+              className="mr-2 text-sm font-medium text-primary underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:no-underline disabled:opacity-40"
+            >
+              Call Tomorrow
+            </button>
+            {isEditing && (
+              <Button variant="secondary" size="md" onClick={resetForm} disabled={isSaving}>
+                Cancel
+              </Button>
+            )}
+            <Button
+              variant="primary"
+              size="md"
+              onClick={() => {
+                void saveActivity();
+              }}
+              disabled={!canSave || isSaving}
+            >
+              {isSaving ? 'Saving…' : isEditing ? 'Update Activity' : 'Save Activity'}
+            </Button>
           </div>
-
-          {!isLoadingHistory && historyItems.length === 0 ? (
-            <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-border p-8 text-center">
-              <InboxArrowDownIcon className="h-6 w-6 text-text-muted" />
-              <p className="text-sm text-text-muted">No activity logged yet.</p>
-              <p className="text-xs text-text-subtle">
-                Activities you save above will show up here.
-              </p>
-            </div>
-          ) : (
-            <DataGrid<CandidateActivityItem>
-              data={pagedItems}
-              columns={columns}
-              totalRows={sortedItems.length}
-              state={gridState}
-              onStateChange={setGridState}
-              rowId={(row) => String(row.candidateActivityId)}
-              loading={isLoadingHistory}
-              enableSorting
-              getRowClassName={(row) =>
-                row.isHighlighted ? 'bg-warning-subtle hover:bg-warning-subtle' : undefined
-              }
-              layout={{ widthMode: 'fit' }}
-            />
-          )}
         </div>
       </div>
-    </PageContainer>
+
+      <div className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-5">
+        <div className="flex items-center gap-2">
+          <h2 className="text-sm font-semibold text-text">Activity History</h2>
+          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
+            {historyItems.length}
+          </span>
+        </div>
+
+        {!isLoadingHistory && historyItems.length === 0 ? (
+          <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-border p-8 text-center">
+            <InboxArrowDownIcon className="h-6 w-6 text-text-muted" />
+            <p className="text-sm text-text-muted">No activity logged yet.</p>
+            <p className="text-xs text-text-subtle">
+              Activities you save above will show up here.
+            </p>
+          </div>
+        ) : (
+          <DataGrid<CandidateActivityItem>
+            data={pagedItems}
+            columns={columns}
+            totalRows={sortedItems.length}
+            state={gridState}
+            onStateChange={setGridState}
+            rowId={(row) => String(row.candidateActivityId)}
+            loading={isLoadingHistory}
+            enableSorting
+            getRowClassName={(row) =>
+              row.isHighlighted ? 'bg-warning-subtle hover:bg-warning-subtle' : undefined
+            }
+            layout={{ widthMode: 'fit' }}
+          />
+        )}
+      </div>
+    </div>
+  );
+}
+
+// Same field wrapper as the Interview Process round form, so both tabs share one look.
+function Field({ label, children }: { label: string; children: ReactNode }): JSX.Element {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <span className="text-xs font-semibold text-text-muted">{label}</span>
+      {children}
+    </div>
   );
 }

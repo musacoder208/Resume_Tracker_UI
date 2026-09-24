@@ -178,7 +178,8 @@
       "resume": "السيرة الذاتية",
       "aiScore": "تقييم الذكاء الاصطناعي",
       "hrQuestions": "تقييم الموارد البشرية",
-      "interviewProcess": "عملية المقابلة"
+      "interviewProcess": "عملية المقابلة",
+      "hrActivity": "نشاط الموارد البشرية"
     },
     "interviewProcess": {
       "status": "حالة المرشح",

@@ -178,7 +178,8 @@
       "resume": "Resume",
       "aiScore": "AI Score",
       "hrQuestions": "HR Evaluation",
-      "interviewProcess": "Interview Process"
+      "interviewProcess": "Interview Process",
+      "hrActivity": "HR Activity"
     },
     "interviewProcess": {
       "status": "Candidate Status",

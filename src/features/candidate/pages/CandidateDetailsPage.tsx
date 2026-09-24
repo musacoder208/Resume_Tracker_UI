@@ -47,6 +47,7 @@ import { toastService } from '@/components/ui/toast/toastService';
 import { InterviewProcessTab } from '../interviewProcess';
 import { InterviewUpdateSummary } from '../interviewProcess/hrTabSummary';
 import { useGetCandidateRequisitionQuery } from '../interviewProcess/api/interviewProcess.api';
+import { CandidateActivityPanel } from '@/features/candidateActivity/components/CandidateActivityPanel';
 import type { HRAnswerQuestion, HRQuestionOption, SaveHRAnswerItem } from '../types/candidate.types';
 import { useGetMasterDataQuery } from '@/features/jd/api/jd.api';
 import { useGetModuleIdQuery } from '@/features/common/api/common.api';
@@ -68,7 +69,8 @@ type DetailTab =
   | 'resume'
   | 'score'
   | 'hrQuestions'
-  | 'interviewProcess';
+  | 'interviewProcess'
+  | 'hrActivity';
 
 const AVATAR_PALETTE = [
   'bg-primary/15 text-primary',
@@ -1789,6 +1791,7 @@ export function CandidateDetailsPage(): JSX.Element {
     { key: 'resume', label: t('details.tabs.resume') },
     { key: 'score', label: t('details.tabs.aiScore') },
     { key: 'interviewProcess', label: t('details.tabs.interviewProcess') },
+    { key: 'hrActivity', label: t('details.tabs.hrActivity') },
   ];
 
   return (
@@ -1898,6 +1901,7 @@ export function CandidateDetailsPage(): JSX.Element {
                 t={t}
               />
             )}
+            {activeTab === 'hrActivity' && <CandidateActivityPanel candidateId={candidateId} />}
           </div>
         </div>
       </div>
