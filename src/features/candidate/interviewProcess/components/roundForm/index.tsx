@@ -109,13 +109,10 @@ export function RoundForm({ candidateId, jdId, seniorityId: seniorityIdFallback,
   const isPreScreening = roundCode === PRE_SCREENING_ROUND_CODE;
 
   const allowedActionCodes = isPreScreening ? PRE_SCREENING_ACTIONS : OTHER_ROUND_ACTIONS;
+  // Shows the round-action's own `name` from the DB as-is — no label override.
   const decisionOptions = useMemo(
-    () =>
-      actionOptions
-        .filter((a) => allowedActionCodes.includes(a.code as RoundActionCode))
-        .map((a) => ({ ...a, label: tp(`decisionLabels.${a.code}`) })),
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- tp is stable enough for this list to only depend on the underlying data
-    [actionOptions, isPreScreening]
+    () => actionOptions.filter((a) => allowedActionCodes.includes(a.code as RoundActionCode)),
+    [actionOptions, allowedActionCodes]
   );
 
   const selectedAction = actionOptions.find((a) => a.value === actionId);
