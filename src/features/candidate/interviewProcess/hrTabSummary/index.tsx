@@ -2,7 +2,7 @@ import type { JSX } from 'react';
 import { useGetCandidateHistoryQuery } from '../api/interviewProcess.api';
 import { Stepper } from '../components/stepper';
 import { HistoryList } from '../components/historyList';
-import { decisionLabel as decisionLabelFor, decisionVariant } from '../utils/labels';
+import { decisionVariant } from '../utils/labels';
 
 export interface InterviewUpdateSummaryProps {
   candidateId: number;
@@ -15,7 +15,6 @@ export interface InterviewUpdateSummaryProps {
  */
 export function InterviewUpdateSummary({ candidateId, t }: InterviewUpdateSummaryProps): JSX.Element | null {
   const tp = (key: string): string => t(`details.interviewProcess.${key}`);
-  const decisionLabel = (code: Parameters<typeof decisionLabelFor>[1]): string => decisionLabelFor(t, code);
 
   const { data: snapshot, isLoading } = useGetCandidateHistoryQuery(candidateId, {
     skip: isNaN(candidateId),
@@ -41,14 +40,12 @@ export function InterviewUpdateSummary({ candidateId, t }: InterviewUpdateSummar
           <Stepper
             history={snapshot.history}
             pendingRound={snapshot.pendingRound}
-            decisionLabel={decisionLabel}
             inProgressLabel={tp('stepper.inProgress')}
           />
           <HistoryList
             rounds={snapshot.history}
             title={tp('history.title')}
             emptyText={tp('emptyHistory')}
-            decisionLabel={decisionLabel}
             decisionVariant={decisionVariant}
             interviewersLabel={tp('history.interviewers')}
             noAnswersText={tp('history.noAnswers')}

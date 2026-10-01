@@ -230,13 +230,6 @@
         "round": "الجولة التالية",
         "interviewers": "القائم(ون) بمقابلة الجولة التالية"
       },
-      "decisionLabels": {
-        "SHORTLISTED": "إدراج في القائمة المختصرة",
-        "MOVE_TO_NEXT_ROUND": "الانتقال إلى الجولة التالية",
-        "FINAL_SELECT": "اختيار نهائي",
-        "HOLD": "تعليق",
-        "REJECTED": "رفض"
-      },
       "statusLabels": {
         "Pending": "قيد الانتظار",
         "Shortlisted": "في القائمة المختصرة",

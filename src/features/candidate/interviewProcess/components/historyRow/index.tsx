@@ -8,7 +8,6 @@ import type { HistoryRound, RoundActionCode } from '../../types/interviewProcess
 
 export interface HistoryRowProps {
   round: HistoryRound;
-  decisionLabel: (code: RoundActionCode | null) => string;
   decisionVariant: (code: RoundActionCode | null) => 'success' | 'error' | 'warning' | 'neutral';
   interviewersLabel: string;
   noAnswersText: string;
@@ -16,7 +15,6 @@ export interface HistoryRowProps {
 
 export function HistoryRow({
   round,
-  decisionLabel,
   decisionVariant,
   interviewersLabel,
   noAnswersText,
@@ -52,7 +50,7 @@ export function HistoryRow({
           {round.contactStatusName != null && (
             <StatusBadge dot={false} variant="warning" label={round.contactStatusName} />
           )}
-          <StatusBadge dot={false} variant={decisionVariant(round.actionCode)} label={decisionLabel(round.actionCode)} />
+          <StatusBadge dot={false} variant={decisionVariant(round.actionCode)} label={round.actionName ?? '—'} />
           {open ? <ChevronDownIcon className="h-4 w-4 text-text-subtle" /> : <ChevronRightIcon className="h-4 w-4 text-text-subtle" />}
         </div>
       </button>

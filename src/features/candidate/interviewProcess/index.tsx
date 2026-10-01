@@ -7,7 +7,7 @@ import { useGetCandidateHistoryQuery } from './api/interviewProcess.api';
 import { Stepper } from './components/stepper';
 import { RoundForm } from './components/roundForm';
 import { HistoryList } from './components/historyList';
-import { decisionLabel as decisionLabelFor, decisionVariant } from './utils/labels';
+import { decisionVariant } from './utils/labels';
 import type { CandidateStatus } from './types/interviewProcess.types';
 
 export interface InterviewProcessTabProps {
@@ -30,7 +30,6 @@ const STATUS_VARIANT: Record<CandidateStatus, StatusBadgeVariant> = {
 
 export function InterviewProcessTab({ candidateId, jdId, seniorityId, t }: InterviewProcessTabProps): JSX.Element {
   const tp = (key: string, opts?: Record<string, unknown>): string => t(`details.interviewProcess.${key}`, opts);
-  const decisionLabel = (code: Parameters<typeof decisionLabelFor>[1]): string => decisionLabelFor(t, code);
 
   const {
     data: snapshot,
@@ -72,7 +71,6 @@ export function InterviewProcessTab({ candidateId, jdId, seniorityId, t }: Inter
           <Stepper
             history={snapshot.history}
             pendingRound={snapshot.pendingRound}
-            decisionLabel={decisionLabel}
             inProgressLabel={tp('stepper.inProgress')}
           />
         </div>
@@ -100,7 +98,6 @@ export function InterviewProcessTab({ candidateId, jdId, seniorityId, t }: Inter
         rounds={snapshot.history}
         title={tp('history.title')}
         emptyText={tp('emptyHistory')}
-        decisionLabel={decisionLabel}
         decisionVariant={decisionVariant}
         interviewersLabel={tp('history.interviewers')}
         noAnswersText={tp('history.noAnswers')}

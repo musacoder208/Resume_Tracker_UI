@@ -6,7 +6,6 @@ export interface HistoryListProps {
   rounds: HistoryRound[];
   title: string;
   emptyText: string;
-  decisionLabel: (code: RoundActionCode | null) => string;
   decisionVariant: (code: RoundActionCode | null) => 'success' | 'error' | 'warning' | 'neutral';
   interviewersLabel: string;
   noAnswersText: string;
@@ -16,7 +15,6 @@ export function HistoryList({
   rounds,
   title,
   emptyText,
-  decisionLabel,
   decisionVariant,
   interviewersLabel,
   noAnswersText,
@@ -33,7 +31,6 @@ export function HistoryList({
           <HistoryRow
             key={round.transId}
             round={round}
-            decisionLabel={decisionLabel}
             decisionVariant={decisionVariant}
             interviewersLabel={interviewersLabel}
             noAnswersText={noAnswersText}

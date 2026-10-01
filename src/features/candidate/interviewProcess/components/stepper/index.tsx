@@ -7,7 +7,6 @@ import type { HistoryRound, PendingRound, RoundActionCode } from '../../types/in
 export interface StepperProps {
   history: HistoryRound[];
   pendingRound: PendingRound | null;
-  decisionLabel: (code: RoundActionCode | null) => string;
   inProgressLabel: string;
 }
 
@@ -18,7 +17,7 @@ const POSITIVE_CODES: RoundActionCode[] = ['SHORTLISTED', 'MOVE_TO_NEXT_ROUND', 
  * they happened), plus the currently pending round — never a fixed numbered template,
  * since round order is not fixed and any round can be repeated.
  */
-export function Stepper({ history, pendingRound, decisionLabel, inProgressLabel }: StepperProps): JSX.Element {
+export function Stepper({ history, pendingRound, inProgressLabel }: StepperProps): JSX.Element {
   const journeyIds: number[] = [];
   history.forEach((h) => {
     if (!journeyIds.includes(h.roundId)) journeyIds.push(h.roundId);
@@ -69,7 +68,7 @@ export function Stepper({ history, pendingRound, decisionLabel, inProgressLabel 
               <CheckCircleIcon className="h-5 w-5" />
             </div>
           );
-          sub = <span className="text-[10px] text-text-muted">{decisionLabel(code)} · {formatDisplayDateTime(latest.createdDate).split(' · ')[0]}</span>;
+          sub = <span className="text-[10px] text-text-muted">{latest.actionName ?? '—'} · {formatDisplayDateTime(latest.createdDate).split(' · ')[0]}</span>;
           connectorClass = 'bg-success';
         } else if (code === 'REJECTED') {
           circle = (
@@ -78,7 +77,7 @@ export function Stepper({ history, pendingRound, decisionLabel, inProgressLabel 
             </div>
           );
           labelClass = 'text-xs font-semibold text-error';
-          sub = <span className="text-[10px] text-error">{decisionLabel(code)}</span>;
+          sub = <span className="text-[10px] text-error">{latest.actionName ?? '—'}</span>;
           connectorClass = 'bg-error';
         } else if (code === 'HOLD') {
           circle = (
@@ -87,7 +86,7 @@ export function Stepper({ history, pendingRound, decisionLabel, inProgressLabel 
             </div>
           );
           labelClass = 'text-xs font-semibold text-warning';
-          sub = <span className="text-[10px] text-warning">{decisionLabel(code)}</span>;
+          sub = <span className="text-[10px] text-warning">{latest.actionName ?? '—'}</span>;
         } else {
           circle = (
             <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-border-muted bg-surface-muted text-text-muted text-xs font-bold">

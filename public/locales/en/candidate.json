@@ -230,13 +230,6 @@
         "round": "Next Round",
         "interviewers": "Next Round Interviewer(s)"
       },
-      "decisionLabels": {
-        "SHORTLISTED": "Shortlist",
-        "MOVE_TO_NEXT_ROUND": "Move to Next Round",
-        "FINAL_SELECT": "Final Select",
-        "HOLD": "Hold",
-        "REJECTED": "Reject"
-      },
       "statusLabels": {
         "Pending": "Pending",
         "Shortlisted": "Shortlisted",
