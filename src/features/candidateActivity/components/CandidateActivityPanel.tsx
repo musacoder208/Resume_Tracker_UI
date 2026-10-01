@@ -13,7 +13,7 @@ import { createInitialGridState } from '@/components/datagrid/types/grid.state';
 import type { GridState } from '@/components/datagrid/types/grid.state';
 import type { GridColumnDef } from '@/components/datagrid/types/grid.types';
 import { InboxArrowDownIcon, PencilIcon, StarIcon } from '@/icons';
-import { useAppDispatch } from '@/hooks/reduxHooks';
+import { useAppDispatch, useAppSelector } from '@/hooks/reduxHooks';
 import {
   candidateActivityApi,
   useGetActivityListQuery,
@@ -22,6 +22,7 @@ import {
   useSaveCandidateActivityMutation,
   useSaveCandidateActivityHighlightMutation,
   useGetCandidateActivityQuery,
+  useMarkCandidateActivityCompletedMutation,
 } from '../api/candidateActivity.api';
 import type {
   Activity,
@@ -171,7 +172,12 @@ export function CandidateActivityPanel({ candidateId }: { candidateId: number })
   const { data: history, isLoading: isLoadingHistory } =
     useGetCandidateActivityQuery(historyQueryParams);
 
-  const [saveCandidateActivity, { isLoading: isSaving }] = useSaveCandidateActivityMutation();
+  const [saveCandidateActivity, { isLoading: isSavingActivity }] =
+    useSaveCandidateActivityMutation();
+  const [markCandidateActivityCompleted, { isLoading: isCompletingPrevious }] =
+    useMarkCandidateActivityCompletedMutation();
+  const isSaving = isSavingActivity || isCompletingPrevious;
+  const currentUserId = useAppSelector((state) => state.auth.user?.userId ?? null);
   const [saveCandidateActivityHighlight] = useSaveCandidateActivityHighlightMutation();
   const [togglingId, setTogglingId] = useState<number | null>(null);
 
@@ -240,6 +246,20 @@ export function CandidateActivityPanel({ candidateId }: { candidateId: number })
         : combineToNaiveDateTime(scheduleDate, scheduleTime);
 
     try {
+      // A new activity replaces this user's current pending one: complete the
+      // pending activities first, then insert. Edits update in place and skip this.
+      if (editingId == null && currentUserId != null) {
+        const pendingIds = (history?.activities ?? [])
+          .filter((a) => a.statusCode === 'PENDING' && a.createdBy === Number(currentUserId))
+          .map((a) => a.candidateActivityId);
+        for (const candidateActivityId of pendingIds) {
+          // Any failure stops here (caught below) — nothing is inserted.
+          await markCandidateActivityCompleted({
+            candidate_activity_id: candidateActivityId,
+          }).unwrap();
+        }
+      }
+
       await saveCandidateActivity({
         candidate_activity_id: editingId ?? undefined,
         candidate_id: candidateId,
@@ -371,9 +391,7 @@ export function CandidateActivityPanel({ candidateId }: { candidateId: number })
       header: 'Alert',
       size: 90,
       minSize: 90,
-      cell: ({ row }) => (
-        <span className="text-text-muted">{row.original.alertName ?? '—'}</span>
-      ),
+      cell: ({ row }) => <span className="text-text-muted">{row.original.alertName ?? '—'}</span>,
     },
     {
       id: 'logged',
@@ -462,7 +480,9 @@ export function CandidateActivityPanel({ candidateId }: { candidateId: number })
             <AutocompleteSelect
               value={selectedActivity != null ? String(selectedActivity.activityId) : ''}
               onChange={(value) => {
-                handleActivityChange(activities.find((a) => String(a.activityId) === value) ?? null);
+                handleActivityChange(
+                  activities.find((a) => String(a.activityId) === value) ?? null
+                );
               }}
               options={activityOptions}
               placeholder="Select activity…"
@@ -582,9 +602,7 @@ export function CandidateActivityPanel({ candidateId }: { candidateId: number })
           <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-border p-8 text-center">
             <InboxArrowDownIcon className="h-6 w-6 text-text-muted" />
             <p className="text-sm text-text-muted">No activity logged yet.</p>
-            <p className="text-xs text-text-subtle">
-              Activities you save above will show up here.
-            </p>
+            <p className="text-xs text-text-subtle">Activities you save above will show up here.</p>
           </div>
         ) : (
           <DataGrid<CandidateActivityItem>

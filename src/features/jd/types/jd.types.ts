@@ -13,12 +13,20 @@ export interface HrStatusItem {
   code: string;
 }
 
+// Candidate activity statuses (Pending / Completed). Match on `code` — it's stable.
+export interface ActivityStatusItem {
+  id: number;
+  name: string;
+  code: string;
+}
+
 export interface MasterData {
   jobTitles: MasterDataItem[];
   seniorities: MasterDataItem[];
   feedbackStatuses: MasterDataItem[];
   statuses: Record<string, MasterDataItem[]>;
   hrStatuses: HrStatusItem[];
+  activityStatuses: ActivityStatusItem[];
   genders: string[];
 }
 
@@ -129,6 +137,8 @@ export interface RawMasterData {
   feedbackStatuses?: MasterDataItem[];
   statuses?: Record<string, MasterDataItem[]>;
   hrStatuses?: HrStatusItem[];
+  // id arrives as a string — status_id is a bigint in Postgres.
+  activityStatuses?: { id: string | number; name: string; code: string }[];
   genders?: string[];
 }
 

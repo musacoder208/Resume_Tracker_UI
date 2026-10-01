@@ -5,6 +5,7 @@ import { AppShell } from '../layout/pageLayout/privateLayout/AppShell';
 import { NotFound } from '@/components/ui/notFound';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { DashboardPage } from '@/features/dashboard/pages/DashboardPage';
+import { UserDashboardPage } from '@/features/candidateActivity/pages/UserDashboardPage';
 import { CompanyProfilePage } from '@/features/companyProfile/pages/CompanyProfilePage';
 import { JdLandingPage } from '@/features/jd/pages/JdLandingPage';
 import { AddJdPage } from '@/features/jd/pages/AddJdPage';
@@ -32,6 +33,10 @@ export const router = createBrowserRouter(
         {
           path: '/dashboard',
           element: <DashboardPage />,
+        },
+        {
+          path: '/my-action',
+          element: <UserDashboardPage />,
         },
         {
           path: '/company-profile',

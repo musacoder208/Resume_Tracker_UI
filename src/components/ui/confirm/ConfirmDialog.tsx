@@ -68,6 +68,7 @@ export function ConfirmDialog({
     variant = 'info',
     allowEnterConfirm = true,
     allowEscCancel = true,
+    hideShortcutHint = false,
   } = safeOptions;
 
   const cancelButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -177,11 +178,13 @@ export function ConfirmDialog({
               </button>
             </div>
 
-            <p className="mt-3 text-xs text-text-muted">
-              {allowEnterConfirm ? 'Enter to confirm' : ''}
-              {allowEnterConfirm && allowEscCancel ? ' • ' : ''}
-              {allowEscCancel ? 'Esc to cancel' : ''}
-            </p>
+            {!hideShortcutHint && (
+              <p className="mt-3 text-xs text-text-muted">
+                {allowEnterConfirm ? 'Enter to confirm' : ''}
+                {allowEnterConfirm && allowEscCancel ? ' • ' : ''}
+                {allowEscCancel ? 'Esc to cancel' : ''}
+              </p>
+            )}
           </DialogPanel>
         </div>
       </div>

@@ -24,6 +24,12 @@ export interface ConfirmOptions {
    * (Headless UI already calls onClose on Esc)
    */
   allowEscCancel?: boolean;
+
+  /**
+   * If true, hides the "Enter to confirm • Esc to cancel" hint (default false).
+   * The keys still work.
+   */
+  hideShortcutHint?: boolean;
 }
 
 export type ConfirmFn = (options: ConfirmOptions) => Promise<boolean>;

@@ -51,6 +51,11 @@ export const mapMasterDataResponse = (raw: ApiResponse<RawMasterData>): MasterDa
   feedbackStatuses: raw.data.feedbackStatuses ?? [],
   statuses: raw.data.statuses ?? {},
   hrStatuses: raw.data.hrStatuses ?? [],
+  activityStatuses: (raw.data.activityStatuses ?? []).map((s) => ({
+    id: Number(s.id),
+    name: s.name,
+    code: s.code,
+  })),
   genders: raw.data.genders ?? [],
 });
 

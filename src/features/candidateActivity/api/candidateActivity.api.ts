@@ -9,12 +9,17 @@ import type {
   SaveCandidateActivityHighlightResponse,
   GetCandidateActivityResult,
   GetCandidateActivityParams,
+  GetCallbackRequestListResult,
+  GetCallbackRequestListParams,
+  MarkCandidateActivityCompletedRequest,
+  MarkCandidateActivityCompletedResponse,
 } from '../types/candidateActivity.types';
 import {
   mapActivityListResponse,
   mapSubActivityListResponse,
   mapAlertListResponse,
   mapCandidateActivityListResponse,
+  mapCallbackRequestListResponse,
 } from './candidateActivity.mappers';
 
 export const candidateActivityApi = baseApi.injectEndpoints({
@@ -71,6 +76,32 @@ export const candidateActivityApi = baseApi.injectEndpoints({
         body,
       }),
     }),
+
+    // Callback Request activities created by the logged-in user — the backend
+    // resolves the user and org from the token. Filtered + paginated server-side.
+    getCallbackRequestList: builder.query<
+      GetCallbackRequestListResult,
+      GetCallbackRequestListParams
+    >({
+      query: (params) => ({
+        url: 'candidate/getCallbackRequestList',
+        params,
+      }),
+      transformResponse: mapCallbackRequestListResponse,
+      providesTags: ['CandidateActivity'],
+    }),
+
+    markCandidateActivityCompleted: builder.mutation<
+      MarkCandidateActivityCompletedResponse,
+      MarkCandidateActivityCompletedRequest
+    >({
+      query: (body) => ({
+        url: 'candidate/markCandidateActivityCompleted',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['CandidateActivity'],
+    }),
   }),
 });
 
@@ -81,4 +112,6 @@ export const {
   useSaveCandidateActivityMutation,
   useGetCandidateActivityQuery,
   useSaveCandidateActivityHighlightMutation,
+  useGetCallbackRequestListQuery,
+  useMarkCandidateActivityCompletedMutation,
 } = candidateActivityApi;

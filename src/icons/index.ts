@@ -71,6 +71,8 @@ export {
   PhoneIcon,
   EnvelopeIcon,
   BuildingOfficeIcon,
+  ArrowPathIcon,
+  ArrowTopRightOnSquareIcon,
 } from '@heroicons/react/24/outline';
 
 export { WavingHandIcon } from './svg';

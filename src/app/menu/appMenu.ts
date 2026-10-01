@@ -6,10 +6,12 @@ import {
   BuildingOffice2Icon,
   DocumentTextIcon,
   UsersIcon,
+  Squares2X2Icon,
 } from '@/icons';
 
 const routeIconMap: Record<string, ComponentType<{ className?: string }>> = {
   '/dashboard':       HomeIcon,
+  '/my-action':       Squares2X2Icon,
   '/company-profile': BuildingOffice2Icon,
   '/jd':              DocumentTextIcon,
   '/candidate':       UsersIcon,

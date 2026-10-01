@@ -47,6 +47,10 @@ export interface RawCandidateActivityItem {
   alert_id: number | null;
   alert_name: string | null;
   is_highlighted: boolean;
+  // Activity status — needed to complete the previous pending activity on a new save.
+  status_id?: number | null;
+  status_code?: string | null;
+  status_name?: string | null;
   created_by: number;
   created_date: string;
 }
@@ -106,6 +110,9 @@ export interface CandidateActivityItem {
   alertId: number | null;
   alertName: string | null;
   isHighlighted: boolean;
+  statusId: number | null;
+  statusCode: string | null;
+  statusName: string | null;
   createdBy: number;
   createdDate: string;
 }
@@ -123,7 +130,8 @@ export interface GetCandidateActivityResult {
 }
 
 export interface SaveCandidateActivityRequest {
-  candidate_activity_id?: number;
+  // null/omitted = insert a new activity; a number = update that activity.
+  candidate_activity_id?: number | null;
   candidate_id: number;
   activity_id: number;
   sub_activity_id?: number;
@@ -153,5 +161,94 @@ export interface SaveCandidateActivityHighlightResponse {
   data: {
     candidate_activity_id: number;
     is_highlighted: boolean;
+  };
+}
+
+// ── Callback requests (User Dashboard) ───────────────────────────────────────
+
+export interface RawCallbackRequestItem {
+  candidate_activity_id: number;
+  candidate_id: number;
+  full_name: string;
+  email: string | null;
+  phone: string | null;
+  current_job_title: string | null;
+  current_company: string | null;
+  jd_id: number | null;
+  jd_name: string | null;
+  activity_id: number;
+  activity_name: string;
+  sub_activity_id: number;
+  sub_activity_name: string;
+  notes: string | null;
+  callback_date: string | null;
+  is_overdue: boolean | null;
+  status_id: number;
+  status_code: string;
+  status_name: string;
+  is_highlighted: boolean;
+  created_by: number;
+  created_date: string;
+}
+
+export interface RawGetCallbackRequestListResponse {
+  success: boolean;
+  code: string;
+  message: string;
+  data: {
+    callbacks: RawCallbackRequestItem[];
+    pagination: RawCandidateActivityPagination;
+  };
+}
+
+export type CallbackStatusCode = 'PENDING' | 'COMPLETED';
+
+export interface GetCallbackRequestListParams {
+  status_code?: CallbackStatusCode; // omitted = all statuses
+  start_date?: string; // 'YYYY-MM-DD' — callbacks on that day
+  page?: number;
+  page_size?: number;
+}
+
+export interface CallbackRequestItem {
+  candidateActivityId: number;
+  candidateId: number;
+  fullName: string;
+  email: string | null;
+  phone: string | null;
+  currentJobTitle: string | null;
+  currentCompany: string | null;
+  jdId: number | null;
+  jdName: string | null;
+  activityId: number;
+  activityName: string;
+  subActivityId: number;
+  subActivityName: string;
+  notes: string | null;
+  callbackDate: string | null;
+  isOverdue: boolean;
+  statusId: number;
+  statusCode: string;
+  statusName: string;
+  isHighlighted: boolean;
+  createdBy: number;
+  createdDate: string;
+}
+
+export interface GetCallbackRequestListResult {
+  callbacks: CallbackRequestItem[];
+  pagination: CandidateActivityPagination;
+}
+
+export interface MarkCandidateActivityCompletedRequest {
+  candidate_activity_id: number;
+}
+
+export interface MarkCandidateActivityCompletedResponse {
+  success: boolean;
+  code: string;
+  message: string;
+  data: {
+    candidate_activity_id: number;
   };
 }
