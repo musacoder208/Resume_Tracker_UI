@@ -27,6 +27,8 @@ export interface MasterData {
   statuses: Record<string, MasterDataItem[]>;
   hrStatuses: HrStatusItem[];
   activityStatuses: ActivityStatusItem[];
+  // Sub-activities of the "Call" activity (Callback Request, …) — My Actions filter.
+  callSubActivities: ActivityStatusItem[];
   genders: string[];
 }
 
@@ -139,6 +141,7 @@ export interface RawMasterData {
   hrStatuses?: HrStatusItem[];
   // id arrives as a string — status_id is a bigint in Postgres.
   activityStatuses?: { id: string | number; name: string; code: string }[];
+  callSubActivities?: { id: string | number; name: string; code: string }[];
   genders?: string[];
 }
 

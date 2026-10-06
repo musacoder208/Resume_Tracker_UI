@@ -85,6 +85,7 @@
     "allGenders": "جميع الأجناس",
     "allRounds": "جميع الجولات",
     "allRoundActions": "جميع حالات الجولة",
+    "allSubActivities": "جميع الأنشطة الفرعية",
     "searchButton": "بحث",
     "clear": "مسح",
     "verdictExcellent": "تطابق ممتاز",
@@ -212,7 +213,11 @@
         "saveRound": "حفظ الجولة",
         "saving": "جارٍ الحفظ…",
         "contactStatusSaved": "تم حفظ حالة التواصل.",
-        "roundSaved": "تم حفظ الجولة."
+        "roundSaved": "تم حفظ الجولة.",
+        "confirmRejectTitle": "رفض هذا المرشح؟",
+        "confirmRejectDesc": "هل أنت متأكد أنك تريد رفض هذا المرشح؟ سيؤدي ذلك إلى إنهاء عملية المقابلة.",
+        "confirmReject": "نعم، رفض",
+        "cancel": "إلغاء"
       },
       "questions": {
         "title": "أسئلة المقابلة",

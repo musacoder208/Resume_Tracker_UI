@@ -133,8 +133,9 @@ export interface SaveCandidateActivityRequest {
   // null/omitted = insert a new activity; a number = update that activity.
   candidate_activity_id?: number | null;
   candidate_id: number;
-  activity_id: number;
-  sub_activity_id?: number;
+  // Codes from the activity / sub-activity lists (e.g. "CALL", "CALLBACK_REQUEST"), not ids.
+  activity_code: string;
+  sub_activity_code?: string;
   notes?: string;
   start_date?: string;
   alert_id?: number;
@@ -179,6 +180,7 @@ export interface RawCallbackRequestItem {
   activity_id: number;
   activity_name: string;
   sub_activity_id: number;
+  sub_activity_code?: string | null;
   sub_activity_name: string;
   notes: string | null;
   callback_date: string | null;
@@ -223,6 +225,7 @@ export interface CallbackRequestItem {
   activityId: number;
   activityName: string;
   subActivityId: number;
+  subActivityCode: string | null;
   subActivityName: string;
   notes: string | null;
   callbackDate: string | null;

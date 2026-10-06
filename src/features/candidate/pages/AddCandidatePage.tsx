@@ -70,9 +70,11 @@ export function AddCandidatePage(): JSX.Element {
           total:
             uploadStatusData.complete.length +
             uploadStatusData.duplicate.length +
+            uploadStatusData.batchDuplicate.length +
             uploadStatusData.incomplete.length,
           success: uploadStatusData.complete.length,
-          duplicate: uploadStatusData.duplicate.length,
+          // Batch duplicates are counted with (and shown in) Duplicate.
+          duplicate: uploadStatusData.duplicate.length + uploadStatusData.batchDuplicate.length,
           incomplete: uploadStatusData.incomplete.length,
         }
       : EMPTY_SUMMARY;

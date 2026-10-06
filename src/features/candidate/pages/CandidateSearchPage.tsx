@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import clsx from 'clsx';
 import { PageContainer } from '@/components/containers/PageContainer';
 import { Button } from '@/components/ui/button';
+import { Select } from '@/components/ui/select/Select';
 import { CandidateListCardSkeleton } from '@/components/ui/loader';
 import { useT } from '@/i18n/useT';
 import {
@@ -10,7 +11,6 @@ import {
   UsersIcon,
   CheckCircleIcon,
   ClockIcon,
-  ChartBarIcon,
   BriefcaseIcon,
   MagnifyingGlassIcon,
   XMarkIcon,
@@ -99,6 +99,58 @@ function EmptyState({ title, hint, onUpload, uploadLabel, onClear, clearLabel }:
   );
 }
 
+interface FilterOption {
+  value: string;
+  label: string;
+}
+
+// The shared Select (same dropdown as the JD list / My Actions filters), driven by
+// the same string values the native selects used — '' means "All", shown as the
+// placeholder; the ✕ button clears back to it.
+function FilterSelect({
+  value,
+  onChange,
+  options,
+  placeholder,
+  clearable = true,
+  hasError = false,
+  className = 'w-full sm:w-44',
+}: {
+  value: string;
+  onChange: (value: string) => void;
+  options: readonly FilterOption[];
+  placeholder: string;
+  clearable?: boolean;
+  hasError?: boolean;
+  className?: string;
+}): JSX.Element {
+  const selected = options.find((o) => o.value === value) ?? null;
+  return (
+    <div className={clsx('flex items-center gap-1', className)}>
+      <div className={clsx('min-w-0 flex-1', hasError && '[&_button]:ring-1 [&_button]:ring-error')}>
+        <Select<FilterOption>
+          value={selected}
+          onChange={(opt) => { onChange(opt?.value ?? ''); }}
+          options={options}
+          getOptionKey={(opt) => opt.value}
+          renderValue={(opt) => <span className="text-sm text-text">{opt.label}</span>}
+          renderOption={(opt) => <span className="text-sm">{opt.label}</span>}
+          placeholder={<span className="text-sm text-text-muted">{placeholder}</span>}
+        />
+      </div>
+      {clearable && value !== '' && (
+        <button
+          type="button"
+          onClick={() => { onChange(''); }}
+          className="mt-2 rounded-md p-1 text-text-muted hover:bg-surface-muted hover:text-text"
+        >
+          <XMarkIcon className="h-4 w-4" />
+        </button>
+      )}
+    </div>
+  );
+}
+
 interface FilterBarValues {
   jd: string;
   verdict: string;
@@ -107,6 +159,7 @@ interface FilterBarValues {
   gender: string;
   round: string;
   action: string;
+  subActivity: string;
   search: string;
 }
 
@@ -117,7 +170,7 @@ interface FilterBarProps {
   genders: string[];
   roundOptions: Array<{ id: number; label: string }>;
   actionOptions: Array<{ id: number; label: string }>;
-  hasActiveFilters: boolean;
+  subActivityOptions: Array<{ code: string; name: string }>;
   onSearch: (values: FilterBarValues) => void;
   onClear: () => void;
   t: (key: string) => string;
@@ -135,7 +188,7 @@ function FilterBar({
   genders,
   roundOptions,
   actionOptions,
-  hasActiveFilters,
+  subActivityOptions,
   onSearch,
   onClear,
   t,
@@ -148,9 +201,10 @@ function FilterBar({
   const [gender, setGender] = useState(initial.gender);
   const [round, setRound] = useState(initial.round);
   const [action, setAction] = useState(initial.action);
+  const [subActivity, setSubActivity] = useState(initial.subActivity);
 
   function submit(): void {
-    onSearch({ jd, verdict, experience, status, gender, round, action, search });
+    onSearch({ jd, verdict, experience, status, gender, round, action, subActivity, search });
   }
 
   return (
@@ -158,7 +212,8 @@ function FilterBar({
 
       {/* Row 1 — search + JD */}
       <div className="flex items-start gap-3">
-        <div className="relative min-w-0 flex-1">
+        {/* mt-2 lines the input up with the Select, which has its own top margin */}
+        <div className="relative mt-2 min-w-0 flex-1">
           <MagnifyingGlassIcon className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
           <input
             type="text"
@@ -170,19 +225,16 @@ function FilterBar({
           />
         </div>
         <div className="flex flex-col gap-1">
-          <select
+          {/* JD is required — no clear (✕) button, red ring while empty */}
+          <FilterSelect
             value={jd}
-            onChange={(e) => { setJd(e.target.value); }}
-            className={clsx(
-              'w-56 rounded-md border bg-surface py-1.5 ps-3 pe-8 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary',
-              jd === '' ? 'border-error' : 'border-border',
-            )}
-          >
-            <option value="">{t('jdSelection.placeholder')}</option>
-            {jdOptions.map((opt) => (
-              <option key={opt.value} value={opt.value}>{opt.label}</option>
-            ))}
-          </select>
+            onChange={setJd}
+            options={jdOptions}
+            placeholder={t('jdSelection.placeholder')}
+            clearable={false}
+            hasError={jd === ''}
+            className="w-56"
+          />
           {jd === '' && (
             <p className="text-xs text-error">{t('jdSelection.required')}</p>
           )}
@@ -190,89 +242,73 @@ function FilterBar({
       </div>
 
       {/* Row 2 — refinement filters */}
-      <div className="flex flex-wrap items-center gap-3">
-        <select
+      {/* items-end: buttons line up with the Selects (which carry their own top margin) */}
+      <div className="flex flex-wrap items-end gap-3">
+        <FilterSelect
           value={verdict}
-          onChange={(e) => { setVerdict(e.target.value); }}
-          className="rounded-md border border-border bg-surface py-1.5 ps-3 pe-8 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary"
-        >
-          <option value="">{t('filters.allVerdicts')}</option>
-          <option value="Strong Match">{t('filters.verdictStrong')}</option>
-          <option value="Good Match">{t('filters.verdictGood')}</option>
-          <option value="Moderate Match">{t('filters.verdictModerate')}</option>
-          <option value="Weak Match">{t('filters.verdictWeak')}</option>
-        </select>
-        <select
+          onChange={setVerdict}
+          options={[
+            { value: 'Strong Match', label: t('filters.verdictStrong') },
+            { value: 'Good Match', label: t('filters.verdictGood') },
+            { value: 'Moderate Match', label: t('filters.verdictModerate') },
+            { value: 'Weak Match', label: t('filters.verdictWeak') },
+          ]}
+          placeholder={t('filters.allVerdicts')}
+        />
+        <FilterSelect
           value={experience}
-          onChange={(e) => { setExperience(e.target.value); }}
-          className="rounded-md border border-border bg-surface py-1.5 ps-3 pe-8 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary"
-        >
-          <option value="">{t('filters.allExperience')}</option>
-          <option value="0-1">{t('filters.expFresher')}</option>
-          <option value="1-3">{t('filters.expJunior')}</option>
-          <option value="3-5">{t('filters.expMid')}</option>
-          <option value="5-8">{t('filters.expSenior')}</option>
-          <option value="8+">{t('filters.expExpert')}</option>
-        </select>
-        <select
+          onChange={setExperience}
+          options={[
+            { value: '0-1', label: t('filters.expFresher') },
+            { value: '1-3', label: t('filters.expJunior') },
+            { value: '3-5', label: t('filters.expMid') },
+            { value: '5-8', label: t('filters.expSenior') },
+            { value: '8+', label: t('filters.expExpert') },
+          ]}
+          placeholder={t('filters.allExperience')}
+        />
+        <FilterSelect
           value={status}
-          onChange={(e) => { setStatus(e.target.value); }}
-          className="rounded-md border border-border bg-surface py-1.5 ps-3 pe-8 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary"
-        >
-          <option value="">{t('filters.allStatuses')}</option>
-          {moduleStatuses.map((s) => (
-            <option key={s.id} value={String(s.id)}>{s.name}</option>
-          ))}
-        </select>
-        <select
+          onChange={setStatus}
+          options={moduleStatuses.map((s) => ({ value: String(s.id), label: s.name }))}
+          placeholder={t('filters.allStatuses')}
+        />
+        <FilterSelect
           value={gender}
-          onChange={(e) => { setGender(e.target.value); }}
-          className="rounded-md border border-border bg-surface py-1.5 ps-3 pe-8 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary"
-        >
-          <option value="">{t('filters.allGenders')}</option>
-          {genders.map((g) => (
-            <option key={g} value={g}>{g.charAt(0).toUpperCase() + g.slice(1).toLowerCase()}</option>
-          ))}
-        </select>
-        <select
+          onChange={setGender}
+          options={genders.map((g) => ({
+            value: g,
+            label: g.charAt(0).toUpperCase() + g.slice(1).toLowerCase(),
+          }))}
+          placeholder={t('filters.allGenders')}
+        />
+        <FilterSelect
           value={round}
-          onChange={(e) => { setRound(e.target.value); }}
-          className="rounded-md border border-border bg-surface py-1.5 ps-3 pe-8 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary"
-        >
-          <option value="">{t('filters.allRounds')}</option>
-          {roundOptions.map((r) => (
-            <option key={r.id} value={String(r.id)}>{r.label}</option>
-          ))}
-        </select>
-        <select
+          onChange={setRound}
+          options={roundOptions.map((r) => ({ value: String(r.id), label: r.label }))}
+          placeholder={t('filters.allRounds')}
+        />
+        <FilterSelect
           value={action}
-          onChange={(e) => { setAction(e.target.value); }}
-          className="rounded-md border border-border bg-surface py-1.5 ps-3 pe-8 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary"
-        >
-          <option value="">{t('filters.allRoundActions')}</option>
-          {actionOptions.map((a) => (
-            <option key={a.id} value={String(a.id)}>{a.label}</option>
-          ))}
-        </select>
-        <Button
-          variant="primary"
-          size="sm"
-          leadingIcon={<MagnifyingGlassIcon className="h-4 w-4" />}
-          onClick={submit}
-          disabled={jd === ''}
-        >
-          {t('filters.searchButton')}
-        </Button>
-        {hasActiveFilters && (
-          <Button
-            variant="soft"
-            size="sm"
-            leadingIcon={<XMarkIcon className="h-4 w-4" />}
-            onClick={onClear}
-          >
+          onChange={setAction}
+          options={actionOptions.map((a) => ({ value: String(a.id), label: a.label }))}
+          placeholder={t('filters.allRoundActions')}
+        />
+        <FilterSelect
+          value={subActivity}
+          onChange={setSubActivity}
+          options={subActivityOptions.map((s) => ({ value: s.code, label: s.name }))}
+          placeholder={t('filters.allSubActivities')}
+        />
+        {/* Search & Clear — same buttons as every other filter bar */}
+        <div className="flex items-center gap-2">
+          <Button variant="primary" size="sm" onClick={submit} disabled={jd === ''}>
+            {t('filters.searchButton')}
+          </Button>
+          <Button variant="secondary" size="sm" onClick={onClear}>
             {t('filters.clear')}
           </Button>
-        )}
+        </div>
       </div>
 
     </div>
@@ -296,6 +332,7 @@ export function CandidateSearchPage(): JSX.Element {
   const selectedGender = searchParams.get('gender') ?? '';
   const selectedRound = searchParams.get('round') ?? '';
   const selectedAction = searchParams.get('action') ?? '';
+  const selectedSubActivity = searchParams.get('subActivity') ?? '';
   const selectedSearch = searchParams.get('search') ?? '';
   const page = Number(searchParams.get('page') ?? '1');
   const sortBy = searchParams.get('sortBy') ?? '';
@@ -366,10 +403,11 @@ export function CandidateSearchPage(): JSX.Element {
       gender: selectedGender,
       round: selectedRound,
       action: selectedAction,
+      subActivity: selectedSubActivity,
       search: selectedSearch,
       page: String(page),
     }));
-  }, [selectedJd, selectedVerdict, selectedExperience, selectedStatus, /* selectedHrStatus, */ selectedGender, selectedRound, selectedAction, selectedSearch, page]);
+  }, [selectedJd, selectedVerdict, selectedExperience, selectedStatus, /* selectedHrStatus, */ selectedGender, selectedRound, selectedAction, selectedSubActivity, selectedSearch, page]);
 
   // Updates one filter param in the URL (replacing history entry) and resets to page 1.
   function setFilterParam(key: string, value: string): void {
@@ -398,8 +436,9 @@ export function CandidateSearchPage(): JSX.Element {
     if (selectedGender !== '') p.gender = selectedGender;
     if (selectedRound !== '') p.round_id = selectedRound;
     if (selectedAction !== '') p.action_id = selectedAction;
+    if (selectedSubActivity !== '') p.sub_activity_code = selectedSubActivity;
     return p;
-  }, [selectedJd, selectedSearch, selectedVerdict, selectedExperience, selectedStatus, /* selectedHrStatus, */ selectedGender, selectedRound, selectedAction, page]);
+  }, [selectedJd, selectedSearch, selectedVerdict, selectedExperience, selectedStatus, /* selectedHrStatus, */ selectedGender, selectedRound, selectedAction, selectedSubActivity, page]);
 
   const { data: moduleId } = useGetModuleIdQuery('CAND_MGT');
   const { data: masterData } = useGetMasterDataQuery();
@@ -408,6 +447,7 @@ export function CandidateSearchPage(): JSX.Element {
   const moduleStatuses = moduleId != null ? (masterData?.statuses?.[String(moduleId)] ?? []) : [];
   // HR status disabled — const hrStatuses = masterData?.hrStatuses ?? [];
   const genders = masterData?.genders ?? [];
+  const subActivityOptions = masterData?.callSubActivities ?? [];
   const { data: roundOptions = [] } = useGetRoundsQuery();
   const { data: actionOptions = [] } = useGetRoundActionsQuery();
   const { data, isLoading, isFetching, refetch } = useGetCandidateListQuery(queryParams, {
@@ -471,7 +511,7 @@ export function CandidateSearchPage(): JSX.Element {
   }, [moduleStatuses]);
 
   const hasActiveFilters =
-    selectedSearch !== '' || selectedVerdict !== '' || selectedExperience !== '' || selectedStatus !== '' || /* selectedHrStatus !== '' || */ selectedGender !== '' || selectedRound !== '' || selectedAction !== '';
+    selectedSearch !== '' || selectedVerdict !== '' || selectedExperience !== '' || selectedStatus !== '' || /* selectedHrStatus !== '' || */ selectedGender !== '' || selectedRound !== '' || selectedAction !== '' || selectedSubActivity !== '';
 
   function clearFilters(): void {
     markStatusDecided();
@@ -482,6 +522,7 @@ export function CandidateSearchPage(): JSX.Element {
     next.delete('gender');
     next.delete('round');
     next.delete('action');
+    next.delete('subActivity');
 
     // Reset Status to its "Ready" default (same as a fresh page load) rather than clearing it
     // to "All" — mirrors the previous HR Status behavior above.
@@ -510,6 +551,7 @@ export function CandidateSearchPage(): JSX.Element {
     setOrDelete('gender', values.gender);
     setOrDelete('round', values.round);
     setOrDelete('action', values.action);
+    setOrDelete('subActivity', values.subActivity);
     setOrDelete('search', values.search);
     next.set('page', '1');
     setSearchParams(next, { replace: true });
@@ -538,7 +580,7 @@ export function CandidateSearchPage(): JSX.Element {
 
   // Remounts FilterBar (resetting its drafts to match) whenever the committed filters change
   // from outside the FilterBar itself — see the FilterBar component's own comment above.
-  const filterKey = [selectedJd, selectedVerdict, selectedExperience, selectedStatus, selectedGender, selectedRound, selectedAction, selectedSearch].join('|');
+  const filterKey = [selectedJd, selectedVerdict, selectedExperience, selectedStatus, selectedGender, selectedRound, selectedAction, selectedSubActivity, selectedSearch].join('|');
 
   // Pagination — use backend response if available, else estimate from summary total
   const totalCount = data?.pagination?.totalCount ?? summary.totalCandidates;
@@ -554,7 +596,6 @@ export function CandidateSearchPage(): JSX.Element {
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-xl font-bold text-text">{t('page.title')}</h1>
-            <p className="mt-0.5 text-xs text-text-muted">{t('page.subtitle')}</p>
           </div>
           <Button
             variant="primary"
@@ -567,7 +608,7 @@ export function CandidateSearchPage(): JSX.Element {
         </div>
 
         {/* ── Summary cards ─────────────────────────────────────────────── */}
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <SummaryCard
             label={t('summary.totalCandidates')}
             value={summary.totalCandidates}
@@ -585,12 +626,6 @@ export function CandidateSearchPage(): JSX.Element {
             value={summary.pendingScoring}
             icon={<ClockIcon className="h-5 w-5 text-warning" />}
             accentBg="bg-warning/10"
-          />
-          <SummaryCard
-            label={t('summary.avgScore')}
-            value={`${summary.avgMatchScore.toFixed(1)}%`}
-            icon={<ChartBarIcon className="h-5 w-5 text-primary" />}
-            accentBg="bg-primary/10"
           />
           <SummaryCard
             label={t('summary.activeJds')}
@@ -611,6 +646,7 @@ export function CandidateSearchPage(): JSX.Element {
             gender: selectedGender,
             round: selectedRound,
             action: selectedAction,
+            subActivity: selectedSubActivity,
             search: selectedSearch,
           }}
           jdOptions={jdOptions}
@@ -618,7 +654,7 @@ export function CandidateSearchPage(): JSX.Element {
           genders={genders}
           roundOptions={roundOptions}
           actionOptions={actionOptions}
-          hasActiveFilters={hasActiveFilters}
+          subActivityOptions={subActivityOptions}
           onSearch={applyFilters}
           onClear={clearFilters}
           t={t}

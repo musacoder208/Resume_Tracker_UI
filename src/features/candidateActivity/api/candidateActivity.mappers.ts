@@ -84,6 +84,7 @@ export const mapCallbackRequestListResponse = (
     activityId: Number(item.activity_id),
     activityName: item.activity_name,
     subActivityId: Number(item.sub_activity_id),
+    subActivityCode: item.sub_activity_code ?? null,
     subActivityName: item.sub_activity_name,
     notes: item.notes ?? null,
     callbackDate: item.callback_date ?? null,

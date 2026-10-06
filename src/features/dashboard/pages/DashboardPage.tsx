@@ -150,7 +150,6 @@ export function DashboardPage(): JSX.Element {
       {/* Overview header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-text">{t('overview.title')}</h1>
-        <p className="mt-0.5 text-xs text-text-muted">{t('overview.subtitle')}</p>
       </div>
 
       {isLoading && <DashboardSkeleton />}

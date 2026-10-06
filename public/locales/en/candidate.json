@@ -85,6 +85,7 @@
     "allGenders": "All Genders",
     "allRounds": "All Rounds",
     "allRoundActions": "All Round Status",
+    "allSubActivities": "All Sub Activities",
     "searchButton": "Search",
     "clear": "Clear",
     "verdictExcellent": "Excellent Match",
@@ -212,7 +213,11 @@
         "saveRound": "Save Round",
         "saving": "Saving…",
         "contactStatusSaved": "Contact status saved.",
-        "roundSaved": "Round saved."
+        "roundSaved": "Round saved.",
+        "confirmRejectTitle": "Reject this candidate?",
+        "confirmRejectDesc": "Are you sure you want to reject this candidate? This ends their interview process.",
+        "confirmReject": "Yes, Reject",
+        "cancel": "Cancel"
       },
       "questions": {
         "title": "Interview Questions",

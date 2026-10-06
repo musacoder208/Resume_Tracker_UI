@@ -34,7 +34,7 @@ export function Select<T>({
   return (
     <Listbox value={value} onChange={onChange} disabled={disabled}>
       <div className="relative mt-2">
-        <ListboxButton className="grid w-full grid-cols-1 rounded-md bg-surface py-1.5 ps-3 pe-2 text-start outline-1 -outline-offset-1 border-border focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-none sm:text-sm data-disabled:cursor-not-allowed data-disabled:opacity-60">
+        <ListboxButton className="grid w-full grid-cols-1 rounded-md bg-surface py-1.5 ps-3 pe-2 text-start outline-1 -outline-offset-1 outline-border focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-none sm:text-sm data-disabled:cursor-not-allowed data-disabled:opacity-60">
           <span className="col-start-1 row-start-1 truncate pe-6">
             {value != null ? renderValue(value) : placeholder}
           </span>

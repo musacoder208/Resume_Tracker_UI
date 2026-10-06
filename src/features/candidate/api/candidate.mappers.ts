@@ -143,11 +143,14 @@ export const mapUploadStatusResponse = (raw: RawUploadStatusResponse): UploadSta
     uploadStatus: item.upload_status as UploadStatusResult['complete'][number]['uploadStatus'],
     statusCode: item.status_code ?? null,
     reason: item.reason,
+    isSelected: item.is_selected ?? false,
+    fileName: item.file_name ?? item.filename ?? null,
     createdDate: item.created_date,
   });
   return {
     complete: (raw.data.complete ?? []).map(mapItem),
     duplicate: (raw.data.duplicate ?? []).map(mapItem),
+    batchDuplicate: (raw.data.batch_duplicate ?? []).map(mapItem),
     incomplete: (raw.data.incomplete ?? []).map(mapItem),
   };
 };

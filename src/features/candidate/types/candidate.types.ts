@@ -275,6 +275,7 @@ export interface CandidateListParams {
   gender?: string;
   round_id?: string;
   action_id?: string;
+  sub_activity_code?: string; // a Call sub-activity code, e.g. 'CALLBACK_REQUEST'
   page?: number;
   page_size?: number;
 }
@@ -420,6 +421,12 @@ export interface RawUploadStatusCandidate {
   upload_status: string;
   status_code: string | null;
   reason: string | null;
+  // Backend's default checkbox state for the first load.
+  is_selected?: boolean | null;
+  // Uploaded file name — the only identifying detail on batch_duplicate rows
+  // (they're never extracted, so name/email/phone are empty).
+  file_name?: string | null;
+  filename?: string | null;
   created_date: string;
 }
 
@@ -430,6 +437,9 @@ export interface RawUploadStatusResponse {
   data: {
     complete: RawUploadStatusCandidate[];
     duplicate: RawUploadStatusCandidate[];
+    // Duplicates within the same upload batch (vs. `duplicate` = already in the DB).
+    // Shown together with `duplicate` in the Duplicate tab.
+    batch_duplicate?: RawUploadStatusCandidate[];
     incomplete: RawUploadStatusCandidate[];
   };
 }
@@ -440,15 +450,18 @@ export interface UploadStatusCandidate {
   email: string | null;
   phone: string | null;
   currentJobTitle: string | null;
-  uploadStatus: 'complete' | 'duplicate' | 'incomplete';
+  uploadStatus: 'complete' | 'duplicate' | 'batch_duplicate' | 'incomplete';
   statusCode: string | null;
   reason: string | null;
+  isSelected: boolean;
+  fileName: string | null;
   createdDate: string;
 }
 
 export interface UploadStatusResult {
   complete: UploadStatusCandidate[];
   duplicate: UploadStatusCandidate[];
+  batchDuplicate: UploadStatusCandidate[];
   incomplete: UploadStatusCandidate[];
 }
 

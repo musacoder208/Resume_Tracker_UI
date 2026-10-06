@@ -131,8 +131,8 @@ export function UserDashboardPage(): JSX.Element {
   // via the 'CandidateActivity' tag, so the row and count update on their own.
   async function handleMarkCompleted(item: CallbackRequestItem): Promise<void> {
     const ok = await confirm({
-      title: 'Mark this callback as completed?',
-      description: `The callback for ${item.fullName} will be marked as completed.`,
+      title: 'Mark this activity as completed?',
+      description: `The ${item.subActivityName} for ${item.fullName} will be marked as completed.`,
       confirmText: 'Mark Completed',
       cancelText: 'Cancel',
       variant: 'info',
@@ -381,13 +381,13 @@ export function UserDashboardPage(): JSX.Element {
             </div>
           </div>
 
-          {/* Apply & Reset buttons */}
+          {/* Search & Clear buttons */}
           <div className="mt-2 flex items-center gap-2">
             <Button variant="primary" size="sm" onClick={handleApply} disabled={isFetching}>
-              Apply
+              Search
             </Button>
             <Button variant="secondary" size="sm" onClick={handleReset} disabled={isFetching}>
-              Reset
+              Clear
             </Button>
           </div>
         </div>
@@ -395,7 +395,7 @@ export function UserDashboardPage(): JSX.Element {
         {isError && data == null ? (
           <div className="flex flex-col items-center gap-3 rounded-xl border border-error/30 bg-error/5 p-8 text-center">
             <ExclamationCircleIcon className="h-6 w-6 text-error" />
-            <p className="text-sm text-error">Couldn't load your callback requests.</p>
+            <p className="text-sm text-error">Couldn't load your actions.</p>
             <Button
               variant="secondary"
               size="sm"
@@ -417,10 +417,10 @@ export function UserDashboardPage(): JSX.Element {
                 </p>
               </>
             ) : hasFilters ? (
-              <p className="text-sm text-text-muted">No callbacks match these filters.</p>
+              <p className="text-sm text-text-muted">No records match these filters.</p>
             ) : (
               <>
-                <p className="text-sm text-text-muted">No callbacks yet.</p>
+                <p className="text-sm text-text-muted">No records yet.</p>
                 <p className="text-xs text-text-subtle">
                   Callback requests you log in HR Activity will show up here.
                 </p>

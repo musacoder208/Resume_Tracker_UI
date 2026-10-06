@@ -7,6 +7,7 @@ import { toastService } from '@/components/ui/toast/toastService';
 import { CalendarPicker } from '@/features/candidate/interviewProcess/components/calendarPicker';
 import { TimePicker } from '@/features/candidate/interviewProcess/components/timePicker';
 import {
+  useGetActivityListQuery,
   useGetAlertListQuery,
   useSaveCandidateActivityMutation,
 } from '../api/candidateActivity.api';
@@ -35,6 +36,12 @@ export function RescheduleCallbackModal({
   const [showErrors, setShowErrors] = useState(false);
 
   const { data: alerts = [], isLoading: isLoadingAlerts } = useGetAlertListQuery();
+  // The callback row has ids/names only — the save needs the activity code.
+  const { data: activities = [] } = useGetActivityListQuery();
+  const activityCode =
+    activities.find((a) => a.activityId === item.activityId)?.activityCode ??
+    activities.find((a) => a.activityName === item.activityName)?.activityCode ??
+    null;
   const [saveCandidateActivity, { isLoading: isSaving }] = useSaveCandidateActivityMutation();
 
   const alertOptions = useMemo(
@@ -43,6 +50,10 @@ export function RescheduleCallbackModal({
   );
 
   async function handleSave(): Promise<void> {
+    if (activityCode == null) {
+      toastService.info('Activity details are still loading. Please try again.');
+      return;
+    }
     if (date === '' || time === '') {
       setShowErrors(true);
       toastService.info('Please select both a date and a time for the callback.');
@@ -55,8 +66,8 @@ export function RescheduleCallbackModal({
       await saveCandidateActivity({
         candidate_activity_id: null,
         candidate_id: item.candidateId,
-        activity_id: item.activityId,
-        sub_activity_id: item.subActivityId,
+        activity_code: activityCode,
+        sub_activity_code: item.subActivityCode ?? undefined,
         notes: notes.trim() === '' ? undefined : notes.trim(),
         start_date: `${date}T${time}:00`,
         alert_id: alertId ?? undefined,

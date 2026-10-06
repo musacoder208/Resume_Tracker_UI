@@ -152,6 +152,8 @@ export function CandidateActivityPanel({ candidateId }: { candidateId: number })
   const [scheduleTime, setScheduleTime] = useState('');
   const [selectedAlertId, setSelectedAlertId] = useState<number | null>(null);
   const [editingId, setEditingId] = useState<number | null>(null);
+  // Name of the edited row's sub-activity — fallback match when its id isn't in the list.
+  const [editingSubActivityName, setEditingSubActivityName] = useState<string | null>(null);
   const [showErrors, setShowErrors] = useState(false);
 
   const { data: activities = [], isLoading: isLoadingActivities } = useGetActivityListQuery();
@@ -165,12 +167,21 @@ export function CandidateActivityPanel({ candidateId }: { candidateId: number })
     });
 
   // Derived, not stored — resolves as soon as the matching sub-activity list
-  // arrives, whether the id came from a normal selection or from editing a row.
+  // arrives, whether the id came from a normal selection or from editing a row
+  // (matched by id, else by the history row's name).
   const selectedSubActivity =
-    subActivities.find((s) => s.subActivityId === selectedSubActivityId) ?? null;
+    subActivities.find((s) => s.subActivityId === selectedSubActivityId) ??
+    (editingSubActivityName != null
+      ? (subActivities.find((s) => s.subActivityName === editingSubActivityName) ?? null)
+      : null);
 
-  const { data: history, isLoading: isLoadingHistory } =
-    useGetCandidateActivityQuery(historyQueryParams);
+  // The panel mounts each time the HR Activity tab is opened — refetch then, so the
+  // history is current without a page refresh (cached rows show meanwhile).
+  const {
+    data: history,
+    isLoading: isLoadingHistory,
+    isFetching: isFetchingHistory,
+  } = useGetCandidateActivityQuery(historyQueryParams, { refetchOnMountOrArgChange: true });
 
   const [saveCandidateActivity, { isLoading: isSavingActivity }] =
     useSaveCandidateActivityMutation();
@@ -198,12 +209,14 @@ export function CandidateActivityPanel({ candidateId }: { candidateId: number })
   function handleActivityChange(activity: Activity | null): void {
     setSelectedActivity(activity);
     setSelectedSubActivityId(null);
+    setEditingSubActivityName(null);
   }
 
   function resetForm(): void {
     setEditingId(null);
     setSelectedActivity(null);
     setSelectedSubActivityId(null);
+    setEditingSubActivityName(null);
     setNotes('');
     setScheduleDate('');
     setScheduleTime('');
@@ -212,10 +225,16 @@ export function CandidateActivityPanel({ candidateId }: { candidateId: number })
   }
 
   function handleEditClick(item: CandidateActivityItem): void {
-    const activity = activities.find((a) => a.activityId === item.activityId) ?? null;
+    // Map the row back to the master lists (by id, else by name) so the save
+    // can send the current activity_code / sub_activity_code.
+    const activity =
+      activities.find((a) => a.activityId === item.activityId) ??
+      activities.find((a) => a.activityName === item.activityName) ??
+      null;
     setEditingId(item.candidateActivityId);
     setSelectedActivity(activity);
     setSelectedSubActivityId(item.subActivityId);
+    setEditingSubActivityName(item.subActivityName);
     setNotes(item.notes ?? '');
     const scheduled = item.startDate != null ? parseNaiveDateTime(item.startDate) : null;
     setScheduleDate(scheduled != null ? format(scheduled, 'yyyy-MM-dd') : '');
@@ -263,8 +282,8 @@ export function CandidateActivityPanel({ candidateId }: { candidateId: number })
       await saveCandidateActivity({
         candidate_activity_id: editingId ?? undefined,
         candidate_id: candidateId,
-        activity_id: selectedActivity.activityId,
-        sub_activity_id: selectedSubActivity?.subActivityId,
+        activity_code: selectedActivity.activityCode,
+        sub_activity_code: selectedSubActivity?.subActivityCode,
         notes: notes.trim() === '' ? undefined : notes.trim(),
         start_date: effectiveStartDate,
         alert_id: selectedAlert?.alertId,
@@ -367,8 +386,8 @@ export function CandidateActivityPanel({ candidateId }: { candidateId: number })
       id: 'notes',
       header: 'Notes',
       enableSorting: false,
-      size: 160,
-      minSize: 160,
+      size: 300,
+      minSize: 260,
       cell: ({ row }) => (
         <span className="block whitespace-normal text-text-muted">{row.original.notes ?? '—'}</span>
       ),
@@ -495,6 +514,7 @@ export function CandidateActivityPanel({ candidateId }: { candidateId: number })
               value={selectedSubActivity != null ? String(selectedSubActivity.subActivityId) : ''}
               onChange={(value) => {
                 setSelectedSubActivityId(value === '' ? null : Number(value));
+                setEditingSubActivityName(null);
               }}
               options={subActivityOptions}
               placeholder="Select sub-activity…"
@@ -612,7 +632,7 @@ export function CandidateActivityPanel({ candidateId }: { candidateId: number })
             state={gridState}
             onStateChange={setGridState}
             rowId={(row) => String(row.candidateActivityId)}
-            loading={isLoadingHistory}
+            loading={isFetchingHistory}
             enableSorting
             getRowClassName={(row) =>
               row.isHighlighted ? 'bg-warning-subtle hover:bg-warning-subtle' : undefined

@@ -4,6 +4,7 @@ import type { TFunction } from 'i18next';
 import { Button } from '@/components/ui/button';
 import { AutocompleteSelect } from '@/components/ui/autocompleteSelect';
 import { toastService } from '@/components/ui/toast/toastService';
+import { useConfirm } from '@/components/ui/confirm/ConfirmProvider';
 import { InterviewerPicker } from '../interviewerPicker';
 import { CalendarPicker } from '../calendarPicker';
 import { TimePicker } from '../timePicker';
@@ -70,6 +71,7 @@ export function RoundForm({ candidateId, jdId, seniorityId: seniorityIdFallback,
   const [fetchQuestions, { data: questions = [], isFetching: isFetchingQuestions }] = useLazyGetQuestionsQuery();
   // const [saveContactStatus, { isLoading: isSavingContactStatus }] = useSaveContactStatusMutation();
   const [saveRound, { isLoading: isSavingRound }] = useSaveRoundMutation();
+  const confirm = useConfirm();
 
   const interviewerOptions = useMemo(
     () => mergeInterviewers(interviewerDirectory, snapshot),
@@ -183,6 +185,19 @@ export function RoundForm({ candidateId, jdId, seniorityId: seniorityIdFallback,
       setShowErrors(true);
       toastService.info(tp('errors.fixHighlighted'));
       return;
+    }
+
+    // Rejecting ends the interview process — confirm first; other decisions save directly.
+    if (actionCode === 'REJECTED') {
+      const ok = await confirm({
+        title: tp('actions.confirmRejectTitle'),
+        description: tp('actions.confirmRejectDesc'),
+        confirmText: tp('actions.confirmReject'),
+        cancelText: tp('actions.cancel'),
+        variant: 'danger',
+        hideShortcutHint: true,
+      });
+      if (!ok) return;
     }
 
     const answerPayload: SaveRoundAnswer[] = questions.map((q) => ({

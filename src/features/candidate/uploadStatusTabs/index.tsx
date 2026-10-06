@@ -2,7 +2,7 @@ import { useState, useEffect, type JSX } from 'react';
 import clsx from 'clsx';
 import { useT } from '@/i18n/useT';
 import { Button } from '@/components/ui/button';
-import { InboxArrowDownIcon, EyeIcon, XMarkIcon } from '@/icons';
+import { InboxArrowDownIcon, EyeIcon, XMarkIcon, DocumentTextIcon } from '@/icons';
 import { env } from '@/config/env';
 import { CandidateCardSkeleton } from '@/components/ui/loader';
 import type {
@@ -47,6 +47,13 @@ const STATUS_BADGE_CLASSES: Record<CandidateTab, string> = {
 
 const SKELETON_COUNT = 3;
 
+// Order rows by upload sequence — newest first; candidate_id breaks ties for
+// rows saved in the same instant.
+function byUploadSequence(a: UploadStatusCandidate, b: UploadStatusCandidate): number {
+  const timeDiff = new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime();
+  return timeDiff !== 0 ? timeDiff : b.candidateId - a.candidateId;
+}
+
 // ── Checkbox config per candidate ─────────────────────────────────────────────
 
 interface CheckboxConfig {
@@ -60,8 +67,11 @@ function getCheckboxConfig(
   selectedIds: Set<number>
 ): CheckboxConfig {
   if (candidate.uploadStatus === 'complete') {
-    if (candidate.statusCode === 'ready') {
-      // Always checked + green + disabled
+    // Only score_pending candidates can still be scored. Every other status —
+    // ready, shortlisted, in interview process, selected, rejected, … — is
+    // locked the same way as ready: always checked + green + disabled.
+    // (Start Scoring only ever sends score_pending rows, see pendingSelectedIds.)
+    if (candidate.statusCode !== 'score_pending') {
       return {
         checked: true,
         disabled: true,
@@ -115,6 +125,13 @@ function StatusCard({
     .map((w) => w[0]?.toUpperCase() ?? '')
     .join('');
 
+  // Batch duplicates (listed in the Duplicate tab) are never extracted — the
+  // uploaded file name is all there is.
+  const isBatchDuplicate = candidate.uploadStatus === 'batch_duplicate';
+  const title = isBatchDuplicate
+    ? (candidate.fileName ?? (candidate.fullName !== '' ? candidate.fullName : '—'))
+    : candidate.fullName;
+
   return (
     <div className="flex items-center gap-3 py-3.5">
       {/* Checkbox — only on the complete (success) tab */}
@@ -138,22 +155,27 @@ function StatusCard({
 
       {/* Avatar */}
       <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
-        {initials}
+        {isBatchDuplicate ? <DocumentTextIcon className="h-4 w-4" /> : initials}
       </div>
 
       {/* Info */}
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <p className="truncate text-sm font-semibold text-text">{candidate.fullName}</p>
+          <p className="truncate text-sm font-semibold text-text" title={title}>
+            {title}
+          </p>
           <span
             className={clsx(
               'shrink-0 rounded-full px-2 py-0.5 text-xs font-medium',
               STATUS_BADGE_CLASSES[tab]
             )}
           >
-            {candidate.uploadStatus}
+            {candidate.uploadStatus === 'batch_duplicate'
+              ? 'batch duplicate'
+              : candidate.uploadStatus}
           </span>
-          {candidate.statusCode != null && candidate.statusCode !== '' && (
+          {/* Batch duplicates are never scored, so their status_code isn't meaningful. */}
+          {!isBatchDuplicate && candidate.statusCode != null && candidate.statusCode !== '' && (
             <span className="shrink-0 rounded-full bg-surface-muted px-2 py-0.5 text-xs text-text-muted">
               {candidate.statusCode}
             </span>
@@ -222,7 +244,8 @@ export function UploadStatusTabs({
 
     // Auto-switch to the first tab that has results
     if (data.complete.length > 0) setActiveTab('success');
-    else if (data.duplicate.length > 0) setActiveTab('duplicate');
+    else if (data.duplicate.length > 0 || data.batchDuplicate.length > 0)
+      setActiveTab('duplicate');
     else setActiveTab('incomplete');
   }, [data]);
 
@@ -237,13 +260,17 @@ export function UploadStatusTabs({
 
   const tabCandidates: Record<CandidateTab, UploadStatusCandidate[]> = {
     success: data?.complete ?? [],
-    duplicate: data?.duplicate ?? [],
+    // DB duplicates + duplicates within the same batch, in upload sequence.
+    duplicate: [...(data?.duplicate ?? []), ...(data?.batchDuplicate ?? [])].sort(
+      byUploadSequence
+    ),
     incomplete: data?.incomplete ?? [],
   };
 
   const currentList = tabCandidates[activeTab];
 
-  // Only score_pending candidates actually need scoring — "ready" ones are
+  // Only score_pending candidates actually need scoring — every other status
+  // (ready, shortlisted, in interview process, selected, rejected, …) is
   // forced-checked (see getCheckboxConfig) so they'd otherwise still show up
   // in selectedIds, but they must never be sent to Start Scoring.
   const pendingSelectedIds = (data?.complete ?? [])

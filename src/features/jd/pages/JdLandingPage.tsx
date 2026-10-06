@@ -255,7 +255,6 @@ export function JdLandingPage(): JSX.Element {
         <div className="flex items-start justify-between gap-4">
           <div>
             <h1 className="text-base font-semibold text-text">{t('landing.title')}</h1>
-            <p className="mt-0.5 text-xs text-text-muted">{t('landing.subtitle')}</p>
           </div>
           <Button
             variant="primary"
