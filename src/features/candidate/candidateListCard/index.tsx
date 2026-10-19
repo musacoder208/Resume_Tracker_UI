@@ -12,6 +12,7 @@ import {
 } from '@/icons';
 import type { CandidateListItem } from '../types/candidate.types';
 import { HrStatusBadge } from '../hrStatusIcon';
+import { FollowUpBadge } from '../followUpBadge';
 
 interface CandidateListCardProps {
   candidate: CandidateListItem;
@@ -168,6 +169,11 @@ export function CandidateListCard({ candidate, onClick }: CandidateListCardProps
                 </>
               )}
             </div>
+            {candidate.followUpId != null && (
+              <div className="mt-1">
+                <FollowUpBadge date={candidate.followUpDate} isOverdue={candidate.isFollowUpOverdue} />
+              </div>
+            )}
           </div>
         </div>
 

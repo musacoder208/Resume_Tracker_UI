@@ -9,6 +9,8 @@ interface ConfirmModalProps {
   open: boolean;
   onClose: () => void;
   onConfirm: () => void;
+  /** Cancel button handler when it should differ from closing (X). Default onClose. */
+  onCancel?: () => void;
   icon?: ReactNode;
   title: string;
   message: string;
@@ -26,6 +28,7 @@ export function ConfirmModal({
   open,
   onClose,
   onConfirm,
+  onCancel,
   icon,
   title,
   message,
@@ -74,7 +77,7 @@ export function ConfirmModal({
 
         {/* Actions — space-between */}
         <div className="flex justify-between gap-3 pt-2">
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onCancel ?? onClose}>
             {cancelLabel}
           </Button>
           <Button variant={confirmVariant} onClick={onConfirm} className={confirmClassName}>

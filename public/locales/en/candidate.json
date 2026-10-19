@@ -370,5 +370,85 @@
       "invalidId": "Invalid candidate ID.",
       "fetchFailed": "Failed to load candidate details. Please try again."
     }
+  },
+  "followUpBadge": {
+    "upcoming": "Follow-up · {{date}}",
+    "today": "Today · {{time}}",
+    "overdue": "Overdue · {{date}}",
+    "noDate": "Follow-up pending",
+    "title": "Pending follow-up: {{date}}"
+  },
+  "activityPanel": {
+    "logTitle": "Log Activity",
+    "editActivityTitle": "Edit Activity",
+    "editFollowUpTitle": "Edit Follow-up",
+    "sections": {
+      "activity": "Activity",
+      "followUp": "Follow-up"
+    },
+    "fields": {
+      "activity": "Activity",
+      "subActivity": "Sub-Activity",
+      "notes": "Note",
+      "followUpDate": "Follow-up Date & Time",
+      "alert": "Alert"
+    },
+    "placeholders": {
+      "activity": "Select activity…",
+      "subActivity": "Select sub-activity…",
+      "notes": "Add any context about this activity…",
+      "date": "Select date",
+      "time": "Select time",
+      "alert": "Select alert…"
+    },
+    "actions": {
+      "save": "Save",
+      "update": "Update",
+      "saving": "Saving…",
+      "cancel": "Cancel",
+      "callTomorrow": "Call Tomorrow",
+      "callTomorrowTitle": "Save a follow-up for tomorrow at {{time}}",
+      "clearSchedule": "Clear schedule",
+      "edit": "Edit",
+      "highlight": "Highlight this row",
+      "removeHighlight": "Remove highlight"
+    },
+    "hints": {
+      "ready": "Ready to save.",
+      "selectSomething": "Select an activity or a follow-up date to save.",
+      "scheduleIncomplete": "Please select both a date and a time for the follow-up.",
+      "alertNeedsDate": "Select a follow-up date and time for the alert."
+    },
+    "completingFollowUp": {
+      "message": "Completing the follow-up scheduled for {{date}}. Saving an activity or a next follow-up marks it as completed.",
+      "messageNoDate": "Completing a follow-up. Saving an activity or a next follow-up marks it as completed.",
+      "cancel": "Cancel",
+      "alreadyCompleted": "This follow-up is already completed or no longer available.",
+      "dismiss": "Dismiss"
+    },
+    "overdueFollowUp": {
+      "title": "Pending Follow-up",
+      "message": "This candidate already has a pending follow-up whose date and time have passed.",
+      "question": "Do you want to complete the existing follow-up and create a new one? Choose No to update the existing follow-up with the new details.",
+      "yes": "Yes, complete it",
+      "no": "No, update it"
+    },
+    "history": {
+      "title": "Activity History",
+      "empty": "No activity logged yet.",
+      "emptyHint": "Activities you save above will show up here."
+    },
+    "columns": {
+      "activity": "Activity",
+      "subActivity": "Sub-Activity",
+      "status": "Status",
+      "type": "Activity Type",
+      "notes": "Note",
+      "scheduled": "Scheduled",
+      "alert": "Alert",
+      "createdDate": "Created Date",
+      "actions": "Actions",
+      "highlight": "Highlight"
+    }
   }
 }

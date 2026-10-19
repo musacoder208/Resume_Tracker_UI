@@ -12,6 +12,7 @@ import { AddJdPage } from '@/features/jd/pages/AddJdPage';
 import { CandidateSearchPage } from '@/features/candidate/pages/CandidateSearchPage';
 import { AddCandidatePage } from '@/features/candidate/pages/AddCandidatePage';
 import { CandidateDetailsPage } from '@/features/candidate/pages/CandidateDetailsPage';
+import { AiUsageReportPage } from '@/features/reports/pages/AiUsageReportPage';
 //import { env } from '@/config/env';
 
 export const router = createBrowserRouter(
@@ -65,6 +66,10 @@ export const router = createBrowserRouter(
         {
           path: '/candidate/:candidateId',
           element: <CandidateDetailsPage />,
+        },
+        {
+          path: '/reports/ai-usage',
+          element: <AiUsageReportPage />,
         },
         {
           path: '*',

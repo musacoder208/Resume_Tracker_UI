@@ -9,6 +9,7 @@ import type { StatusBadgeVariant } from '@/components/ui/statusBadge';
 import { EyeIcon } from '@/icons';
 import { useT } from '@/i18n/useT';
 import type { CandidateListItem } from '../types/candidate.types';
+import { FollowUpBadge } from '../followUpBadge';
 
 const fmt = (n: number): number => parseFloat(n.toFixed(2));
 
@@ -145,7 +146,14 @@ export function CandidateGridView({
       id: 'fullName',
       accessorKey: 'fullName',
       header: t('grid.name'),
-      cell: ({ row }) => <span className="text-xs font-semibold text-text">{row.original.fullName}</span>,
+      cell: ({ row }) => (
+        <div className="flex flex-col gap-1">
+          <span className="text-xs font-semibold text-text">{row.original.fullName}</span>
+          {row.original.followUpId != null && (
+            <FollowUpBadge date={row.original.followUpDate} isOverdue={row.original.isFollowUpOverdue} />
+          )}
+        </div>
+      ),
     },
     {
       id: 'currentJobTitle',

@@ -205,6 +205,10 @@ export interface RawCandidateListItem {
   hr_status_label: string | null;
   status_code: string | null;
   status_name: string | null;
+  // Earliest PENDING follow-up (null when none) — such candidates are listed first
+  follow_up_id?: number | null;
+  follow_up_date?: string | null;
+  is_follow_up_overdue?: boolean | null;
 }
 
 export interface RawPagination {
@@ -257,6 +261,10 @@ export interface CandidateListItem {
   hrStatusLabel: string | null;
   statusCode: string | null;
   statusName: string | null;
+  followUpId: number | null;
+  // Naive local date-time (no time zone), as stored
+  followUpDate: string | null;
+  isFollowUpOverdue: boolean;
 }
 
 export interface CandidateListResult {

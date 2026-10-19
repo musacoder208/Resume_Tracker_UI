@@ -1,9 +1,13 @@
-import { useMemo, useState, type JSX, type ReactNode } from 'react';
+import { useMemo, useState, type JSX } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { addDays, format, setHours, setMinutes, startOfDay } from 'date-fns';
 import clsx from 'clsx';
 import { env } from '@/config/env';
-import { Button } from '@/components/ui/button';
+import { Button, IconButton } from '@/components/ui/button';
 import { AutocompleteSelect } from '@/components/ui/autocompleteSelect';
+import { Textarea } from '@/components/ui/textarea';
+import { FormField } from '@/components/form/FormField';
+import { ConfirmModal } from '@/components/modals/ConfirmModal';
 import { toastService } from '@/components/ui/toast/toastService';
 import { CalendarPicker } from '@/features/candidate/interviewProcess/components/calendarPicker';
 import { TimePicker } from '@/features/candidate/interviewProcess/components/timePicker';
@@ -13,27 +17,43 @@ import { createInitialGridState } from '@/components/datagrid/types/grid.state';
 import type { GridState } from '@/components/datagrid/types/grid.state';
 import type { GridColumnDef } from '@/components/datagrid/types/grid.types';
 import { InboxArrowDownIcon, PencilIcon, StarIcon } from '@/icons';
-import { useAppDispatch, useAppSelector } from '@/hooks/reduxHooks';
+import { useAppDispatch } from '@/hooks/reduxHooks';
+import { useT } from '@/i18n/useT';
 import {
   candidateActivityApi,
   useGetActivityListQuery,
   useGetSubActivityListQuery,
   useGetAlertListQuery,
   useSaveCandidateActivityMutation,
+  useSaveCandidateActivityWithFollowUpMutation,
+  useLazyGetPendingFollowUpQuery,
   useSaveCandidateActivityHighlightMutation,
   useGetCandidateActivityQuery,
-  useMarkCandidateActivityCompletedMutation,
 } from '../api/candidateActivity.api';
 import type {
   Activity,
   CandidateActivityItem,
+  FollowUpAction,
   GetCandidateActivityParams,
+  SaveCandidateActivityWithFollowUpRequest,
 } from '../types/candidateActivity.types';
 
 // The API paginates server-side (max page_size 100) but this panel still
 // sorts/filters/paginates on the client — so fetch the largest single page
 // and treat it as "the dataset". Activities beyond the first 100 won't show.
 const HISTORY_PAGE_SIZE = 100;
+
+// Default follow-up activity / sub-activity (created by the save, hidden from
+// the Activity dropdown). Needed when editing an existing follow-up row.
+const FOLLOW_UP_ACTIVITY_CODE = 'FOLLOW_UP';
+const FOLLOW_UP_SUB_ACTIVITY_CODE = 'SCHEDULED_CALL';
+
+// My Action → "Log Activity" opens this tab with ?completeFollowUp=<id>; the next
+// save then also completes that follow-up. Without it the panel works as usual.
+const COMPLETE_FOLLOW_UP_PARAM = 'completeFollowUp';
+const MY_ACTION_PATH = '/my-action';
+
+type EditingKind = 'activity' | 'followUp';
 
 // start_date is stored as `timestamp without time zone` — the backend keeps
 // whatever clock value it's given, with no timezone conversion. Date.toISOString()
@@ -90,6 +110,18 @@ function getStatusVariant(label: string): StatusBadgeVariant {
   return 'neutral';
 }
 
+// Activity status (tbl_activity_status) → badge color.
+function getActivityStatusVariant(statusCode: string | null): StatusBadgeVariant {
+  switch (statusCode) {
+    case 'PENDING':
+      return 'warning';
+    case 'COMPLETED':
+      return 'success';
+    default:
+      return 'neutral';
+  }
+}
+
 // Purely cosmetic — colors the User/System tag in line with the timeline icon colors.
 function getTypeTagClasses(activityType: string): string {
   return activityType.toLowerCase() === 'system'
@@ -108,6 +140,8 @@ function getSortValue(item: CandidateActivityItem, columnId: string): string | n
       return (item.subActivityName ?? '').toLowerCase();
     case 'type':
       return item.activityType.toLowerCase();
+    case 'status':
+      return (item.statusName ?? '').toLowerCase();
     case 'notes':
       return (item.notes ?? '').toLowerCase();
     case 'start_date':
@@ -138,6 +172,7 @@ function sortItems(
 }
 
 export function CandidateActivityPanel({ candidateId }: { candidateId: number }): JSX.Element {
+  const { t } = useT('candidate');
   const dispatch = useAppDispatch();
 
   const historyQueryParams = useMemo<GetCandidateActivityParams>(
@@ -145,13 +180,16 @@ export function CandidateActivityPanel({ candidateId }: { candidateId: number })
     [candidateId]
   );
 
+  // ── Activity section ──
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [selectedSubActivityId, setSelectedSubActivityId] = useState<number | null>(null);
   const [notes, setNotes] = useState('');
+  // ── Follow-up section ──
   const [scheduleDate, setScheduleDate] = useState('');
   const [scheduleTime, setScheduleTime] = useState('');
   const [selectedAlertId, setSelectedAlertId] = useState<number | null>(null);
-  const [editingId, setEditingId] = useState<number | null>(null);
+  // ── Edit mode ──
+  const [editingItem, setEditingItem] = useState<CandidateActivityItem | null>(null);
   // Name of the edited row's sub-activity — fallback match when its id isn't in the list.
   const [editingSubActivityName, setEditingSubActivityName] = useState<string | null>(null);
   const [showErrors, setShowErrors] = useState(false);
@@ -183,12 +221,39 @@ export function CandidateActivityPanel({ candidateId }: { candidateId: number })
     isFetching: isFetchingHistory,
   } = useGetCandidateActivityQuery(historyQueryParams, { refetchOnMountOrArgChange: true });
 
-  const [saveCandidateActivity, { isLoading: isSavingActivity }] =
-    useSaveCandidateActivityMutation();
-  const [markCandidateActivityCompleted, { isLoading: isCompletingPrevious }] =
-    useMarkCandidateActivityCompletedMutation();
-  const isSaving = isSavingActivity || isCompletingPrevious;
-  const currentUserId = useAppSelector((state) => state.auth.user?.userId ?? null);
+  // ── Completing a follow-up (only when opened from My Action) ──
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const completeFollowUpId = Number(searchParams.get(COMPLETE_FOLLOW_UP_PARAM) ?? '');
+  const hasCompleteParam = Number.isInteger(completeFollowUpId) && completeFollowUpId > 0;
+  // Looked up in the loaded history: still pending → completing mode; otherwise
+  // (completed meanwhile / old link) the param is ignored and a notice is shown.
+  const completeTarget = hasCompleteParam
+    ? (history?.activities.find(
+        (a) =>
+          a.candidateActivityId === completeFollowUpId &&
+          a.activityCode === FOLLOW_UP_ACTIVITY_CODE
+      ) ?? null)
+    : null;
+  const completingFollowUp = completeTarget?.statusCode === 'PENDING' ? completeTarget : null;
+  const isCompleteParamStale = hasCompleteParam && history != null && completingFollowUp == null;
+
+  function clearCompleteParam(): void {
+    const next = new URLSearchParams(searchParams);
+    next.delete(COMPLETE_FOLLOW_UP_PARAM);
+    setSearchParams(next, { replace: true });
+  }
+
+  const [saveCandidateActivity, { isLoading: isUpdating }] = useSaveCandidateActivityMutation();
+  const [saveWithFollowUp, { isLoading: isSavingNew }] =
+    useSaveCandidateActivityWithFollowUpMutation();
+  const [fetchPendingFollowUp, { isFetching: isCheckingFollowUp }] =
+    useLazyGetPendingFollowUpQuery();
+  // Save held back while the user decides about an overdue follow-up.
+  const [overdueSave, setOverdueSave] = useState<SaveCandidateActivityWithFollowUpRequest | null>(
+    null
+  );
+  const isSaving = isUpdating || isSavingNew || isCheckingFollowUp;
   const [saveCandidateActivityHighlight] = useSaveCandidateActivityHighlightMutation();
   const [togglingId, setTogglingId] = useState<number | null>(null);
 
@@ -213,7 +278,7 @@ export function CandidateActivityPanel({ candidateId }: { candidateId: number })
   }
 
   function resetForm(): void {
-    setEditingId(null);
+    setEditingItem(null);
     setSelectedActivity(null);
     setSelectedSubActivityId(null);
     setEditingSubActivityName(null);
@@ -224,75 +289,190 @@ export function CandidateActivityPanel({ candidateId }: { candidateId: number })
     setShowErrors(false);
   }
 
+  // A follow-up row is edited in the Follow-up section only; any other row in
+  // the Activity section only.
   function handleEditClick(item: CandidateActivityItem): void {
+    resetForm();
+    setEditingItem(item);
+    if (item.activityCode === FOLLOW_UP_ACTIVITY_CODE) {
+      const scheduled = item.startDate != null ? parseNaiveDateTime(item.startDate) : null;
+      setScheduleDate(scheduled != null ? format(scheduled, 'yyyy-MM-dd') : '');
+      setScheduleTime(scheduled != null ? format(scheduled, 'HH:mm') : '');
+      setSelectedAlertId(item.alertId);
+      return;
+    }
     // Map the row back to the master lists (by id, else by name) so the save
     // can send the current activity_code / sub_activity_code.
     const activity =
       activities.find((a) => a.activityId === item.activityId) ??
       activities.find((a) => a.activityName === item.activityName) ??
       null;
-    setEditingId(item.candidateActivityId);
     setSelectedActivity(activity);
     setSelectedSubActivityId(item.subActivityId);
     setEditingSubActivityName(item.subActivityName);
     setNotes(item.notes ?? '');
-    const scheduled = item.startDate != null ? parseNaiveDateTime(item.startDate) : null;
-    setScheduleDate(scheduled != null ? format(scheduled, 'yyyy-MM-dd') : '');
-    setScheduleTime(scheduled != null ? format(scheduled, 'HH:mm') : '');
-    setSelectedAlertId(item.alertId);
-    setShowErrors(false);
   }
 
-  const canSave = selectedActivity != null;
-  const isEditing = editingId != null;
+  const editingKind: EditingKind | null =
+    editingItem == null
+      ? null
+      : editingItem.activityCode === FOLLOW_UP_ACTIVITY_CODE
+        ? 'followUp'
+        : 'activity';
+  const isEditing = editingKind != null;
+  const showActivitySection = editingKind !== 'followUp';
+  const showFollowUpSection = editingKind !== 'activity';
+
   // A schedule needs both halves — a date with no time (or vice versa) can't be saved.
   const isScheduleIncomplete = (scheduleDate === '') !== (scheduleTime === '');
+  const followUpDate = combineToNaiveDateTime(scheduleDate, scheduleTime);
+  const hasActivity = selectedActivity != null;
+  const hasFollowUp = followUpDate != null;
 
-  // Shared by the Save/Update button and the "Call Tomorrow" shortcut — the
-  // shortcut just overrides the start date with tomorrow at the configured time.
-  async function saveActivity(startDateOverride?: Date): Promise<void> {
-    if (selectedActivity == null) return;
+  const canSave =
+    editingKind === 'followUp'
+      ? hasFollowUp
+      : editingKind === 'activity'
+        ? hasActivity
+        : hasActivity || hasFollowUp;
 
-    if (startDateOverride == null && isScheduleIncomplete) {
+  async function submitNew(
+    body: SaveCandidateActivityWithFollowUpRequest,
+    action: FollowUpAction
+  ): Promise<void> {
+    try {
+      await saveWithFollowUp({ ...body, follow_up_action: action }).unwrap();
+      // Success/error toast handled by apiToastMiddleware.
+      resetForm();
+      // Follow-up completed from My Action → back to the list (refetched via tag)
+      if (body.complete_follow_up_id != null) void navigate(MY_ACTION_PATH);
+    } catch {
+      // error handled by apiToastMiddleware
+    }
+  }
+
+  // With a follow-up date, first look at this user's pending follow-up:
+  //   none    → insert a new one
+  //   future  → update it (no popup)
+  //   overdue → ask: complete it + insert new (Yes), or update it (No)
+  async function submitWithFollowUpCheck(body: SaveCandidateActivityWithFollowUpRequest): Promise<void> {
+    // Completing a follow-up from My Action: it is closed by this save, so no
+    // pending check / overdue popup — a next follow-up is always a new one.
+    if (completingFollowUp != null) {
+      await submitNew({ ...body, complete_follow_up_id: completingFollowUp.candidateActivityId }, 'NEW');
+      return;
+    }
+    if (body.follow_up_date == null) {
+      await submitNew(body, 'NEW');
+      return;
+    }
+    let pending;
+    try {
+      pending = await fetchPendingFollowUp(candidateId).unwrap();
+    } catch {
+      // error handled by apiToastMiddleware
+      return;
+    }
+    if (pending == null) {
+      await submitNew(body, 'NEW');
+    } else if (pending.isPast) {
+      setOverdueSave(body);
+    } else {
+      await submitNew(body, 'UPDATE_EXISTING');
+    }
+  }
+
+  function handleOverdueChoice(action: FollowUpAction): void {
+    if (overdueSave == null) return;
+    const body = overdueSave;
+    setOverdueSave(null);
+    void submitNew(body, action);
+  }
+
+  // Save (new): activity row and/or follow-up row in one call.
+  async function saveNew(): Promise<void> {
+    if (isScheduleIncomplete) {
       setShowErrors(true);
-      toastService.info('Please select both a date and a time for the schedule.');
+      toastService.info(t('activityPanel.hints.scheduleIncomplete'));
+      return;
+    }
+    if (selectedAlert != null && !hasFollowUp) {
+      setShowErrors(true);
+      toastService.info(t('activityPanel.hints.alertNeedsDate'));
+      return;
+    }
+    await submitWithFollowUpCheck({
+      candidate_id: candidateId,
+      activity_code: selectedActivity?.activityCode,
+      sub_activity_code: selectedActivity != null ? selectedSubActivity?.subActivityCode : undefined,
+      notes: selectedActivity != null && notes.trim() !== '' ? notes.trim() : undefined,
+      alert_id: hasFollowUp ? selectedAlert?.alertId : undefined,
+      follow_up_date: followUpDate,
+    });
+  }
+
+  // "Call Tomorrow": saves only a follow-up for tomorrow at the configured time —
+  // the Activity section is ignored.
+  async function saveCallTomorrow(): Promise<void> {
+    await submitWithFollowUpCheck({
+      candidate_id: candidateId,
+      alert_id: selectedAlert?.alertId,
+      follow_up_date: toNaiveDateTimeString(getCallTomorrowDate(env.CALL_TOMORROW_TIME)),
+    });
+  }
+
+  // Update (edit): only the edited row, through the existing update endpoint.
+  async function saveEdit(item: CandidateActivityItem, kind: EditingKind): Promise<void> {
+    if (kind === 'followUp') {
+      if (followUpDate == null) {
+        setShowErrors(true);
+        toastService.info(t('activityPanel.hints.scheduleIncomplete'));
+        return;
+      }
+      try {
+        await saveCandidateActivity({
+          candidate_activity_id: item.candidateActivityId,
+          candidate_id: candidateId,
+          activity_code: FOLLOW_UP_ACTIVITY_CODE,
+          sub_activity_code: FOLLOW_UP_SUB_ACTIVITY_CODE,
+          notes: item.notes ?? undefined,
+          start_date: followUpDate,
+          alert_id: selectedAlert?.alertId,
+        }).unwrap();
+        resetForm();
+      } catch {
+        // error handled by apiToastMiddleware
+      }
       return;
     }
 
-    const effectiveStartDate =
-      startDateOverride != null
-        ? toNaiveDateTimeString(startDateOverride)
-        : combineToNaiveDateTime(scheduleDate, scheduleTime);
-
+    if (selectedActivity == null) return;
     try {
-      // A new activity replaces this user's current pending one: complete the
-      // pending activities first, then insert. Edits update in place and skip this.
-      if (editingId == null && currentUserId != null) {
-        const pendingIds = (history?.activities ?? [])
-          .filter((a) => a.statusCode === 'PENDING' && a.createdBy === Number(currentUserId))
-          .map((a) => a.candidateActivityId);
-        for (const candidateActivityId of pendingIds) {
-          // Any failure stops here (caught below) — nothing is inserted.
-          await markCandidateActivityCompleted({
-            candidate_activity_id: candidateActivityId,
-          }).unwrap();
-        }
-      }
-
+      // Keep the row's own schedule / alert (older rows may have them) — only
+      // the Activity section is edited here.
       await saveCandidateActivity({
-        candidate_activity_id: editingId ?? undefined,
+        candidate_activity_id: item.candidateActivityId,
         candidate_id: candidateId,
         activity_code: selectedActivity.activityCode,
         sub_activity_code: selectedSubActivity?.subActivityCode,
         notes: notes.trim() === '' ? undefined : notes.trim(),
-        start_date: effectiveStartDate,
-        alert_id: selectedAlert?.alertId,
+        start_date:
+          item.startDate != null
+            ? toNaiveDateTimeString(parseNaiveDateTime(item.startDate))
+            : undefined,
+        alert_id: item.alertId ?? undefined,
       }).unwrap();
-
-      // Success/error toast handled by apiToastMiddleware.
       resetForm();
     } catch {
       // error handled by apiToastMiddleware
+    }
+  }
+
+  function handleSave(): void {
+    if (editingItem != null && editingKind != null) {
+      void saveEdit(editingItem, editingKind);
+    } else {
+      void saveNew();
     }
   }
 
@@ -344,14 +524,14 @@ export function CandidateActivityPanel({ candidateId }: { candidateId: number })
   const columns: GridColumnDef<CandidateActivityItem>[] = [
     {
       id: 'activity',
-      header: 'Activity',
+      header: t('activityPanel.columns.activity'),
       size: 110,
       minSize: 110,
       cell: ({ row }) => <span className="font-medium text-text">{row.original.activityName}</span>,
     },
     {
       id: 'sub_activity',
-      header: 'Sub-Activity',
+      header: t('activityPanel.columns.subActivity'),
       size: 130,
       minSize: 130,
       cell: ({ row }) => {
@@ -367,14 +547,25 @@ export function CandidateActivityPanel({ candidateId }: { candidateId: number })
       },
     },
     {
+      id: 'status',
+      header: t('activityPanel.columns.status'),
+      size: 110,
+      minSize: 110,
+      cell: ({ row }) => {
+        const { statusName, statusCode } = row.original;
+        if (statusName == null) return <span className="text-text-muted">—</span>;
+        return <StatusBadge label={statusName} variant={getActivityStatusVariant(statusCode)} />;
+      },
+    },
+    {
       id: 'type',
-      header: 'Activity Type',
+      header: t('activityPanel.columns.type'),
       size: 100,
       minSize: 100,
       cell: ({ row }) => (
         <span
           className={clsx(
-            'rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide',
+            'rounded-full px-2 py-0.5 text-xs font-semibold uppercase tracking-wide',
             getTypeTagClasses(row.original.activityType)
           )}
         >
@@ -384,7 +575,7 @@ export function CandidateActivityPanel({ candidateId }: { candidateId: number })
     },
     {
       id: 'notes',
-      header: 'Notes',
+      header: t('activityPanel.columns.notes'),
       enableSorting: false,
       size: 300,
       minSize: 260,
@@ -394,7 +585,7 @@ export function CandidateActivityPanel({ candidateId }: { candidateId: number })
     },
     {
       id: 'start_date',
-      header: 'Scheduled',
+      header: t('activityPanel.columns.scheduled'),
       size: 130,
       minSize: 130,
       cell: ({ row }) => (
@@ -407,14 +598,14 @@ export function CandidateActivityPanel({ candidateId }: { candidateId: number })
     },
     {
       id: 'alert',
-      header: 'Alert',
+      header: t('activityPanel.columns.alert'),
       size: 90,
       minSize: 90,
       cell: ({ row }) => <span className="text-text-muted">{row.original.alertName ?? '—'}</span>,
     },
     {
       id: 'logged',
-      header: 'Created Date',
+      header: t('activityPanel.columns.createdDate'),
       size: 130,
       minSize: 130,
       cell: ({ row }) => (
@@ -425,7 +616,7 @@ export function CandidateActivityPanel({ candidateId }: { candidateId: number })
     },
     {
       id: 'actions',
-      header: 'Actions',
+      header: t('activityPanel.columns.actions'),
       enableSorting: false,
       size: 56,
       minSize: 56,
@@ -437,8 +628,8 @@ export function CandidateActivityPanel({ candidateId }: { candidateId: number })
             variant="unstyled"
             size="xs"
             circular
-            title="Edit"
-            aria-label="Edit"
+            title={t('activityPanel.actions.edit')}
+            aria-label={t('activityPanel.actions.edit')}
             className="text-text-muted hover:text-text"
             leadingIcon={<PencilIcon className="h-4 w-4" />}
             onClick={() => {
@@ -450,7 +641,7 @@ export function CandidateActivityPanel({ candidateId }: { candidateId: number })
     },
     {
       id: 'highlight',
-      header: 'Highlight',
+      header: t('activityPanel.columns.highlight'),
       enableSorting: false,
       size: 56,
       minSize: 56,
@@ -458,153 +649,195 @@ export function CandidateActivityPanel({ candidateId }: { candidateId: number })
       cell: ({ row }) => {
         const item = row.original;
         const isToggling = togglingId === item.candidateActivityId;
+        const label = item.isHighlighted
+          ? t('activityPanel.actions.removeHighlight')
+          : t('activityPanel.actions.highlight');
         return (
-          <button
-            type="button"
+          <IconButton
+            variant="unstyled"
+            circular
             disabled={isToggling}
-            title={item.isHighlighted ? 'Remove highlight' : 'Highlight this row'}
-            aria-label="Toggle highlight"
+            title={label}
+            ariaLabel={label}
             onClick={() => {
               void handleToggleHighlight(item);
             }}
             className={clsx(
-              'flex h-6 w-6 items-center justify-center rounded-full transition-colors',
-              'disabled:cursor-not-allowed disabled:opacity-40',
+              'h-6 w-6 transition-colors disabled:cursor-not-allowed disabled:opacity-40',
               item.isHighlighted ? 'text-warning' : 'text-text-muted hover:text-warning'
             )}
-          >
-            <StarIcon className="h-4 w-4" fill={item.isHighlighted ? 'currentColor' : 'none'} />
-          </button>
+            icon={<StarIcon className="h-4 w-4" fill={item.isHighlighted ? 'currentColor' : 'none'} />}
+          />
         );
       },
     },
   ];
 
+  const title =
+    editingKind === 'followUp'
+      ? t('activityPanel.editFollowUpTitle')
+      : editingKind === 'activity'
+        ? t('activityPanel.editActivityTitle')
+        : t('activityPanel.logTitle');
+
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-col gap-5 rounded-xl border border-border bg-surface p-5">
-        <div className="flex items-center justify-between">
-          <span className="text-[11px] font-bold uppercase tracking-wide text-text-muted">
-            {isEditing ? 'Edit Activity' : 'Log Activity'}
-          </span>
-          {isEditing && (
-            <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary">
-              Editing entry #{editingId}
-            </span>
+        <span className="text-xs font-bold uppercase tracking-wide text-text-muted">{title}</span>
+
+        {/* Opened from My Action → this save also completes the follow-up */}
+        {!isEditing && completingFollowUp != null && (
+          <div className="flex flex-col gap-2 rounded-lg border border-primary/30 bg-primary/5 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs text-text">
+              {completingFollowUp.startDate != null
+                ? t('activityPanel.completingFollowUp.message', {
+                    date: format(parseNaiveDateTime(completingFollowUp.startDate), 'd MMM yyyy, h:mm a'),
+                  })
+                : t('activityPanel.completingFollowUp.messageNoDate')}
+            </p>
+            <Button variant="secondary" size="xs" onClick={clearCompleteParam} disabled={isSaving}>
+              {t('activityPanel.completingFollowUp.cancel')}
+            </Button>
+          </div>
+        )}
+        {isCompleteParamStale && (
+          <div className="flex flex-col gap-2 rounded-lg border border-border bg-surface-muted/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs text-text-muted">{t('activityPanel.completingFollowUp.alreadyCompleted')}</p>
+            <Button variant="secondary" size="xs" onClick={clearCompleteParam}>
+              {t('activityPanel.completingFollowUp.dismiss')}
+            </Button>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+          {/* ── Activity section ── */}
+          {showActivitySection && (
+            <section className="flex flex-col gap-4 rounded-lg border border-border-muted p-4">
+              <h3 className="text-sm font-semibold text-text">{t('activityPanel.sections.activity')}</h3>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <FormField label={t('activityPanel.fields.activity')}>
+                  <AutocompleteSelect
+                    value={selectedActivity != null ? String(selectedActivity.activityId) : ''}
+                    onChange={(value) => {
+                      handleActivityChange(
+                        activities.find((a) => String(a.activityId) === value) ?? null
+                      );
+                    }}
+                    options={activityOptions}
+                    placeholder={t('activityPanel.placeholders.activity')}
+                    disabled={isLoadingActivities}
+                  />
+                </FormField>
+
+                <FormField label={t('activityPanel.fields.subActivity')}>
+                  <AutocompleteSelect
+                    value={selectedSubActivity != null ? String(selectedSubActivity.subActivityId) : ''}
+                    onChange={(value) => {
+                      setSelectedSubActivityId(value === '' ? null : Number(value));
+                      setEditingSubActivityName(null);
+                    }}
+                    options={subActivityOptions}
+                    placeholder={t('activityPanel.placeholders.subActivity')}
+                    disabled={selectedActivity == null || isLoadingSubActivities}
+                  />
+                </FormField>
+              </div>
+
+              <FormField label={t('activityPanel.fields.notes')}>
+                <Textarea
+                  value={notes}
+                  rows={3}
+                  onChange={(e) => {
+                    setNotes(e.target.value);
+                  }}
+                  placeholder={t('activityPanel.placeholders.notes')}
+                  className="resize-y text-xs"
+                />
+              </FormField>
+            </section>
+          )}
+
+          {/* ── Follow-up section ── */}
+          {showFollowUpSection && (
+            <section className="flex flex-col gap-4 rounded-lg border border-border-muted p-4">
+              <h3 className="text-sm font-semibold text-text">{t('activityPanel.sections.followUp')}</h3>
+
+              <FormField label={t('activityPanel.fields.followUpDate')}>
+                <div className="flex flex-wrap items-center gap-2">
+                  <CalendarPicker
+                    value={scheduleDate}
+                    onChange={setScheduleDate}
+                    placeholder={t('activityPanel.placeholders.date')}
+                    hasError={showErrors && (isScheduleIncomplete || (selectedAlert != null && !hasFollowUp)) && scheduleDate === ''}
+                  />
+                  <TimePicker
+                    value={scheduleTime}
+                    onChange={setScheduleTime}
+                    placeholder={t('activityPanel.placeholders.time')}
+                    hasError={showErrors && (isScheduleIncomplete || (selectedAlert != null && !hasFollowUp)) && scheduleTime === ''}
+                  />
+                </div>
+                {(scheduleDate !== '' || scheduleTime !== '') && (
+                  <Button
+                    variant="unstyled"
+                    size="xs"
+                    onClick={() => {
+                      setScheduleDate('');
+                      setScheduleTime('');
+                    }}
+                    className="self-start px-0 text-xs font-medium text-text-muted hover:text-text"
+                  >
+                    {t('activityPanel.actions.clearSchedule')}
+                  </Button>
+                )}
+              </FormField>
+
+              <FormField label={t('activityPanel.fields.alert')}>
+                <AutocompleteSelect
+                  value={selectedAlert != null ? String(selectedAlert.alertId) : ''}
+                  onChange={(value) => {
+                    setSelectedAlertId(value === '' ? null : Number(value));
+                  }}
+                  options={alertOptions}
+                  placeholder={t('activityPanel.placeholders.alert')}
+                  disabled={isLoadingAlerts}
+                />
+              </FormField>
+
+              {!isEditing && (
+                <Button
+                  variant="unstyled"
+                  size="sm"
+                  onClick={() => {
+                    void saveCallTomorrow();
+                  }}
+                  disabled={isSaving}
+                  title={t('activityPanel.actions.callTomorrowTitle', { time: env.CALL_TOMORROW_TIME })}
+                  className="self-start px-0 font-medium text-primary underline underline-offset-2 hover:text-primary-hover"
+                >
+                  {t('activityPanel.actions.callTomorrow')}
+                </Button>
+              )}
+            </section>
           )}
         </div>
 
-        <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
-          <Field label="Activity">
-            <AutocompleteSelect
-              value={selectedActivity != null ? String(selectedActivity.activityId) : ''}
-              onChange={(value) => {
-                handleActivityChange(
-                  activities.find((a) => String(a.activityId) === value) ?? null
-                );
-              }}
-              options={activityOptions}
-              placeholder="Select activity…"
-              disabled={isLoadingActivities}
-            />
-          </Field>
-
-          <Field label="Sub-Activity">
-            <AutocompleteSelect
-              value={selectedSubActivity != null ? String(selectedSubActivity.subActivityId) : ''}
-              onChange={(value) => {
-                setSelectedSubActivityId(value === '' ? null : Number(value));
-                setEditingSubActivityName(null);
-              }}
-              options={subActivityOptions}
-              placeholder="Select sub-activity…"
-              disabled={selectedActivity == null || isLoadingSubActivities}
-            />
-          </Field>
-
-          <Field label="Schedular">
-            <div className="flex items-center gap-2">
-              <CalendarPicker
-                value={scheduleDate}
-                onChange={setScheduleDate}
-                placeholder="Select date"
-                hasError={showErrors && isScheduleIncomplete && scheduleDate === ''}
-              />
-              <TimePicker
-                value={scheduleTime}
-                onChange={setScheduleTime}
-                placeholder="Select time"
-                hasError={showErrors && isScheduleIncomplete && scheduleTime === ''}
-              />
-            </div>
-            {(scheduleDate !== '' || scheduleTime !== '') && (
-              <button
-                type="button"
-                onClick={() => {
-                  setScheduleDate('');
-                  setScheduleTime('');
-                }}
-                className="self-start text-[11px] font-medium text-text-muted hover:text-text"
-              >
-                Clear schedule
-              </button>
-            )}
-          </Field>
-
-          <Field label="Alert">
-            <AutocompleteSelect
-              value={selectedAlert != null ? String(selectedAlert.alertId) : ''}
-              onChange={(value) => {
-                setSelectedAlertId(value === '' ? null : Number(value));
-              }}
-              options={alertOptions}
-              placeholder="Select alert…"
-              disabled={isLoadingAlerts}
-            />
-          </Field>
-        </div>
-
-        <Field label="Notes">
-          <textarea
-            value={notes}
-            onChange={(e) => {
-              setNotes(e.target.value);
-            }}
-            placeholder="Add any context about this activity…"
-            className="min-h-[64px] w-full resize-y rounded-lg border border-border-muted bg-surface-muted/40 p-3 text-xs text-text placeholder:text-text-muted"
-          />
-        </Field>
-
-        <div className="flex items-center justify-between border-t border-border pt-4">
+        <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-text-muted">
-            {canSave ? 'Ready to save.' : 'Select an activity to enable save.'}
+            {canSave ? t('activityPanel.hints.ready') : t('activityPanel.hints.selectSomething')}
           </p>
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                void saveActivity(getCallTomorrowDate(env.CALL_TOMORROW_TIME));
-              }}
-              disabled={!canSave || isSaving}
-              title={`Save with start date tomorrow at ${env.CALL_TOMORROW_TIME}`}
-              className="mr-2 text-sm font-medium text-primary underline-offset-2 hover:underline disabled:cursor-not-allowed disabled:no-underline disabled:opacity-40"
-            >
-              Call Tomorrow
-            </button>
             {isEditing && (
               <Button variant="secondary" size="md" onClick={resetForm} disabled={isSaving}>
-                Cancel
+                {t('activityPanel.actions.cancel')}
               </Button>
             )}
-            <Button
-              variant="primary"
-              size="md"
-              onClick={() => {
-                void saveActivity();
-              }}
-              disabled={!canSave || isSaving}
-            >
-              {isSaving ? 'Saving…' : isEditing ? 'Update Activity' : 'Save Activity'}
+            <Button variant="primary" size="md" onClick={handleSave} disabled={!canSave || isSaving}>
+              {isSaving
+                ? t('activityPanel.actions.saving')
+                : isEditing
+                  ? t('activityPanel.actions.update')
+                  : t('activityPanel.actions.save')}
             </Button>
           </div>
         </div>
@@ -612,7 +845,7 @@ export function CandidateActivityPanel({ candidateId }: { candidateId: number })
 
       <div className="flex flex-col gap-4 rounded-xl border border-border bg-surface p-5">
         <div className="flex items-center gap-2">
-          <h2 className="text-sm font-semibold text-text">Activity History</h2>
+          <h2 className="text-sm font-semibold text-text">{t('activityPanel.history.title')}</h2>
           <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
             {historyItems.length}
           </span>
@@ -621,8 +854,8 @@ export function CandidateActivityPanel({ candidateId }: { candidateId: number })
         {!isLoadingHistory && historyItems.length === 0 ? (
           <div className="flex flex-col items-center gap-2 rounded-xl border border-dashed border-border p-8 text-center">
             <InboxArrowDownIcon className="h-6 w-6 text-text-muted" />
-            <p className="text-sm text-text-muted">No activity logged yet.</p>
-            <p className="text-xs text-text-subtle">Activities you save above will show up here.</p>
+            <p className="text-sm text-text-muted">{t('activityPanel.history.empty')}</p>
+            <p className="text-xs text-text-subtle">{t('activityPanel.history.emptyHint')}</p>
           </div>
         ) : (
           <DataGrid<CandidateActivityItem>
@@ -641,16 +874,25 @@ export function CandidateActivityPanel({ candidateId }: { candidateId: number })
           />
         )}
       </div>
-    </div>
-  );
-}
 
-// Same field wrapper as the Interview Process round form, so both tabs share one look.
-function Field({ label, children }: { label: string; children: ReactNode }): JSX.Element {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <span className="text-xs font-semibold text-text-muted">{label}</span>
-      {children}
+      {/* Overdue follow-up: Yes = complete it + new, No = update it, X = save nothing */}
+      <ConfirmModal
+        open={overdueSave != null}
+        onClose={() => {
+          setOverdueSave(null);
+        }}
+        onCancel={() => {
+          handleOverdueChoice('UPDATE_EXISTING');
+        }}
+        onConfirm={() => {
+          handleOverdueChoice('COMPLETE_AND_NEW');
+        }}
+        title={t('activityPanel.overdueFollowUp.title')}
+        message={t('activityPanel.overdueFollowUp.message')}
+        question={t('activityPanel.overdueFollowUp.question')}
+        cancelLabel={t('activityPanel.overdueFollowUp.no')}
+        confirmLabel={t('activityPanel.overdueFollowUp.yes')}
+      />
     </div>
   );
 }

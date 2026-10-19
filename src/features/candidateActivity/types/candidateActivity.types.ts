@@ -38,8 +38,11 @@ export interface RawCandidateActivityItem {
   candidate_activity_id: number;
   candidate_id: number;
   activity_id: number;
+  // Codes — FOLLOW_UP marks a follow-up row (edited in the Follow-up section).
+  activity_code?: string | null;
   activity_name: string;
   sub_activity_id: number | null;
+  sub_activity_code?: string | null;
   sub_activity_name: string | null;
   activity_type: string;
   notes: string | null;
@@ -101,8 +104,10 @@ export interface CandidateActivityItem {
   candidateActivityId: number;
   candidateId: number;
   activityId: number;
+  activityCode: string | null;
   activityName: string;
   subActivityId: number | null;
+  subActivityCode: string | null;
   subActivityName: string | null;
   activityType: string;
   notes: string | null;
@@ -149,6 +154,59 @@ export interface SaveCandidateActivityResponse {
   data: {
     candidate_activity_id: number;
   };
+}
+
+// New HR Activity save — activity row (COMPLETED) and/or follow-up row (PENDING).
+// At least one of activity_code / follow_up_date; alert_id only with follow_up_date.
+export interface SaveCandidateActivityWithFollowUpRequest {
+  candidate_id: number;
+  activity_code?: string;
+  sub_activity_code?: string;
+  notes?: string;
+  alert_id?: number;
+  // Naive local date-time "yyyy-MM-ddTHH:mm:ss" (stored without time zone)
+  follow_up_date?: string;
+  // What to do with the user's pending follow-up. Omitted = NEW.
+  follow_up_action?: FollowUpAction;
+  // My Action → Log Activity: the pending follow-up this save completes.
+  complete_follow_up_id?: number;
+}
+
+// NEW              → insert (completes the user's pending follow-ups)
+// UPDATE_EXISTING  → update the user's pending follow-up with the new date / alert
+// COMPLETE_AND_NEW → user confirmed: complete the overdue follow-up, insert a new one
+export type FollowUpAction = 'NEW' | 'UPDATE_EXISTING' | 'COMPLETE_AND_NEW';
+
+export interface SaveCandidateActivityWithFollowUpResponse {
+  success: boolean;
+  code: string;
+  message: string;
+  data: {
+    activity_id: number | null;
+    follow_up_id: number | null;
+    follow_up_action_taken: 'INSERTED' | 'UPDATED' | null;
+  };
+}
+
+// The logged-in user's pending follow-up for a candidate (data is null when none).
+export interface RawPendingFollowUp {
+  follow_up_id: number;
+  start_date: string | null;
+  alert_id: number | null;
+  is_past: boolean;
+}
+
+export interface RawGetPendingFollowUpResponse {
+  success: boolean;
+  data: RawPendingFollowUp | null;
+}
+
+export interface PendingFollowUp {
+  followUpId: number;
+  startDate: string | null;
+  alertId: number | null;
+  // Date + time already passed (compared on the DB clock)
+  isPast: boolean;
 }
 
 export interface SaveCandidateActivityHighlightRequest {

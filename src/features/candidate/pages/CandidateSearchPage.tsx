@@ -452,6 +452,9 @@ export function CandidateSearchPage(): JSX.Element {
   const { data: actionOptions = [] } = useGetRoundActionsQuery();
   const { data, isLoading, isFetching, refetch } = useGetCandidateListQuery(queryParams, {
     skip: selectedJd === '',
+    // Refetch each time the list is opened (e.g. Back from candidate details), so
+    // changes made there (activity, follow-ups, status) show without a manual refresh.
+    refetchOnMountOrArgChange: true,
   });
 
   // Forces a fresh fetch every time Search (or Clear) is clicked, even when the resulting

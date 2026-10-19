@@ -370,5 +370,85 @@
       "invalidId": "معرف المرشح غير صالح.",
       "fetchFailed": "فشل تحميل تفاصيل المرشح. يرجى المحاولة مرة أخرى."
     }
+  },
+  "followUpBadge": {
+    "upcoming": "متابعة · {{date}}",
+    "today": "اليوم · {{time}}",
+    "overdue": "متأخرة · {{date}}",
+    "noDate": "متابعة معلّقة",
+    "title": "متابعة معلّقة: {{date}}"
+  },
+  "activityPanel": {
+    "logTitle": "تسجيل نشاط",
+    "editActivityTitle": "تعديل النشاط",
+    "editFollowUpTitle": "تعديل المتابعة",
+    "sections": {
+      "activity": "النشاط",
+      "followUp": "المتابعة"
+    },
+    "fields": {
+      "activity": "النشاط",
+      "subActivity": "النشاط الفرعي",
+      "notes": "ملاحظة",
+      "followUpDate": "تاريخ ووقت المتابعة",
+      "alert": "تنبيه"
+    },
+    "placeholders": {
+      "activity": "اختر النشاط…",
+      "subActivity": "اختر النشاط الفرعي…",
+      "notes": "أضف أي تفاصيل عن هذا النشاط…",
+      "date": "اختر التاريخ",
+      "time": "اختر الوقت",
+      "alert": "اختر التنبيه…"
+    },
+    "actions": {
+      "save": "حفظ",
+      "update": "تحديث",
+      "saving": "جارٍ الحفظ…",
+      "cancel": "إلغاء",
+      "callTomorrow": "اتصال غدًا",
+      "callTomorrowTitle": "حفظ متابعة غدًا الساعة {{time}}",
+      "clearSchedule": "مسح الموعد",
+      "edit": "تعديل",
+      "highlight": "تمييز هذا الصف",
+      "removeHighlight": "إزالة التمييز"
+    },
+    "hints": {
+      "ready": "جاهز للحفظ.",
+      "selectSomething": "اختر نشاطًا أو تاريخ متابعة للحفظ.",
+      "scheduleIncomplete": "يرجى اختيار التاريخ والوقت للمتابعة.",
+      "alertNeedsDate": "اختر تاريخ ووقت المتابعة للتنبيه."
+    },
+    "completingFollowUp": {
+      "message": "إكمال المتابعة المجدولة في {{date}}. حفظ نشاط أو متابعة تالية يجعلها مكتملة.",
+      "messageNoDate": "إكمال متابعة. حفظ نشاط أو متابعة تالية يجعلها مكتملة.",
+      "cancel": "إلغاء",
+      "alreadyCompleted": "هذه المتابعة مكتملة بالفعل أو لم تعد متاحة.",
+      "dismiss": "إغلاق"
+    },
+    "overdueFollowUp": {
+      "title": "متابعة معلّقة",
+      "message": "لدى هذا المرشح متابعة معلّقة انقضى تاريخها ووقتها.",
+      "question": "هل تريد إكمال المتابعة الحالية وإنشاء متابعة جديدة؟ اختر لا لتحديث المتابعة الحالية بالتفاصيل الجديدة.",
+      "yes": "نعم، أكملها",
+      "no": "لا، حدّثها"
+    },
+    "history": {
+      "title": "سجل الأنشطة",
+      "empty": "لا توجد أنشطة مسجلة بعد.",
+      "emptyHint": "ستظهر الأنشطة التي تحفظها أعلاه هنا."
+    },
+    "columns": {
+      "activity": "النشاط",
+      "subActivity": "النشاط الفرعي",
+      "status": "الحالة",
+      "type": "نوع النشاط",
+      "notes": "ملاحظة",
+      "scheduled": "الموعد",
+      "alert": "تنبيه",
+      "createdDate": "تاريخ الإنشاء",
+      "actions": "الإجراءات",
+      "highlight": "تمييز"
+    }
   }
 }

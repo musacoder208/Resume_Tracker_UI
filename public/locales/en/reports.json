@@ -1,0 +1,54 @@
+{
+  "title": "AI Usage Report",
+  "unassigned": "Unassigned",
+  "deleted": "Deleted",
+  "unknownCandidate": "Candidate #{{id}}",
+  "stats": {
+    "totalJds": "Total JDs",
+    "totalCandidates": "Total Candidates",
+    "totalTokens": "Total Tokens",
+    "totalCost": "Total Cost"
+  },
+  "filters": {
+    "fromDate": "From Date",
+    "toDate": "To Date",
+    "jdName": "JD Name",
+    "selectDate": "Select date",
+    "allJds": "All JDs",
+    "jdsSelected": "{{count}} JDs selected"
+  },
+  "actions": {
+    "search": "Search",
+    "clearFilters": "Clear",
+    "exportExcel": "Export Excel",
+    "exporting": "Exporting…",
+    "close": "Close"
+  },
+  "sections": {
+    "jdProcesses": "JD Processes",
+    "candidates": "Candidates ({{count}})"
+  },
+  "totals": {
+    "totalTokens": "Total Tokens",
+    "totalCost": "Total Cost"
+  },
+  "table": {
+    "srNo": "Sr No",
+    "jdName": "JD Name",
+    "createdDate": "Created Date",
+    "candidates": "Candidates",
+    "process": "Process",
+    "candidateProcess": "Candidate / Process",
+    "uploadedDate": "Uploaded Date",
+    "calls": "Calls",
+    "failed": "Failed",
+    "inputTokens": "Input Tokens",
+    "outputTokens": "Output Tokens",
+    "totalTokens": "Total Tokens",
+    "cost": "Cost ($)"
+  },
+  "processLabels": {
+    "ai_evaluation": "AI Evaluation",
+    "classify_capability_group": "Classify Capability Group"
+  }
+}

@@ -9,7 +9,21 @@ import type {
   GetCandidateActivityResult,
   RawGetCallbackRequestListResponse,
   GetCallbackRequestListResult,
+  RawGetPendingFollowUpResponse,
+  PendingFollowUp,
 } from '../types/candidateActivity.types';
+
+export const mapPendingFollowUpResponse = (
+  raw: RawGetPendingFollowUpResponse
+): PendingFollowUp | null =>
+  raw.data == null
+    ? null
+    : {
+        followUpId: Number(raw.data.follow_up_id),
+        startDate: raw.data.start_date ?? null,
+        alertId: raw.data.alert_id != null ? Number(raw.data.alert_id) : null,
+        isPast: raw.data.is_past,
+      };
 
 export const mapActivityListResponse = (raw: RawActivityListResponse): Activity[] =>
   (raw.data ?? []).map((a) => ({
@@ -41,8 +55,10 @@ export const mapCandidateActivityListResponse = (
     candidateActivityId: item.candidate_activity_id,
     candidateId: item.candidate_id,
     activityId: item.activity_id,
+    activityCode: item.activity_code ?? null,
     activityName: item.activity_name,
     subActivityId: item.sub_activity_id,
+    subActivityCode: item.sub_activity_code ?? null,
     subActivityName: item.sub_activity_name,
     activityType: item.activity_type,
     notes: item.notes,

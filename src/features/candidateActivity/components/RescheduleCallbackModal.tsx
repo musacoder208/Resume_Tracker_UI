@@ -7,9 +7,8 @@ import { toastService } from '@/components/ui/toast/toastService';
 import { CalendarPicker } from '@/features/candidate/interviewProcess/components/calendarPicker';
 import { TimePicker } from '@/features/candidate/interviewProcess/components/timePicker';
 import {
-  useGetActivityListQuery,
   useGetAlertListQuery,
-  useSaveCandidateActivityMutation,
+  useSaveCandidateActivityWithFollowUpMutation,
 } from '../api/candidateActivity.api';
 import type { CallbackRequestItem } from '../types/candidateActivity.types';
 import { parseNaiveDateTime } from '../utils/callbackDate';
@@ -18,8 +17,8 @@ interface RescheduleCallbackModalProps {
   /** The callback being rescheduled — the parent keys this modal by its id. */
   item: CallbackRequestItem;
   onClose: () => void;
-  /** Runs after the new callback activity is saved. */
-  onRescheduled: (item: CallbackRequestItem) => Promise<void> | void;
+  /** Runs after the follow-up is updated. */
+  onRescheduled?: (item: CallbackRequestItem) => Promise<void> | void;
 }
 
 export function RescheduleCallbackModal({
@@ -31,18 +30,12 @@ export function RescheduleCallbackModal({
   const current = item.callbackDate != null ? parseNaiveDateTime(item.callbackDate) : null;
   const [date, setDate] = useState(() => (current != null ? format(current, 'yyyy-MM-dd') : ''));
   const [time, setTime] = useState(() => (current != null ? format(current, 'HH:mm') : ''));
-  const [notes, setNotes] = useState(item.notes ?? '');
   const [alertId, setAlertId] = useState<number | null>(null);
   const [showErrors, setShowErrors] = useState(false);
 
   const { data: alerts = [], isLoading: isLoadingAlerts } = useGetAlertListQuery();
-  // The callback row has ids/names only — the save needs the activity code.
-  const { data: activities = [] } = useGetActivityListQuery();
-  const activityCode =
-    activities.find((a) => a.activityId === item.activityId)?.activityCode ??
-    activities.find((a) => a.activityName === item.activityName)?.activityCode ??
-    null;
-  const [saveCandidateActivity, { isLoading: isSaving }] = useSaveCandidateActivityMutation();
+  const [saveWithFollowUp, { isLoading: isSaving }] =
+    useSaveCandidateActivityWithFollowUpMutation();
 
   const alertOptions = useMemo(
     () => alerts.map((a) => ({ value: String(a.alertId), label: a.alertName })),
@@ -50,10 +43,6 @@ export function RescheduleCallbackModal({
   );
 
   async function handleSave(): Promise<void> {
-    if (activityCode == null) {
-      toastService.info('Activity details are still loading. Please try again.');
-      return;
-    }
     if (date === '' || time === '') {
       setShowErrors(true);
       toastService.info('Please select both a date and a time for the callback.');
@@ -61,20 +50,17 @@ export function RescheduleCallbackModal({
     }
 
     try {
-      // candidate_activity_id is null on purpose — rescheduling inserts a new
-      // callback activity instead of updating the existing one.
-      await saveCandidateActivity({
-        candidate_activity_id: null,
+      // Reschedule always updates the user's pending follow-up in place (no
+      // popup); the alert is kept when none is picked.
+      await saveWithFollowUp({
         candidate_id: item.candidateId,
-        activity_code: activityCode,
-        sub_activity_code: item.subActivityCode ?? undefined,
-        notes: notes.trim() === '' ? undefined : notes.trim(),
-        start_date: `${date}T${time}:00`,
         alert_id: alertId ?? undefined,
+        follow_up_date: `${date}T${time}:00`,
+        follow_up_action: 'UPDATE_EXISTING',
       }).unwrap();
 
       // Success/error toast handled by apiToastMiddleware.
-      await onRescheduled(item);
+      await onRescheduled?.(item);
       onClose();
     } catch {
       // error handled by apiToastMiddleware
@@ -147,17 +133,6 @@ export function RescheduleCallbackModal({
             options={alertOptions}
             placeholder="Select alert…"
             disabled={isLoadingAlerts}
-          />
-        </Field>
-
-        <Field label="Notes">
-          <textarea
-            value={notes}
-            onChange={(e) => {
-              setNotes(e.target.value);
-            }}
-            placeholder="Add any context about this callback…"
-            className="min-h-[64px] w-full resize-y rounded-lg border border-border-muted bg-surface-muted/40 p-3 text-xs text-text placeholder:text-text-muted"
           />
         </Field>
       </div>

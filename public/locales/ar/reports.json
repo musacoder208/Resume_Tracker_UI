@@ -1,0 +1,54 @@
+{
+  "title": "تقرير استخدام الذكاء الاصطناعي",
+  "unassigned": "غير مرتبط",
+  "deleted": "محذوف",
+  "unknownCandidate": "المرشح #{{id}}",
+  "stats": {
+    "totalJds": "إجمالي الأوصاف الوظيفية",
+    "totalCandidates": "إجمالي المرشحين",
+    "totalTokens": "إجمالي الرموز",
+    "totalCost": "إجمالي التكلفة"
+  },
+  "filters": {
+    "fromDate": "من تاريخ",
+    "toDate": "إلى تاريخ",
+    "jdName": "اسم الوصف الوظيفي",
+    "selectDate": "اختر التاريخ",
+    "allJds": "جميع الأوصاف الوظيفية",
+    "jdsSelected": "تم اختيار {{count}}"
+  },
+  "actions": {
+    "search": "بحث",
+    "clearFilters": "مسح",
+    "exportExcel": "تصدير Excel",
+    "exporting": "جارٍ التصدير…",
+    "close": "إغلاق"
+  },
+  "sections": {
+    "jdProcesses": "عمليات الوصف الوظيفي",
+    "candidates": "المرشحون ({{count}})"
+  },
+  "totals": {
+    "totalTokens": "إجمالي الرموز",
+    "totalCost": "إجمالي التكلفة"
+  },
+  "table": {
+    "srNo": "م",
+    "jdName": "اسم الوصف الوظيفي",
+    "createdDate": "تاريخ الإنشاء",
+    "candidates": "المرشحون",
+    "process": "العملية",
+    "candidateProcess": "المرشح / العملية",
+    "uploadedDate": "تاريخ الرفع",
+    "calls": "الطلبات",
+    "failed": "فاشلة",
+    "inputTokens": "رموز الإدخال",
+    "outputTokens": "رموز الإخراج",
+    "totalTokens": "إجمالي الرموز",
+    "cost": "التكلفة ($)"
+  },
+  "processLabels": {
+    "ai_evaluation": "تقييم الذكاء الاصطناعي",
+    "classify_capability_group": "تصنيف مجموعة القدرات"
+  }
+}

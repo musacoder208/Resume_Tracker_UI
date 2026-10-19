@@ -5,6 +5,8 @@ import type {
   Alert,
   SaveCandidateActivityRequest,
   SaveCandidateActivityResponse,
+  SaveCandidateActivityWithFollowUpRequest,
+  SaveCandidateActivityWithFollowUpResponse,
   SaveCandidateActivityHighlightRequest,
   SaveCandidateActivityHighlightResponse,
   GetCandidateActivityResult,
@@ -13,8 +15,10 @@ import type {
   GetCallbackRequestListParams,
   MarkCandidateActivityCompletedRequest,
   MarkCandidateActivityCompletedResponse,
+  PendingFollowUp,
 } from '../types/candidateActivity.types';
 import {
+  mapPendingFollowUpResponse,
   mapActivityListResponse,
   mapSubActivityListResponse,
   mapAlertListResponse,
@@ -53,6 +57,31 @@ export const candidateActivityApi = baseApi.injectEndpoints({
         body,
       }),
       invalidatesTags: ['CandidateActivity'],
+    }),
+
+    // New save: activity row and/or follow-up row in one call. Refreshes the
+    // history and My Action (both provide 'CandidateActivity').
+    saveCandidateActivityWithFollowUp: builder.mutation<
+      SaveCandidateActivityWithFollowUpResponse,
+      SaveCandidateActivityWithFollowUpRequest
+    >({
+      query: (body) => ({
+        url: 'candidate/saveCandidateActivityWithFollowUp',
+        method: 'POST',
+        body,
+      }),
+      invalidatesTags: ['CandidateActivity'],
+    }),
+
+    // Checked right before a follow-up save (always fresh) to decide between
+    // insert / update / asking the user. A query, so no success toast.
+    getPendingFollowUp: builder.query<PendingFollowUp | null, number>({
+      query: (candidateId) => ({
+        url: 'candidate/getPendingFollowUp',
+        params: { candidate_id: candidateId },
+      }),
+      transformResponse: mapPendingFollowUpResponse,
+      keepUnusedDataFor: 0,
     }),
 
     getCandidateActivity: builder.query<GetCandidateActivityResult, GetCandidateActivityParams>({
@@ -110,6 +139,8 @@ export const {
   useGetSubActivityListQuery,
   useGetAlertListQuery,
   useSaveCandidateActivityMutation,
+  useSaveCandidateActivityWithFollowUpMutation,
+  useLazyGetPendingFollowUpQuery,
   useGetCandidateActivityQuery,
   useSaveCandidateActivityHighlightMutation,
   useGetCallbackRequestListQuery,

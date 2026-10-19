@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, type JSX } from 'react';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import clsx from 'clsx';
 import { PageContainer } from '@/components/containers/PageContainer';
 import { Button } from '@/components/ui/button';
@@ -1722,7 +1722,11 @@ export function CandidateDetailsPage(): JSX.Element {
 
   const stateJdId = (location.state as { jdId?: number } | null)?.jdId ?? null;
 
-  const [activeTab, setActiveTab] = useState<DetailTab>('overview');
+  // ?tab=hrActivity opens the HR Activity tab directly (My Action → Log Activity)
+  const [searchParams] = useSearchParams();
+  const [activeTab, setActiveTab] = useState<DetailTab>(() =>
+    searchParams.get('tab') === 'hrActivity' ? 'hrActivity' : 'overview'
+  );
   const [updateCandidateScore, { isLoading: isCalculating }] = useUpdateCandidateScoreMutation();
 
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);

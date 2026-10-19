@@ -4,7 +4,7 @@ import { format } from 'date-fns';
 import { PageContainer } from '@/components/containers/PageContainer';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/ui/statusBadge';
-import { useConfirm } from '@/components/ui/confirm/ConfirmProvider';
+import { ConfirmModal } from '@/components/modals/ConfirmModal';
 import { DataGrid } from '@/components/datagrid/DataGrid';
 import { createInitialGridState } from '@/components/datagrid/types/grid.state';
 import type { GridState } from '@/components/datagrid/types/grid.state';
@@ -51,12 +51,15 @@ interface AppliedFilters {
 // The list opens on Pending callbacks; Reset returns to this.
 const DEFAULT_FILTERS: AppliedFilters = { statusCode: 'PENDING', startDate: '' };
 
+// Mark as Completed choice popup (Log Activity / Complete Only). Hidden for now:
+// set to true to show it again; while false the button opens HR Activity directly.
+const SHOW_COMPLETE_CHOICE_POPUP: boolean = false;
+
 // Extra dropdown option ahead of the master-data statuses — sends no status_code.
 const ALL_STATUSES_OPTION: ActivityStatusOption = { id: 0, name: 'All Statuses', code: 'ALL' };
 
 export function UserDashboardPage(): JSX.Element {
   const navigate = useNavigate();
-  const confirm = useConfirm();
 
   // Same flow as the JD list: pick filters, then Apply. Reset restores the defaults.
   // The status is held by code so the default applies before master data loads.
@@ -94,6 +97,8 @@ export function UserDashboardPage(): JSX.Element {
   const [markCompleted] = useMarkCandidateActivityCompletedMutation();
 
   const [completingId, setCompletingId] = useState<number | null>(null);
+  // Follow-up whose "Mark as Completed" choice dialog is open
+  const [completeChoiceItem, setCompleteChoiceItem] = useState<CallbackRequestItem | null>(null);
 
   const callbacks = useMemo(() => data?.callbacks ?? [], [data]);
   const totalCount = data?.pagination.totalCount ?? 0;
@@ -129,17 +134,27 @@ export function UserDashboardPage(): JSX.Element {
 
   // Success/error toasts handled by apiToastMiddleware; the current page refetches
   // via the 'CandidateActivity' tag, so the row and count update on their own.
-  async function handleMarkCompleted(item: CallbackRequestItem): Promise<void> {
-    const ok = await confirm({
-      title: 'Mark this activity as completed?',
-      description: `The ${item.subActivityName} for ${item.fullName} will be marked as completed.`,
-      confirmText: 'Mark Completed',
-      cancelText: 'Cancel',
-      variant: 'info',
-      hideShortcutHint: true,
-    });
-    if (!ok) return;
+  // "Log Activity": open the candidate's HR Activity tab, where the save also
+  // completes this follow-up.
+  function handleLogActivity(item: CallbackRequestItem): void {
+    setCompleteChoiceItem(null);
+    void navigate(
+      `/candidate/${item.candidateId}?tab=hrActivity&completeFollowUp=${item.candidateActivityId}`
+    );
+  }
 
+  // Mark as Completed: with the choice popup hidden, go straight to HR Activity.
+  function handleMarkCompletedClick(item: CallbackRequestItem): void {
+    if (SHOW_COMPLETE_CHOICE_POPUP) {
+      setCompleteChoiceItem(item);
+    } else {
+      handleLogActivity(item);
+    }
+  }
+
+  // "Complete Only": mark the follow-up completed without logging an activity.
+  async function handleMarkCompleted(item: CallbackRequestItem): Promise<void> {
+    setCompleteChoiceItem(null);
     setCompletingId(item.candidateActivityId);
     try {
       await markCompleted({ candidate_activity_id: item.candidateActivityId }).unwrap();
@@ -280,7 +295,7 @@ export function UserDashboardPage(): JSX.Element {
                   )
                 }
                 onClick={() => {
-                  void handleMarkCompleted(item);
+                  handleMarkCompletedClick(item);
                 }}
               />
             ) : isCallbackCompleted(item) ? (
@@ -443,6 +458,30 @@ export function UserDashboardPage(): JSX.Element {
           />
         )}
       </div>
+
+      {/* Mark as Completed: log an activity for it, or just complete it. X = nothing.
+          Hidden for now (SHOW_COMPLETE_CHOICE_POPUP) — the button goes straight to HR Activity. */}
+      <ConfirmModal
+        open={SHOW_COMPLETE_CHOICE_POPUP && completeChoiceItem != null}
+        onClose={() => {
+          setCompleteChoiceItem(null);
+        }}
+        onCancel={() => {
+          if (completeChoiceItem != null) void handleMarkCompleted(completeChoiceItem);
+        }}
+        onConfirm={() => {
+          if (completeChoiceItem != null) handleLogActivity(completeChoiceItem);
+        }}
+        title="Complete this follow-up?"
+        message={
+          completeChoiceItem != null
+            ? `The ${completeChoiceItem.subActivityName} for ${completeChoiceItem.fullName} will be marked as completed.`
+            : ''
+        }
+        question="Log an activity for this follow-up (e.g. the call outcome), or complete it without one?"
+        cancelLabel="Complete Only"
+        confirmLabel="Log Activity"
+      />
     </PageContainer>
   );
 }

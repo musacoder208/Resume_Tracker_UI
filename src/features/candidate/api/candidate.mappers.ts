@@ -124,6 +124,10 @@ export const mapCandidateListResponse = (raw: RawCandidateListResponse): Candida
     hrStatusLabel: item.hr_status_label,
     statusCode: item.status_code,
     statusName: item.status_name,
+    // pg bigint → string
+    followUpId: item.follow_up_id != null ? Number(item.follow_up_id) : null,
+    followUpDate: item.follow_up_date ?? null,
+    isFollowUpOverdue: item.is_follow_up_overdue ?? false,
   })),
   pagination: raw.data.pagination != null ? {
     totalCount: raw.data.pagination.total_count,
