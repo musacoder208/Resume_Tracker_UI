@@ -25,9 +25,15 @@
     "close": "Close"
   },
   "sections": {
+    "jds": "JDs",
     "jdProcesses": "JD Processes",
     "candidates": "Candidates ({{count}})"
   },
+  "export": {
+    "jdsFile": "JDs",
+    "jdProcessesFile": "JD Processes - {{jdName}}",
+    "candidatesFile": "Candidates - {{jdName}}",
+    "candidatesSheet": "Candidates"  },
   "totals": {
     "totalTokens": "Total Tokens",
     "totalCost": "Total Cost"
@@ -39,6 +45,9 @@
     "candidates": "Candidates",
     "process": "Process",
     "candidateProcess": "Candidate / Process",
+    "candidate": "Candidate",
+    "mainProcess": "Main Process",
+    "subProcess": "Sub-Process",
     "uploadedDate": "Uploaded Date",
     "calls": "Calls",
     "failed": "Failed",

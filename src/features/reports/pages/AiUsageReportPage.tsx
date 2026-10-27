@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type JSX } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type JSX } from 'react';
 import { PageContainer } from '@/components/containers/PageContainer';
 import { StatCard } from '@/components/ui/statCard';
 import { IconButton } from '@/components/ui/button';
@@ -97,6 +97,11 @@ export function AiUsageReportPage(): JSX.Element {
   // JD whose processes + candidates are shown below the JD grid
   const [selectedJd, setSelectedJd] = useState<SelectedAiUsageJd | null>(initial.selectedJd);
 
+  // Bumped on each JD name click so the details section scrolls into view
+  // (not on mount, when the JD is only restored from sessionStorage)
+  const detailsRef = useRef<HTMLElement>(null);
+  const [scrollRequest, setScrollRequest] = useState(0);
+
   const { data: jdOptions } = useGetAiUsageJdOptionsQuery();
   const selectedJds = useMemo<AiUsageJdOption[]>(
     () => (jdOptions ?? []).filter((o) => selectedJdIds.includes(o.jdId)),
@@ -158,7 +163,13 @@ export function AiUsageReportPage(): JSX.Element {
 
   const handleSelectJd = useCallback((jd: SelectedAiUsageJd): void => {
     setSelectedJd(jd);
+    setScrollRequest((n) => n + 1);
   }, []);
+
+  useEffect(() => {
+    if (scrollRequest === 0) return;
+    detailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [scrollRequest]);
 
   const detailParams = useMemo<AiUsageJdDetailParams | null>(() => {
     if (activeJd == null) return null;
@@ -225,7 +236,7 @@ export function AiUsageReportPage(): JSX.Element {
 
         {/* JD details */}
         {activeJd != null && detailParams != null && (
-          <section className="flex flex-col gap-4">
+          <section ref={detailsRef} className="flex flex-col gap-4">
             <div className="flex items-center justify-between gap-2">
               <h2 className="text-sm font-semibold text-text">{activeJd.jdName}</h2>
               <IconButton
@@ -235,8 +246,8 @@ export function AiUsageReportPage(): JSX.Element {
                 onClick={() => { setSelectedJd(null); }}
               />
             </div>
-            <JdProcessGrid key={`p|${detailKey}`} params={detailParams} />
-            <CandidateUsageGrid key={`c|${detailKey}`} params={detailParams} />
+            <JdProcessGrid key={`p|${detailKey}`} params={detailParams} jdName={activeJd.jdName} />
+            <CandidateUsageGrid key={`c|${detailKey}`} params={detailParams} jdName={activeJd.jdName} />
           </section>
         )}
 

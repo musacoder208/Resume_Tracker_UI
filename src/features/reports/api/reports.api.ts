@@ -93,5 +93,6 @@ export const {
   useLazyGetAiUsageJdsQuery,
   useGetAiUsageJdProcessesQuery,
   useGetAiUsageJdCandidatesQuery,
+  useLazyGetAiUsageJdCandidatesQuery,
   useExportAiUsageMutation,
 } = aiUsageApi;

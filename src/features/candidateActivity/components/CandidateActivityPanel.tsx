@@ -2,7 +2,7 @@ import { useMemo, useState, type JSX } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { addDays, format, setHours, setMinutes, startOfDay } from 'date-fns';
 import clsx from 'clsx';
-import { env } from '@/config/env';
+import { DEFAULT_CALL_TOMORROW_TIME, useGetAppSettingsQuery } from '@/services/appSettings.api';
 import { Button, IconButton } from '@/components/ui/button';
 import { AutocompleteSelect } from '@/components/ui/autocompleteSelect';
 import { Textarea } from '@/components/ui/textarea';
@@ -71,8 +71,8 @@ function parseNaiveDateTime(value: string): Date {
   return new Date(value.replace(/Z$|[+-]\d{2}:?\d{2}$/i, ''));
 }
 
-// Tomorrow at the configured "HH:mm" time (VITE_CALL_TOMORROW_TIME), falling
-// back to 09:30 if the env value is malformed.
+// Tomorrow at the configured "HH:mm" time (backend VITE_CALL_TOMORROW_TIME via
+// common/app-settings), falling back to 09:30 if the value is malformed.
 function getCallTomorrowDate(time: string): Date {
   const match = /^(\d{1,2}):(\d{2})$/.exec(time.trim());
   const hours = match != null ? Number(match[1]) : 9;
@@ -196,6 +196,9 @@ export function CandidateActivityPanel({ candidateId }: { candidateId: number })
 
   const { data: activities = [], isLoading: isLoadingActivities } = useGetActivityListQuery();
   const { data: alerts = [], isLoading: isLoadingAlerts } = useGetAlertListQuery();
+  // "Call Tomorrow" time comes from the backend .env (VITE_CALL_TOMORROW_TIME)
+  const { data: appSettings } = useGetAppSettingsQuery();
+  const callTomorrowTime = appSettings?.callTomorrowTime ?? DEFAULT_CALL_TOMORROW_TIME;
 
   const selectedAlert = alerts.find((a) => a.alertId === selectedAlertId) ?? null;
 
@@ -417,7 +420,7 @@ export function CandidateActivityPanel({ candidateId }: { candidateId: number })
     await submitWithFollowUpCheck({
       candidate_id: candidateId,
       alert_id: selectedAlert?.alertId,
-      follow_up_date: toNaiveDateTimeString(getCallTomorrowDate(env.CALL_TOMORROW_TIME)),
+      follow_up_date: toNaiveDateTimeString(getCallTomorrowDate(callTomorrowTime)),
     });
   }
 
@@ -812,7 +815,7 @@ export function CandidateActivityPanel({ candidateId }: { candidateId: number })
                     void saveCallTomorrow();
                   }}
                   disabled={isSaving}
-                  title={t('activityPanel.actions.callTomorrowTitle', { time: env.CALL_TOMORROW_TIME })}
+                  title={t('activityPanel.actions.callTomorrowTitle', { time: callTomorrowTime })}
                   className="self-start px-0 font-medium text-primary underline underline-offset-2 hover:text-primary-hover"
                 >
                   {t('activityPanel.actions.callTomorrow')}

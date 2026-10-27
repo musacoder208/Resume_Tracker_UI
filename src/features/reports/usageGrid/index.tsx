@@ -4,6 +4,8 @@ import type { TFunction } from 'i18next';
 import clsx from 'clsx';
 import { GridExpandButton } from '@/components/datagrid/helpers/GridExpandButton';
 import { gridTheme } from '@/components/datagrid/theme/gridTheme';
+import { Button } from '@/components/ui/button';
+import { ArrowDownTrayIcon } from '@/icons';
 import { depthIndentClass, formatCost, formatTokens } from './usageGrid.utils';
 
 // ── Tree name cell ────────────────────────────────────────────────────────────
@@ -53,6 +55,47 @@ export function UsageTotalsLine({ t, totalTokens, totalCost }: UsageTotalsLinePr
       {t('totals.totalTokens')} : <b className={gridTheme.paginationStatsValue}>{formatTokens(totalTokens)}</b>
       <span className={gridTheme.paginationStatsDivider}>|</span>
       {t('totals.totalCost')} : <b className={gridTheme.paginationStatsValue}>{formatCost(totalCost)}</b>
+    </div>
+  );
+}
+
+// ── Grid header: title on the left, totals + Export Excel button on the right ──
+
+interface UsageGridHeaderProps {
+  t: TFunction;
+  title: string;
+  /** Omit to hide the totals line */
+  totals?: { totalTokens: number; totalCost: number };
+  onExport: () => void;
+  exporting?: boolean;
+  exportDisabled?: boolean;
+}
+
+export function UsageGridHeader({
+  t,
+  title,
+  totals,
+  onExport,
+  exporting = false,
+  exportDisabled = false,
+}: UsageGridHeaderProps): JSX.Element {
+  return (
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <h3 className="text-sm font-semibold text-text">{title}</h3>
+      <div className="flex flex-wrap items-center gap-3">
+        {totals != null && (
+          <UsageTotalsLine t={t} totalTokens={totals.totalTokens} totalCost={totals.totalCost} />
+        )}
+        <Button
+          variant="secondary"
+          size="sm"
+          leadingIcon={<ArrowDownTrayIcon className="h-4 w-4" />}
+          onClick={onExport}
+          disabled={exportDisabled || exporting}
+        >
+          {exporting ? t('actions.exporting') : t('actions.exportExcel')}
+        </Button>
+      </div>
     </div>
   );
 }

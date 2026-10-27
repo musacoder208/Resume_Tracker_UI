@@ -25,9 +25,15 @@
     "close": "إغلاق"
   },
   "sections": {
+    "jds": "الأوصاف الوظيفية",
     "jdProcesses": "عمليات الوصف الوظيفي",
     "candidates": "المرشحون ({{count}})"
   },
+  "export": {
+    "jdsFile": "الأوصاف الوظيفية",
+    "jdProcessesFile": "عمليات الوصف الوظيفي - {{jdName}}",
+    "candidatesFile": "المرشحون - {{jdName}}",
+    "candidatesSheet": "المرشحون"  },
   "totals": {
     "totalTokens": "إجمالي الرموز",
     "totalCost": "إجمالي التكلفة"
@@ -39,6 +45,9 @@
     "candidates": "المرشحون",
     "process": "العملية",
     "candidateProcess": "المرشح / العملية",
+    "candidate": "المرشح",
+    "mainProcess": "العملية الرئيسية",
+    "subProcess": "العملية الفرعية",
     "uploadedDate": "تاريخ الرفع",
     "calls": "الطلبات",
     "failed": "فاشلة",

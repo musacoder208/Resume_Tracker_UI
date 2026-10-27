@@ -7,6 +7,9 @@ import { Button } from '@/components/ui/button';
 import { useT } from '@/i18n/useT';
 import { formatDate } from '@/utils/formatters';
 import type { AiUsageJdRow, SelectedAiUsageJd } from '../types/reports.types';
+import { exportToExcel } from '@/utils/exportToExcel';
+import { UsageGridHeader } from '../usageGrid';
+import { flattenJdRows, jdExportColumns } from '../usageGrid/usageGrid.export';
 import { formatTokens } from '../usageGrid/usageGrid.utils';
 import { usageColumns } from '../usageGrid/usageGrid.columns';
 
@@ -25,6 +28,22 @@ export function JdUsageGrid({ data, loading, error, selectedJd, onSelectJd }: Jd
   const [gridState, setGridState] = useState<GridState>(() =>
     createInitialGridState({ pagination: { pageIndex: 0, pageSize: 50 } })
   );
+  const [isExporting, setIsExporting] = useState(false);
+
+  // This grid's own export — the JD rows shown, with a Grand Total row
+  async function handleExportExcel(): Promise<void> {
+    setIsExporting(true);
+    try {
+      await exportToExcel({
+        fileName: t('export.jdsFile'),
+        sheetName: t('sections.jds'),
+        columns: jdExportColumns(t),
+        rows: flattenJdRows(t, data),
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  }
 
   const columns = useMemo<GridColumnDef<AiUsageJdRow>[]>(() => [
     {
@@ -77,17 +96,26 @@ export function JdUsageGrid({ data, loading, error, selectedJd, onSelectJd }: Jd
   const selectedKey = selectedJd != null ? jdRowKey(selectedJd.jdId) : null;
 
   return (
-    <DataGrid<AiUsageJdRow>
-      data={data}
-      columns={columns}
-      totalRows={data.length}
-      state={gridState}
-      onStateChange={setGridState}
-      rowId={(row) => jdRowKey(row.jdId)}
-      loading={loading}
-      error={error}
-      layout={{ widthMode: 'fit', height: 'auto' }}
-      getRowClassName={(row) => (jdRowKey(row.jdId) === selectedKey ? 'bg-primary-subtle' : undefined)}
-    />
+    <div className="flex flex-col gap-2">
+      <UsageGridHeader
+        t={t}
+        title={t('sections.jds')}
+        onExport={() => { void handleExportExcel(); }}
+        exporting={isExporting}
+        exportDisabled={loading || data.length === 0}
+      />
+      <DataGrid<AiUsageJdRow>
+        data={data}
+        columns={columns}
+        totalRows={data.length}
+        state={gridState}
+        onStateChange={setGridState}
+        rowId={(row) => jdRowKey(row.jdId)}
+        loading={loading}
+        error={error}
+        layout={{ widthMode: 'fit', height: 'auto' }}
+        getRowClassName={(row) => (jdRowKey(row.jdId) === selectedKey ? 'bg-primary-subtle' : undefined)}
+      />
+    </div>
   );
 }
