@@ -142,6 +142,9 @@
   --layout-field-height: 30px;
   --layout-field-height-sm: 29px;
   --layout-modal-preview-max-height: 60vh;
+  /* Chat Assistant: list + conversation fill the viewport below the page title */
+  --layout-chat-panel-height: calc(100vh - 190px);
+  --layout-chat-panel-min-height: 480px;
 }
 
 body {

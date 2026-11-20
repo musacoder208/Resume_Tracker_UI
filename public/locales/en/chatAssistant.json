@@ -1,0 +1,91 @@
+{
+  "title": "Chat Assistant",
+  "subtitle": "Ask questions about your candidates, JDs and reports",
+  "sessions": {
+    "newChat": "New chat",
+    "showChats": "Chats",
+    "hideChats": "Hide chats",
+    "empty": "No chats yet. Ask your first question.",
+    "loadError": "Couldn't load your chats.",
+    "groups": {
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "previous7Days": "Previous 7 days",
+      "older": "Older"
+    }
+  },
+  "welcome": {
+    "greeting": "Hi {{name}}, how can I help?",
+    "greetingNoName": "Hi, how can I help?",
+    "description": "Ask anything about your candidates, JDs, activity and AI usage.",
+    "suggestions": {
+      "uploadedToday": "How many candidates did I upload today?",
+      "aiCost": "AI usage cost this month",
+      "shortlisted": "Shortlisted candidates for Java Developer",
+      "followUps": "Follow-ups due this week"
+    }
+  },
+  "composer": {
+    "label": "Your question",
+    "placeholder": "Ask anything about your reports…",
+    "send": "Send",
+    "stop": "Stop",
+    "hint": "Enter to send · Shift + Enter for a new line",
+    "hintRunning": "Waiting for the answer… Stop to ask something else",
+    "hintWaiting": "A new question here will replace the question above"
+  },
+  "status": {
+    "thinking": "Thinking…"
+  },
+  "card": {
+    "send": "Send",
+    "cancel": "Cancel question",
+    "yes": "Yes",
+    "no": "No, change it",
+    "changeLabel": "What should I change?",
+    "changePlaceholder": "e.g. only the last 7 days",
+    "noneOfTheseLabel": "None of these? Type your own:",
+    "noneOfThesePlaceholder": "Type your answer…",
+    "clarifyPlaceholder": "Type your answer…"
+  },
+  "reply": {
+    "yes": "Yes",
+    "no": "No",
+    "all": "All",
+    "cancel": "Cancel"
+  },
+  "answer": {
+    "rowsShown": "Showing {{shown}} of {{total}} rows",
+    "truncated": "Only the first {{shown}} rows were returned.",
+    "howCalculated": "How it was calculated",
+    "hideHowCalculated": "Hide calculation",
+    "exportExcel": "Export Excel",
+    "exporting": "Exporting…",
+    "exportFileName": "Chat_Result_{{date}}",
+    "exportSheetName": "Result"
+  },
+  "details": {
+    "show": "Show details",
+    "hide": "Hide details",
+    "reason": "Why the question was changed",
+    "assumptions": "Assumptions",
+    "notes": "Notes"
+  },
+  "errors": {
+    "generic": "Couldn't get the answer right now.",
+    "SESSION_NOT_FOUND": "This chat has expired. Start a new chat to continue.",
+    "QUESTION_NOT_OPEN": "This question was already answered or replaced by a newer one.",
+    "QUESTION_EXPIRED": "This question expired (no reply within 30 minutes). Ask it again.",
+    "TEXT_REQUIRED": "Please type your answer and send again.",
+    "INVALID_SELECTION": "That option is no longer valid. Ask the question again.",
+    "QUESTION_REQUIRED": "The question is empty.",
+    "ENGINE_ERROR": "The answer could not be created. Try asking again.",
+    "chatNotFound": "This chat could not be loaded.",
+    "stopped": "You stopped waiting. If the answer finishes, it will appear when you reopen this chat."
+  },
+  "cancelled": "Question cancelled.",
+  "actions": {
+    "askAgain": "Ask again",
+    "newChat": "New chat"
+  }
+}

@@ -73,6 +73,8 @@ export {
   BuildingOfficeIcon,
   ArrowPathIcon,
   ArrowTopRightOnSquareIcon,
+  ChatBubbleLeftRightIcon,
+  StopIcon,
 } from '@heroicons/react/24/outline';
 
 export { WavingHandIcon } from './svg';

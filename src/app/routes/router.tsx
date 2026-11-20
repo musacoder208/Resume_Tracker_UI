@@ -13,6 +13,7 @@ import { CandidateSearchPage } from '@/features/candidate/pages/CandidateSearchP
 import { AddCandidatePage } from '@/features/candidate/pages/AddCandidatePage';
 import { CandidateDetailsPage } from '@/features/candidate/pages/CandidateDetailsPage';
 import { AiUsageReportPage } from '@/features/reports/pages/AiUsageReportPage';
+import { ChatAssistantPage } from '@/features/chatAssistant/pages/ChatAssistantPage';
 //import { env } from '@/config/env';
 
 export const router = createBrowserRouter(
@@ -70,6 +71,14 @@ export const router = createBrowserRouter(
         {
           path: '/reports/ai-usage',
           element: <AiUsageReportPage />,
+        },
+        {
+          path: '/assistant',
+          element: <ChatAssistantPage />,
+        },
+        {
+          path: '/assistant/:sessionId',
+          element: <ChatAssistantPage />,
         },
         {
           path: '*',

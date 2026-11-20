@@ -8,6 +8,7 @@ import {
   UsersIcon,
   Squares2X2Icon,
   ChartBarIcon,
+  ChatBubbleLeftRightIcon,
 } from '@/icons';
 
 const routeIconMap: Record<string, ComponentType<{ className?: string }>> = {
@@ -17,6 +18,7 @@ const routeIconMap: Record<string, ComponentType<{ className?: string }>> = {
   '/jd':              DocumentTextIcon,
   '/candidate':       UsersIcon,
   '/reports/ai-usage': ChartBarIcon,
+  '/assistant':       ChatBubbleLeftRightIcon,
 };
 
 export function buildMenuFromPageAccess(pageAccess: PageAccess[]): MenuItem[] {
