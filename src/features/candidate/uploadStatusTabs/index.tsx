@@ -1,7 +1,9 @@
-import { useState, useEffect, type JSX } from 'react';
+import { useState, type JSX } from 'react';
 import clsx from 'clsx';
 import { useT } from '@/i18n/useT';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Pagination } from '@/components/ui/pagination';
 import { InboxArrowDownIcon, EyeIcon, XMarkIcon, DocumentTextIcon } from '@/icons';
 import { env } from '@/config/env';
 import { CandidateCardSkeleton } from '@/components/ui/loader';
@@ -12,7 +14,17 @@ import type {
 } from '../types/candidate.types';
 
 interface UploadStatusTabsProps {
+  /** One page of the active tab (server-side paginated) */
   data: UploadStatusResult | null;
+  activeTab: CandidateTab;
+  onTabChange: (tab: CandidateTab) => void;
+  pageSize: number;
+  pageSizeOptions: readonly number[];
+  onPageChange: (page: number) => void;
+  onPageSizeChange: (pageSize: number) => void;
+  /** Selected candidate ids — kept by the parent across pages */
+  selectedIds: Set<number>;
+  onSelectionChange: (ids: Set<number>) => void;
   isRefreshing: boolean;
   isSaving?: boolean;
   onRefresh: () => void;
@@ -47,11 +59,9 @@ const STATUS_BADGE_CLASSES: Record<CandidateTab, string> = {
 
 const SKELETON_COUNT = 3;
 
-// Order rows by upload sequence — newest first; candidate_id breaks ties for
-// rows saved in the same instant.
-function byUploadSequence(a: UploadStatusCandidate, b: UploadStatusCandidate): number {
-  const timeDiff = new Date(b.createdDate).getTime() - new Date(a.createdDate).getTime();
-  return timeDiff !== 0 ? timeDiff : b.candidateId - a.candidateId;
+// Only score_pending candidates can still be selected and sent to Start Scoring.
+function isScorePending(candidate: UploadStatusCandidate): boolean {
+  return candidate.uploadStatus === 'complete' && candidate.statusCode === 'score_pending';
 }
 
 // ── Checkbox config per candidate ─────────────────────────────────────────────
@@ -70,7 +80,6 @@ function getCheckboxConfig(
     // Only score_pending candidates can still be scored. Every other status —
     // ready, shortlisted, in interview process, selected, rejected, … — is
     // locked the same way as ready: always checked + green + disabled.
-    // (Start Scoring only ever sends score_pending rows, see pendingSelectedIds.)
     if (candidate.statusCode !== 'score_pending') {
       return {
         checked: true,
@@ -213,73 +222,75 @@ function StatusCard({
 
 export function UploadStatusTabs({
   data,
+  activeTab,
+  onTabChange,
+  pageSize,
+  pageSizeOptions,
+  onPageChange,
+  onPageSizeChange,
+  selectedIds,
+  onSelectionChange,
   isRefreshing,
   isSaving = false,
   onRefresh,
   onSaveAndScore,
 }: UploadStatusTabsProps): JSX.Element {
   const { t } = useT('candidate');
-  const [activeTab, setActiveTab] = useState<CandidateTab>('success');
   const [previewCandidate, setPreviewCandidate] = useState<{ id: number; name: string } | null>(
     null
   );
 
-  // candidateIds that are checked (managed for editable rows)
-  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
-
-  // On every refresh, reset selection:
-  //   - complete (ready + score_pending) → pre-selected by default
-  //     (ready stays forced/disabled; score_pending stays editable — the
-  //     user can uncheck individual ones, but nothing is sent unless it's
-  //     both score_pending AND checked, see pendingSelectedIds below)
-  //   - incomplete / duplicate           → unchecked
-  useEffect(() => {
-    if (data == null) return;
-
-    const initial = new Set<number>();
-    data.complete.forEach((c) => {
-      initial.add(c.candidateId);
-    });
-    setSelectedIds(initial);
-
-    // Auto-switch to the first tab that has results
-    if (data.complete.length > 0) setActiveTab('success');
-    else if (data.duplicate.length > 0 || data.batchDuplicate.length > 0)
-      setActiveTab('duplicate');
-    else setActiveTab('incomplete');
-  }, [data]);
-
   function toggleCandidate(candidateId: number): void {
-    setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(candidateId)) next.delete(candidateId);
-      else next.add(candidateId);
-      return next;
-    });
+    const next = new Set(selectedIds);
+    if (next.has(candidateId)) next.delete(candidateId);
+    else next.add(candidateId);
+    onSelectionChange(next);
   }
 
-  const tabCandidates: Record<CandidateTab, UploadStatusCandidate[]> = {
-    success: data?.complete ?? [],
-    // DB duplicates + duplicates within the same batch, in upload sequence.
-    duplicate: [...(data?.duplicate ?? []), ...(data?.batchDuplicate ?? [])].sort(
-      byUploadSequence
-    ),
-    incomplete: data?.incomplete ?? [],
+  // The rows of the current page (the server already filtered by tab).
+  const currentList = data?.rows ?? [];
+
+  const tabCounts: Record<CandidateTab, number> = {
+    success: data?.counts.success ?? 0,
+    duplicate: data?.counts.duplicate ?? 0,
+    incomplete: data?.counts.incomplete ?? 0,
   };
 
-  const currentList = tabCandidates[activeTab];
+  // Select All works on the score_pending rows of the CURRENT page only.
+  // Selections on other pages are kept as they are.
+  const pagePendingIds =
+    activeTab === 'success' ? currentList.filter(isScorePending).map((c) => c.candidateId) : [];
+  const selectedOnPage = pagePendingIds.filter((id) => selectedIds.has(id)).length;
+  const isPageAllSelected = pagePendingIds.length > 0 && selectedOnPage === pagePendingIds.length;
+  const isPagePartlySelected = selectedOnPage > 0 && !isPageAllSelected;
 
-  // Only score_pending candidates actually need scoring — every other status
-  // (ready, shortlisted, in interview process, selected, rejected, …) is
-  // forced-checked (see getCheckboxConfig) so they'd otherwise still show up
-  // in selectedIds, but they must never be sent to Start Scoring.
-  const pendingSelectedIds = (data?.complete ?? [])
-    .filter((c) => c.statusCode === 'score_pending' && selectedIds.has(c.candidateId))
-    .map((c) => c.candidateId);
+  function togglePageSelection(): void {
+    const next = new Set(selectedIds);
+    pagePendingIds.forEach((id) => {
+      if (isPageAllSelected) next.delete(id);
+      else next.add(id);
+    });
+    onSelectionChange(next);
+  }
 
-  // Enable "Start Scoring" only when at least one score_pending candidate
-  // in the success tab is checked by the user.
-  const hasSelectedPending = pendingSelectedIds.length > 0;
+  // Only score_pending rows are selectable, so every selected id is sent.
+  const hasSelection = selectedIds.size > 0;
+  const isScoreDisabled = !hasSelection || isSaving || isRefreshing;
+
+  function renderStartScoring(): JSX.Element {
+    return (
+      <Button
+        variant="primary"
+        size="sm"
+        disabled={isScoreDisabled}
+        onClick={() => {
+          onSaveAndScore(Array.from(selectedIds));
+        }}
+      >
+        {isSaving ? t('actions.processing') : t('actions.startScoring')}
+      </Button>
+    );
+  }
 
   function renderContent(): JSX.Element {
     if (isRefreshing) {
@@ -320,6 +331,8 @@ export function UploadStatusTabs({
     );
   }
 
+  const showTopToolbar = activeTab === 'success' && data != null && currentList.length > 0;
+
   return (
     <div className="flex flex-col rounded-xl border border-border bg-surface shadow-sm">
       {/* Tab bar + Refresh button */}
@@ -327,13 +340,13 @@ export function UploadStatusTabs({
         <div className="flex px-2">
           {TABS.map(({ key, labelKey }) => {
             const isActive = activeTab === key;
-            const count = tabCandidates[key].length;
+            const count = tabCounts[key];
             return (
               <button
                 key={key}
                 type="button"
                 onClick={() => {
-                  setActiveTab(key);
+                  onTabChange(key);
                 }}
                 className={clsx(
                   'relative flex items-center gap-2 border-b-2 px-5 py-4 text-xs font-semibold transition-colors',
@@ -361,21 +374,58 @@ export function UploadStatusTabs({
         </Button>
       </div>
 
+      {/* Top action bar — Select All (current page) + Start Scoring */}
+      {showTopToolbar && (
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border-muted bg-surface-muted/40 px-5 py-3">
+          <div className="flex flex-wrap items-center gap-4">
+            <Checkbox
+              label={t('results.selectAllPage')}
+              checked={isPageAllSelected}
+              indeterminate={isPagePartlySelected}
+              disabled={pagePendingIds.length === 0 || isRefreshing}
+              onChange={togglePageSelection}
+            />
+            <span className="text-xs text-text-muted">
+              {t('results.selectedCount', { count: selectedIds.size })}
+            </span>
+            {hasSelection && (
+              <Button
+                variant="outline"
+                size="xs"
+                onClick={() => {
+                  onSelectionChange(new Set());
+                }}
+              >
+                {t('results.clearSelection')}
+              </Button>
+            )}
+          </div>
+          {renderStartScoring()}
+        </div>
+      )}
+
       {/* Card list */}
       <div className="min-h-[320px] overflow-y-auto px-5">{renderContent()}</div>
 
-      {/* Bottom action bar */}
-      <div className="flex items-center justify-end border-t border-border px-5 py-4">
-        <Button
-          variant="primary"
-          size="sm"
-          disabled={!hasSelectedPending || isSaving || isRefreshing}
-          onClick={() => {
-            onSaveAndScore(pendingSelectedIds);
-          }}
-        >
-          {isSaving ? t('actions.processing') : t('actions.startScoring')}
-        </Button>
+      {/* Bottom action bar — pagination + Start Scoring */}
+      <div className="flex flex-col gap-3 border-t border-border px-5 py-4 md:flex-row md:items-center md:justify-between">
+        {data != null ? (
+          <Pagination
+            className="flex-1"
+            // The server's page — it moves an out-of-range page back to the
+            // last one (e.g. after scoring emptied it).
+            page={data.pagination.page}
+            pageSize={pageSize}
+            totalCount={data.pagination.totalCount}
+            pageSizeOptions={pageSizeOptions}
+            onPageChange={onPageChange}
+            onPageSizeChange={onPageSizeChange}
+            disabled={isRefreshing}
+          />
+        ) : (
+          <span />
+        )}
+        <div className="flex justify-end">{renderStartScoring()}</div>
       </div>
 
       {/* Resume preview — right-side drawer */}

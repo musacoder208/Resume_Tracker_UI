@@ -155,7 +155,10 @@
     "emptyHint": "Upload resumes to see results here",
     "unsavedNote": "Extracted candidates are not yet saved. Choose to save candidates or save and start AI scoring.",
     "selectAll": "Select All",
-    "selected": "selected"
+    "selected": "selected",
+    "selectAllPage": "Select all on this page",
+    "selectedCount": "{{count}} selected",
+    "clearSelection": "Clear selection"
   },
   "status": {
     "pending": "Pending",

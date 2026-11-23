@@ -438,18 +438,33 @@ export interface RawUploadStatusCandidate {
   created_date: string;
 }
 
+// Counts across all tabs for the JD (tab badges + Processing Summary).
+// `duplicate` already includes batch duplicates.
+export interface RawUploadStatusCounts {
+  total: number;
+  success: number;
+  duplicate: number;
+  incomplete: number;
+}
+
+// mechsoft.fn_get_upload_status_by_jd(jd_id, tab, page, page_size) — one page of
+// the requested tab. The Duplicate tab returns `duplicate` + `batch_duplicate` rows.
 export interface RawUploadStatusResponse {
   success: boolean;
   code: string;
   message: string;
   data: {
-    complete: RawUploadStatusCandidate[];
-    duplicate: RawUploadStatusCandidate[];
-    // Duplicates within the same upload batch (vs. `duplicate` = already in the DB).
-    // Shown together with `duplicate` in the Duplicate tab.
-    batch_duplicate?: RawUploadStatusCandidate[];
-    incomplete: RawUploadStatusCandidate[];
+    rows: RawUploadStatusCandidate[];
+    pagination: RawPagination;
+    counts: RawUploadStatusCounts;
   };
+}
+
+export interface UploadStatusParams {
+  jdId: number;
+  tab: CandidateTab;
+  page: number;
+  pageSize: number;
 }
 
 export interface UploadStatusCandidate {
@@ -467,10 +482,9 @@ export interface UploadStatusCandidate {
 }
 
 export interface UploadStatusResult {
-  complete: UploadStatusCandidate[];
-  duplicate: UploadStatusCandidate[];
-  batchDuplicate: UploadStatusCandidate[];
-  incomplete: UploadStatusCandidate[];
+  rows: UploadStatusCandidate[];
+  pagination: Pagination;
+  counts: ProcessingSummary;
 }
 
 // ── Candidate Detail Domain Types ─────────────────────────────────────────────

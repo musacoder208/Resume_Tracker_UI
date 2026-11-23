@@ -35,6 +35,7 @@
     "failedToLoad": "فشل تحميل البيانات",
     "previousPage": "الصفحة السابقة",
     "nextPage": "الصفحة التالية",
+    "rowsPerPage": "حجم الصفحة",
     "filter": {
       "placeholder": "تصفية…",
       "contains": "يحتوي",

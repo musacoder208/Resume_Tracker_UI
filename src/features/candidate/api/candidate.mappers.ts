@@ -138,13 +138,13 @@ export const mapCandidateListResponse = (raw: RawCandidateListResponse): Candida
 });
 
 export const mapUploadStatusResponse = (raw: RawUploadStatusResponse): UploadStatusResult => {
-  const mapItem = (item: RawUploadStatusResponse['data']['complete'][number]) => ({
+  const mapItem = (item: RawUploadStatusResponse['data']['rows'][number]): UploadStatusResult['rows'][number] => ({
     candidateId: item.candidate_id,
     fullName: item.full_name ?? '',
     email: item.email,
     phone: item.phone,
     currentJobTitle: item.current_job_title,
-    uploadStatus: item.upload_status as UploadStatusResult['complete'][number]['uploadStatus'],
+    uploadStatus: item.upload_status as UploadStatusResult['rows'][number]['uploadStatus'],
     statusCode: item.status_code ?? null,
     reason: item.reason,
     isSelected: item.is_selected ?? false,
@@ -152,10 +152,19 @@ export const mapUploadStatusResponse = (raw: RawUploadStatusResponse): UploadSta
     createdDate: item.created_date,
   });
   return {
-    complete: (raw.data.complete ?? []).map(mapItem),
-    duplicate: (raw.data.duplicate ?? []).map(mapItem),
-    batchDuplicate: (raw.data.batch_duplicate ?? []).map(mapItem),
-    incomplete: (raw.data.incomplete ?? []).map(mapItem),
+    rows: (raw.data.rows ?? []).map(mapItem),
+    pagination: {
+      totalCount: raw.data.pagination.total_count,
+      page: raw.data.pagination.page,
+      pageSize: raw.data.pagination.page_size,
+      totalPages: raw.data.pagination.total_pages,
+    },
+    counts: {
+      total: raw.data.counts.total,
+      success: raw.data.counts.success,
+      duplicate: raw.data.counts.duplicate,
+      incomplete: raw.data.counts.incomplete,
+    },
   };
 };
 

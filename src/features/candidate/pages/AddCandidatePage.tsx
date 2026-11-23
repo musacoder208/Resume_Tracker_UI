@@ -1,5 +1,6 @@
 import { useState, useEffect, type JSX } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { skipToken } from '@reduxjs/toolkit/query';
 import clsx from 'clsx';
 import { PageContainer } from '@/components/containers/PageContainer';
 import { Button } from '@/components/ui/button';
@@ -11,11 +12,11 @@ import { ProcessingSummaryPanel } from '../processingSummary';
 import { UploadStatusTabs } from '../uploadStatusTabs';
 import {
   useUploadResumesMutation,
-  useLazyGetUploadStatusQuery,
+  useGetUploadStatusQuery,
   useUpdateCandidateScoreMutation,
 } from '../api/candidate.api';
 import { useGetJDDropdownQuery } from '@/features/jd/api/jd.api';
-import type { ProcessingSummary } from '../types/candidate.types';
+import type { CandidateTab, ProcessingSummary } from '../types/candidate.types';
 
 const EMPTY_SUMMARY: ProcessingSummary = {
   total: 0,
@@ -23,6 +24,9 @@ const EMPTY_SUMMARY: ProcessingSummary = {
   duplicate: 0,
   incomplete: 0,
 };
+
+const PAGE_SIZE_OPTIONS = [20, 50, 100] as const;
+const DEFAULT_PAGE_SIZE = PAGE_SIZE_OPTIONS[0];
 
 interface Toast {
   type: 'success' | 'error';
@@ -37,16 +41,34 @@ export function AddCandidatePage(): JSX.Element {
   const { data: jdList = [] } = useGetJDDropdownQuery();
   const jdOptions = jdList.map((item) => ({ value: String(item.jdId), label: item.label }));
 
-  const [uploadResumes, { isLoading: isUploading }] = useUploadResumesMutation();
-  const [getUploadStatus, { data: uploadStatusData, isFetching: isRefreshing }] =
-    useLazyGetUploadStatusQuery();
-  const [updateCandidateScore, { isLoading: isScoring }] = useUpdateCandidateScoreMutation();
-
   const locationState = location.state as { jdId?: string } | null;
   const [selectedJd, setSelectedJd] = useState(locationState?.jdId ?? '');
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [toast, setToast] = useState<Toast | null>(null);
-  const [shouldNavigate, setShouldNavigate] = useState(false);
+
+  // Upload status list — server-side paginated, one tab per request.
+  const [activeTab, setActiveTab] = useState<CandidateTab>('success');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState<number>(DEFAULT_PAGE_SIZE);
+  // Selected candidate ids — kept across page / page-size / tab changes so a
+  // page shows the same ticks when the user comes back to it.
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  // When true, the next loaded result picks the first tab that has rows
+  // (same behaviour as before pagination) — set on JD change and Refresh.
+  const [autoTabPending, setAutoTabPending] = useState(true);
+
+  const [uploadResumes, { isLoading: isUploading }] = useUploadResumesMutation();
+  const [updateCandidateScore, { isLoading: isScoring }] = useUpdateCandidateScoreMutation();
+  const {
+    data: uploadStatusData,
+    currentData: currentUploadStatus,
+    isFetching: isRefreshing,
+    refetch,
+  } = useGetUploadStatusQuery(
+    selectedJd === ''
+      ? skipToken
+      : { jdId: Number(selectedJd), tab: activeTab, page, pageSize }
+  );
 
   // Auto-dismiss toast after 3 seconds
   useEffect(() => {
@@ -55,37 +77,51 @@ export function AddCandidatePage(): JSX.Element {
     return () => { clearTimeout(id); };
   }, [toast]);
 
-  // Navigate to /candidate 2 seconds after successful save
-  useEffect(() => {
-    if (!shouldNavigate) return;
-    const id = setTimeout(() => { void navigate('/candidate'); }, 2000);
-    return () => { clearTimeout(id); };
-  }, [shouldNavigate, navigate]);
+  // Switch to the first tab that has results once the data for this JD has
+  // loaded. Adjusting state during render (not in an effect) avoids an extra
+  // render pass — see https://react.dev/learn/you-might-not-need-an-effect
+  if (autoTabPending && currentUploadStatus != null) {
+    setAutoTabPending(false);
+    const { success, duplicate, incomplete } = currentUploadStatus.counts;
+    let firstTab: CandidateTab = 'success';
+    if (success === 0 && duplicate > 0) firstTab = 'duplicate';
+    else if (success === 0 && duplicate === 0 && incomplete > 0) firstTab = 'incomplete';
+    if (firstTab !== activeTab) {
+      setActiveTab(firstTab);
+      setPage(1);
+    }
+  }
 
   const canProcess = uploadedFiles.length > 0 && selectedJd !== '';
 
   const summary: ProcessingSummary =
-    uploadStatusData != null
-      ? {
-          total:
-            uploadStatusData.complete.length +
-            uploadStatusData.duplicate.length +
-            uploadStatusData.batchDuplicate.length +
-            uploadStatusData.incomplete.length,
-          success: uploadStatusData.complete.length,
-          // Batch duplicates are counted with (and shown in) Duplicate.
-          duplicate: uploadStatusData.duplicate.length + uploadStatusData.batchDuplicate.length,
-          incomplete: uploadStatusData.incomplete.length,
-        }
-      : EMPTY_SUMMARY;
+    selectedJd !== '' && uploadStatusData != null ? uploadStatusData.counts : EMPTY_SUMMARY;
 
   function handleJdChange(value: string): void {
     setSelectedJd(value);
-    if (value === '') {
-      setUploadedFiles([]);
-    } else {
-      void getUploadStatus(Number(value));
-    }
+    setActiveTab('success');
+    setPage(1);
+    setSelectedIds(new Set());
+    setAutoTabPending(true);
+    if (value === '') setUploadedFiles([]);
+  }
+
+  // A manual tab / page choice always wins over the automatic first-tab switch.
+  function handleTabChange(tab: CandidateTab): void {
+    setAutoTabPending(false);
+    setActiveTab(tab);
+    setPage(1);
+  }
+
+  function handlePageChange(nextPage: number): void {
+    setAutoTabPending(false);
+    setPage(nextPage);
+  }
+
+  function handlePageSizeChange(size: number): void {
+    setAutoTabPending(false);
+    setPageSize(size);
+    setPage(1);
   }
 
   async function handleProcess(): Promise<void> {
@@ -106,7 +142,9 @@ export function AddCandidatePage(): JSX.Element {
       setToast({ type: 'error', message: t('jdSelection.required') });
       return;
     }
-    void getUploadStatus(Number(selectedJd));
+    setSelectedIds(new Set());
+    setAutoTabPending(true);
+    void refetch();
   }
 
   async function handleSaveAndScore(candidateIds: number[]): Promise<void> {
@@ -118,7 +156,9 @@ export function AddCandidatePage(): JSX.Element {
       }).unwrap();
       if (result.success) {
         setToast({ type: 'success', message: result.message });
-        setShouldNavigate(true);
+        // Stay on the screen so the user can continue with the next page.
+        setSelectedIds(new Set());
+        void refetch();
       } else {
         setToast({ type: 'error', message: result.message });
       }
@@ -220,7 +260,15 @@ export function AddCandidatePage(): JSX.Element {
           {/* ── Right panel (70%) ────────────────────────────────────── */}
           <div className="flex min-w-0 flex-1 flex-col gap-3">
             <UploadStatusTabs
-              data={uploadStatusData ?? null}
+              data={selectedJd !== '' ? (uploadStatusData ?? null) : null}
+              activeTab={activeTab}
+              onTabChange={handleTabChange}
+              pageSize={pageSize}
+              pageSizeOptions={PAGE_SIZE_OPTIONS}
+              onPageChange={handlePageChange}
+              onPageSizeChange={handlePageSizeChange}
+              selectedIds={selectedIds}
+              onSelectionChange={setSelectedIds}
               isRefreshing={isRefreshing}
               isSaving={isScoring}
               onRefresh={handleRefresh}

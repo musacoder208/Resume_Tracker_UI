@@ -9,6 +9,7 @@ import type {
   CandidateListResult,
   CandidateDetail,
   UploadStatusResult,
+  UploadStatusParams,
   SaveHRFeedbackRequest,
   HRAnswerQuestion,
   RawHRAnswersResponse,
@@ -87,10 +88,11 @@ export const candidateApi = baseApi.injectEndpoints({
       transformResponse: mapCandidateDetailResponse,
     }),
 
-    getUploadStatus: builder.query<UploadStatusResult, number>({
-      query: (jd_id) => ({
+    // Server-side paginated — one page of one tab per call.
+    getUploadStatus: builder.query<UploadStatusResult, UploadStatusParams>({
+      query: ({ jdId, tab, page, pageSize }) => ({
         url: 'candidate/getUploadStatus',
-        params: { jd_id },
+        params: { jd_id: jdId, tab, page, page_size: pageSize },
       }),
       transformResponse: mapUploadStatusResponse,
     }),
@@ -138,7 +140,7 @@ export const {
   useUpdateCandidateScoreMutation,
   useGetCandidateListQuery,
   useGetCandidateDetailsQuery,
-  useLazyGetUploadStatusQuery,
+  useGetUploadStatusQuery,
   useSaveHRFeedbackMutation,
   useGetHRAnswersQuery,
   useSaveHRAnswersMutation,
